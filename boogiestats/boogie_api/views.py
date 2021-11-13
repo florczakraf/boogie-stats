@@ -1,0 +1,418 @@
+import json
+import logging
+
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+from boogie_api.models import Player, Song
+
+logger = logging.getLogger("django.server.dupa")  # TODO
+groovestats_proxy_enabled = False  # TODO take from settings?
+GROOVESTATS_ENDPOINT = "https://api.groovestats.com"  # TODO take from settings?
+GROOVESTATS_RESPONSES = {
+    "MISSING_CHARTS": {
+        "message": "Something went wrong.",
+        "error": "Required query parameter 'chartHashP1' or 'chartHashP2' not found.",
+    },
+    "MISSING_API_KEYS": {
+        "message": "Something went wrong.",
+        "error": "Header 'x-api-key-player-1' or 'x-api-key-player-2' not found.",
+    },
+    "NEW_SESSION": {
+        "activeEvents": [
+            {
+                "name": "Stamina RPG5",
+                "shortName": "SRPG5_POST",
+                "url": r"https:\/\/srpg5.groovestats.com",  # better not mess with srpg?
+            }
+        ],
+        "servicesResult": "OK",
+        "servicesAllowed": {
+            "scoreSubmit": True,
+            "playerScores": True,
+            "playerLeaderboards": True,
+        },
+    },
+    "MISSING_LEADERBOARDS_LIMIT": {
+        "message": "Something went wrong.",  # TODO test this with real groovestats perhaps?
+        "error": "maxLeaderboardResults parameter has not been set.",
+    },
+    "GROOVESTATS_DEAD": {
+        "message": "Something went wrong.",
+        "error": "Couldn't contact GrooveStats API.",
+    },
+}
+GROOVESTATS_TIMEOUT = 2
+
+
+def new_session(request):  # TODO add proxying to groovestats / caching?
+    print(request.headers)
+    print(request.body)
+    return JsonResponse(data=GROOVESTATS_RESPONSES["NEW_SESSION"])
+
+
+def player_scores(request):
+    print(request.headers)
+    print(request.body)
+
+    has_p1 = has_p2 = False
+    leaderboard1 = []
+    leaderboard2 = []
+    params = {}
+    headers = {}
+
+    hash_p1 = request.GET.get("chartHashP1")
+    hash_p2 = request.GET.get("chartHashP2")
+    api_key_p1 = request.headers.get("x-api-key-player-1")
+    api_key_p2 = request.headers.get("x-api-key-player-2")
+
+    if not (hash_p1 or hash_p2):
+        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_CHARTS"])
+
+    if not (api_key_p1 or api_key_p2):
+        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_API_KEYS"])
+
+    if hash_p1 and api_key_p1:
+        has_p1 = True
+        p1 = Player.objects.filter(
+            api_key=api_key_p1
+        ).first()  # TODO might not exist? Create at first submission?
+        song1 = Song.objects.filter(hash=hash_p1).first()
+
+        if song1:
+            leaderboard1 = song1.get_leaderboard(num_entries=1, player=p1)
+        else:
+            params["chartHashP1"] = hash_p1
+            headers["x-api-key-player-1"] = api_key_p1
+
+    if hash_p2 and api_key_p2:
+        has_p2 = True
+        p2 = Player.objects.filter(api_key=api_key_p2).first()
+        song2 = Song.objects.filter(hash=hash_p2).first()
+
+        if song2:
+            leaderboard2 = song2.get_leaderboard(num_entries=1, player=p2)
+        else:
+            params["chartHashP2"] = hash_p2
+            headers["x-api-key-player-2"] = api_key_p2
+
+    if params and headers:
+        gs_response = requests.get(
+            GROOVESTATS_ENDPOINT + "/player-scores.php",
+            params=params,
+            headers=headers,
+            timeout=GROOVESTATS_TIMEOUT,
+        ).json()
+        logger.info(gs_response)
+    else:
+        gs_response = {}
+
+    final_response = {}
+
+    if has_p1:
+        if leaderboard1:
+            final_response["player1"] = {
+                "chartHash": hash_p1,
+                "isRanked": True,
+                "gsLeaderboard": leaderboard1,
+            }
+        elif gs_response:
+            final_response["player1"] = {
+                "chartHash": hash_p1,
+                "isRanked": True,
+                "gsLeaderboard": gs_response.get("player1", {}).get(
+                    "gsLeaderboard", []
+                ),
+            }
+        else:
+            final_response["player1"] = {
+                "chartHash": hash_p1,
+                "isRanked": True,
+                "gsLeaderboard": [],
+            }
+
+    if has_p2:
+        if leaderboard2:
+            final_response["player2"] = {
+                "chartHash": hash_p2,
+                "isRanked": True,
+                "gsLeaderboard": leaderboard2,
+            }
+        elif gs_response:
+            final_response["player2"] = {
+                "chartHash": hash_p2,
+                "isRanked": True,
+                "gsLeaderboard": gs_response.get("player2", {}).get(
+                    "gsLeaderboard", []
+                ),
+            }
+        else:
+            final_response["player2"] = {
+                "chartHash": hash_p2,
+                "isRanked": True,
+                "gsLeaderboard": [],
+            }
+
+    return JsonResponse(data=final_response)
+
+
+def player_leaderboards(request):
+    print(request.headers)
+    print(request.body)
+
+    has_p1 = has_p2 = False
+    leaderboard1 = []
+    leaderboard2 = []
+    params = {}
+    headers = {}
+
+    hash_p1 = request.GET.get("chartHashP1")
+    hash_p2 = request.GET.get("chartHashP2")
+    api_key_p1 = request.headers.get("x-api-key-player-1")
+    api_key_p2 = request.headers.get("x-api-key-player-2")
+    max_results = int(request.GET.get("maxLeaderboardResults", 0))
+
+    if not max_results:
+        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"])
+    params["maxLeaderboardResults"] = max_results
+
+    if not (hash_p1 or hash_p2):
+        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_CHARTS"])
+
+    if not (api_key_p1 or api_key_p2):
+        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_API_KEYS"])
+
+    if hash_p1 and api_key_p1:
+        has_p1 = True
+        p1 = Player.objects.filter(
+            api_key=api_key_p1
+        ).first()  # TODO might not exist? Create at first submission?
+        song1 = Song.objects.filter(hash=hash_p1).first()
+
+        if song1:
+            leaderboard1 = song1.get_leaderboard(num_entries=max_results, player=p1)
+        else:
+            params["chartHashP1"] = hash_p1
+            headers["x-api-key-player-1"] = api_key_p1
+
+    if hash_p2 and api_key_p2:
+        has_p2 = True
+        p2 = Player.objects.filter(api_key=api_key_p2).first()
+        song2 = Song.objects.filter(hash=hash_p2).first()
+
+        if song2:
+            leaderboard2 = song2.get_leaderboard(num_entries=max_results, player=p2)
+        else:
+            params["chartHashP2"] = hash_p2
+            headers["x-api-key-player-2"] = api_key_p2
+
+    if params and headers:
+        gs_response = requests.get(
+            GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
+            params=params,
+            headers=headers,
+            timeout=GROOVESTATS_TIMEOUT,
+        ).json()
+        logger.info(gs_response)
+    else:
+        gs_response = {}
+
+    final_response = {}
+
+    if has_p1:
+        if leaderboard1:
+            final_response["player1"] = {
+                "chartHash": hash_p1,
+                "isRanked": True,
+                "gsLeaderboard": leaderboard1,
+            }
+        elif gs_response:
+            final_response["player1"] = {
+                "chartHash": hash_p1,
+                "isRanked": True,
+                "gsLeaderboard": gs_response.get("player1", {}).get(
+                    "gsLeaderboard", []
+                ),
+            }
+        else:
+            final_response["player1"] = {
+                "chartHash": hash_p1,
+                "isRanked": True,
+                "gsLeaderboard": [],
+            }
+
+    if has_p2:
+        if leaderboard2:
+            final_response["player2"] = {
+                "chartHash": hash_p2,
+                "isRanked": True,
+                "gsLeaderboard": leaderboard2,
+            }
+        elif gs_response:
+            final_response["player2"] = {
+                "chartHash": hash_p2,
+                "isRanked": True,
+                "gsLeaderboard": gs_response.get("player2", {}).get(
+                    "gsLeaderboard", []
+                ),
+            }
+        else:
+            final_response["player2"] = {
+                "chartHash": hash_p2,
+                "isRanked": True,
+                "gsLeaderboard": [],
+            }
+
+    return JsonResponse(data=final_response)
+
+
+@csrf_exempt
+def score_submit(request):
+    print(request.headers)
+    print(request.body)
+
+    has_p1 = has_p2 = False
+    leaderboard1 = []
+    leaderboard2 = []
+    params = {}
+    headers = {}
+
+    hash_p1 = request.GET.get("chartHashP1")
+    hash_p2 = request.GET.get("chartHashP2")
+    api_key_p1 = request.headers.get("x-api-key-player-1")
+    api_key_p2 = request.headers.get("x-api-key-player-2")
+    max_results = int(request.GET.get("maxLeaderboardResults", 0))
+
+    if not max_results:
+        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"])
+    params["maxLeaderboardResults"] = max_results
+
+    if not (hash_p1 or hash_p2):
+        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_CHARTS"])
+
+    if not (api_key_p1 or api_key_p2):
+        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_API_KEYS"])
+
+    try:
+        body_parsed = json.loads(request.body)
+    except json.JSONDecodeError:
+        # TODO early exit?
+        body_parsed = {}
+
+    if hash_p1 and api_key_p1 and body_parsed.get("player1") is not None:
+        has_p1 = True
+        params["chartHashP1"] = hash_p1
+        headers["x-api-key-player-1"] = api_key_p1
+
+    if hash_p2 and api_key_p2 and body_parsed.get("player2") is not None:
+        has_p2 = True
+        params["chartHashP2"] = hash_p2
+        headers["x-api-key-player-2"] = api_key_p2
+
+    if params and headers and body_parsed:
+        gs_response = requests.post(
+            GROOVESTATS_ENDPOINT + "/score-submit.php",
+            params=params,
+            headers=headers,
+            json=body_parsed,
+            timeout=GROOVESTATS_TIMEOUT,
+        ).json()
+        logger.info(gs_response)
+    else:
+        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"])
+
+    if has_p1:
+        p1_ranked = gs_response["player1"]["isRanked"]
+        if p1_ranked:
+            leaderboard1 = gs_response["player1"]["gsLeaderboard"]
+            p1_result = gs_response["player1"]["result"]
+            p1_delta = gs_response["player1"]["scoreDelta"]
+        else:
+            song1, song_created = Song.objects.get_or_create(hash=hash_p1)
+
+            p1 = Player.objects.filter(api_key=api_key_p1).first()
+
+            if not p1:
+                p1 = Player.objects.create(
+                    api_key=api_key_p1, machine_tag=api_key_p1[:4]
+                )
+
+            _, old_score = song1.get_highscore(p1)
+            if old_score:
+                if old_score.score < body_parsed["player1"]["score"]:
+                    p1_result = "improved"
+                else:
+                    p1_result = "score-not-improved"
+
+                p1_delta = body_parsed["player1"]["score"] - old_score.score
+            else:
+                p1_result = "score-added"
+                p1_delta = body_parsed["player1"]["score"]
+
+            p1.scores.create(
+                song=song1,
+                score=body_parsed["player1"]["score"],
+                comment=body_parsed["player1"]["comment"],
+                profile_name=None,
+            )
+
+            leaderboard1 = song1.get_leaderboard(num_entries=max_results, player=p1)
+
+    if has_p2:
+        p2_ranked = gs_response["player2"]["isRanked"]
+        if p2_ranked:
+            leaderboard2 = gs_response["player2"]["gsLeaderboard"]
+            p2_result = gs_response["player2"]["result"]
+            p2_delta = gs_response["player2"]["scoreDelta"]
+        else:
+            song2, song_created = Song.objects.get_or_create(hash=hash_p2)
+
+            p2 = Player.objects.filter(api_key=api_key_p2).first()
+
+            if not p2:
+                p2 = Player.objects.create(
+                    api_key=api_key_p2, machine_tag=api_key_p2[:4]
+                )
+
+            _, old_score = song2.get_highscore(p2)
+            if old_score:
+                if old_score.score < body_parsed["player2"]["score"]:
+                    p2_result = "improved"
+                else:
+                    p2_result = "score-not-improved"
+
+                p2_delta = body_parsed["player2"]["score"] - old_score.score
+            else:
+                p2_result = "score-added"
+                p2_delta = body_parsed["player2"]["score"]
+
+            p2.scores.create(
+                song=song2,
+                score=body_parsed["player2"]["score"],
+                comment=body_parsed["player2"]["comment"],
+                profile_name=None,
+            )
+
+            leaderboard2 = song2.get_leaderboard(num_entries=max_results, player=p2)
+
+    final_response = {}
+    if has_p1:
+        final_response["player1"] = {
+            "chartHash": hash_p1,
+            "isRanked": True,
+            "gsLeaderboard": leaderboard1,
+            "scoreDelta": p1_delta,
+            "result": p1_result,
+        }
+
+    if has_p2:
+        final_response["player2"] = {
+            "chartHash": hash_p2,
+            "isRanked": True,
+            "gsLeaderboard": leaderboard2,
+            "scoreDelta": p2_delta,
+            "result": p2_result,
+        }
+
+    return JsonResponse(data=final_response)
