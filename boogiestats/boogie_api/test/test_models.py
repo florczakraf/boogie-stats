@@ -11,11 +11,22 @@ def song():
 
 
 @pytest.fixture
-def player(song):
+def other_song():
+    return Song.objects.create(hash="othersong")
+
+
+@pytest.fixture
+def player(song, other_song):
     p = Player.objects.create(api_key="playerkey", machine_tag="PL")
     p.scores.create(
         song=song,
         score=6442,
+        comment="M400, OtherMod",
+        profile_name="player profile",
+    )
+    p.scores.create(
+        song=other_song,
+        score=6666,
         comment="M400, OtherMod",
         profile_name="player profile",
     )
@@ -231,6 +242,22 @@ def test_get_leaderboard_when_entries_would_duplicate(
 
 
 def test_get_leaderboard_top_when_player_is_provided(song, player, rival3):
+    leaderboard = song.get_leaderboard(num_entries=10, player=rival3)
+
+    assert leaderboard[0]["name"] == "RIV3"
+    assert leaderboard[0]["rank"] == 1
+    assert leaderboard[0]["score"] == 7700
+    assert leaderboard[0]["isRival"] is False
+    assert leaderboard[0]["isSelf"] is True
+
+    assert leaderboard[1]["name"] == "PL"
+    assert leaderboard[1]["rank"] == 2
+    assert leaderboard[1]["score"] == 6442
+    assert leaderboard[1]["isRival"] is False
+    assert leaderboard[1]["isSelf"] is False
+
+
+def test_get_leaderboard_when_there_are_multiple_songs(song, other_song, player, rival3):
     leaderboard = song.get_leaderboard(num_entries=10, player=rival3)
 
     assert leaderboard[0]["name"] == "RIV3"

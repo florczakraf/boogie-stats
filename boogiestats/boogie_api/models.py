@@ -109,4 +109,4 @@ class Score(models.Model):
 
     @classmethod
     def rank(cls, score):
-        return cls.objects.filter(is_top=True, score__gt=score.score).count() + 1
+        return cls.objects.filter(song=score.song, is_top=True, score__gt=score.score).count() + 1
