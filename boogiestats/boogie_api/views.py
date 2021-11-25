@@ -47,15 +47,10 @@ GROOVESTATS_TIMEOUT = 2
 
 
 def new_session(request):  # TODO add proxying to groovestats / caching?
-    print(request.headers)
-    print(request.body)
     return JsonResponse(data=GROOVESTATS_RESPONSES["NEW_SESSION"])
 
 
 def player_scores(request):
-    print(request.headers)
-    print(request.body)
-
     has_p1 = has_p2 = False
     leaderboard1 = []
     leaderboard2 = []
@@ -152,9 +147,6 @@ def player_scores(request):
 
 
 def player_leaderboards(request):
-    print(request.headers)
-    print(request.body)
-
     has_p1 = has_p2 = False
     leaderboard1 = []
     leaderboard2 = []
@@ -257,9 +249,6 @@ def player_leaderboards(request):
 
 @csrf_exempt
 def score_submit(request):
-    print(request.headers)
-    print(request.body)
-
     has_p1 = has_p2 = False
     leaderboard1 = []
     leaderboard2 = []
