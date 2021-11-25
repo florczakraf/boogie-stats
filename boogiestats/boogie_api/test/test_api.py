@@ -20,9 +20,7 @@ def test_player_scores_without_chart_hash(client):
 
 
 def test_player_scores_without_api_keys(client):
-    response = client.get(
-        "/player-scores.php", data={"chartHashP1": "01234567890ABCDEF"}
-    )
+    response = client.get("/player-scores.php", data={"chartHashP1": "01234567890ABCDEF"})
 
     assert response.json() == GROOVESTATS_RESPONSES["MISSING_API_KEYS"]
 
@@ -32,9 +30,7 @@ def p1_gs_api_key():
     return "abcdef0123456789" * 4
 
 
-def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
-    client, p1_gs_api_key, requests_mock
-):
+def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(client, p1_gs_api_key, requests_mock):
     unranked_song = {
         "player1": {
             "chartHash": "0123456789ABCDEF",
@@ -42,9 +38,7 @@ def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
             "gsLeaderboard": [],
         }
     }
-    requests_mock.get(
-        GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(unranked_song)
-    )
+    requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(unranked_song))
     response = client.get(
         "/player-scores.php",
         data={"chartHashP1": "0123456789ABCDEF"},
@@ -79,9 +73,7 @@ def test_player_scores_given_groovestats_ranked_song(client, p1_gs_api_key, requ
             ],
         }
     }
-    requests_mock.get(
-        GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(ranked_song)
-    )
+    requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(ranked_song))
     response = client.get(
         "/player-scores.php",
         data={"chartHashP1": "76957dd1f96f764d"},
@@ -116,12 +108,8 @@ def other_player(other_player_gs_api_key):
 @pytest.fixture
 def song(some_player, other_player):
     s = Song.objects.create(hash="0123456789ABCDEF")
-    s.scores.create(
-        player=some_player, score=8495, comment="C420", profile_name="1 2 3 4"
-    )
-    s.scores.create(
-        player=other_player, score=8595, comment="C420", profile_name="a b c d"
-    )
+    s.scores.create(player=some_player, score=8495, comment="C420", profile_name="1 2 3 4")
+    s.scores.create(player=other_player, score=8595, comment="C420", profile_name="a b c d")
 
     return s
 
@@ -141,9 +129,7 @@ def test_player_scores_given_groovestats_unranked_song_that_we_track_doesnt_call
             "isRanked": True,
             "gsLeaderboard": [
                 {
-                    "date": song.get_highscore(other_player)[
-                        1
-                    ].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(other_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isFail": False,
                     "isRival": False,
                     "isSelf": False,
@@ -166,9 +152,7 @@ def test_player_leaderboards_requires_max_leaderboard_results_param(client, p1_g
     assert response.json() == GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"]
 
 
-def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
-    client, p1_gs_api_key, requests_mock
-):
+def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(client, p1_gs_api_key, requests_mock):
     unranked_song = {
         "player1": {
             "chartHash": "0123456789ABCDEF",
@@ -195,9 +179,7 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
     }
 
 
-def test_player_leaderboards_given_groovestats_ranked_song(
-    client, p1_gs_api_key, requests_mock
-):
+def test_player_leaderboards_given_groovestats_ranked_song(client, p1_gs_api_key, requests_mock):
     ranked_song = {
         "player1": {
             "chartHash": "76957dd1f96f764d",
@@ -226,9 +208,7 @@ def test_player_leaderboards_given_groovestats_ranked_song(
             ],
         }
     }
-    requests_mock.get(
-        GROOVESTATS_ENDPOINT + "/player-leaderboards.php", text=json.dumps(ranked_song)
-    )
+    requests_mock.get(GROOVESTATS_ENDPOINT + "/player-leaderboards.php", text=json.dumps(ranked_song))
     response = client.get(
         "/player-leaderboards.php",
         data={"chartHashP1": "76957dd1f96f764d", "maxLeaderboardResults": 3},
@@ -253,9 +233,7 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_track_doesn
             "isRanked": True,
             "gsLeaderboard": [
                 {
-                    "date": song.get_highscore(other_player)[
-                        1
-                    ].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(other_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isFail": False,
                     "isRival": False,
                     "isSelf": False,
@@ -265,9 +243,7 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_track_doesn
                     "score": 8595,
                 },
                 {
-                    "date": song.get_highscore(some_player)[1].submission_date.strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    ),
+                    "date": song.get_highscore(some_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isFail": False,
                     "isRival": False,
                     "isSelf": False,
@@ -322,9 +298,7 @@ def test_score_submit_given_groovestats_ranked_song(client, p1_gs_api_key, reque
             "result": "score-added",
         }
     }
-    requests_mock.post(
-        GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(expected_result)
-    )
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(expected_result))
     response = client.post(
         "/score-submit.php?chartHashP1=76957dd1f96f764d&maxLeaderboardResults=3",
         data={
@@ -344,9 +318,7 @@ def test_score_submit_given_groovestats_ranked_song(client, p1_gs_api_key, reque
     assert response.json() == expected_result
 
 
-def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
-    client, p1_gs_api_key, requests_mock
-):
+def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(client, p1_gs_api_key, requests_mock):
     unranked_song = {
         "player1": {
             "chartHash": "76957dd1f96f764e",
@@ -355,9 +327,7 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
             "scoreDelta": 5805,
         }
     }
-    requests_mock.post(
-        GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song)
-    )
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     response = client.post(
         "/score-submit.php?chartHashP1=76957dd1f96f764e&maxLeaderboardResults=3",
         data={
@@ -385,9 +355,7 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
                     "rank": 1,
                     "name": "bc37",
                     "score": 5805,
-                    "date": song.get_highscore(player)[1].submission_date.strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    ),
+                    "date": song.get_highscore(player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": True,
                     "isRival": False,
                     "isFail": False,
@@ -411,9 +379,7 @@ def test_score_submit_given_groovestats_unranked_song_and_better_score(
             "scoreDelta": 5805,
         }
     }
-    requests_mock.post(
-        GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song)
-    )
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     response = client.post(
         "/score-submit.php?chartHashP1=0123456789ABCDEF&maxLeaderboardResults=3",
         data={
@@ -440,9 +406,7 @@ def test_score_submit_given_groovestats_unranked_song_and_better_score(
                     "rank": 1,
                     "name": "1234",
                     "score": 9999,
-                    "date": song.get_highscore(some_player)[1].submission_date.strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    ),
+                    "date": song.get_highscore(some_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": True,
                     "isRival": False,
                     "isFail": False,
@@ -452,9 +416,7 @@ def test_score_submit_given_groovestats_unranked_song_and_better_score(
                     "rank": 2,
                     "name": "ABCD",
                     "score": 8595,
-                    "date": song.get_highscore(other_player)[
-                        1
-                    ].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(other_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": False,
                     "isRival": False,
                     "isFail": False,
@@ -478,9 +440,7 @@ def test_score_submit_given_groovestats_unranked_song_and_worse_score(
             "scoreDelta": 5805,
         }
     }
-    requests_mock.post(
-        GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song)
-    )
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     response = client.post(
         "/score-submit.php?chartHashP1=0123456789ABCDEF&maxLeaderboardResults=3",
         data={
@@ -507,9 +467,7 @@ def test_score_submit_given_groovestats_unranked_song_and_worse_score(
                     "rank": 1,
                     "name": "ABCD",
                     "score": 8595,
-                    "date": song.get_highscore(other_player)[
-                        1
-                    ].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(other_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": False,
                     "isRival": False,
                     "isFail": False,
@@ -519,9 +477,7 @@ def test_score_submit_given_groovestats_unranked_song_and_worse_score(
                     "rank": 2,
                     "name": "1234",
                     "score": 8495,
-                    "date": song.get_highscore(some_player)[1].submission_date.strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    ),
+                    "date": song.get_highscore(some_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": True,
                     "isRival": False,
                     "isFail": False,

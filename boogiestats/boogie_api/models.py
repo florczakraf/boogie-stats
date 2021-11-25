@@ -24,9 +24,7 @@ def make_leaderboard_entry(rank, score, is_rival=False, is_self=False):
 
 
 class Song(models.Model):
-    hash = models.CharField(
-        max_length=16, primary_key=True, db_index=True
-    )  # V3 GrooveStats hash 16 a-f0-9
+    hash = models.CharField(max_length=16, primary_key=True, db_index=True)  # V3 GrooveStats hash 16 a-f0-9
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -53,9 +51,7 @@ class Song(models.Model):
         remaining_scores = max(0, num_entries - len(scores))
 
         top_scores = (
-            self.scores.filter(is_top=True)
-            .exclude(pk__in=used_score_pks)
-            .order_by("-score")[:remaining_scores]
+            self.scores.filter(is_top=True).exclude(pk__in=used_score_pks).order_by("-score")[:remaining_scores]
         )
 
         for score in top_scores:

@@ -87,9 +87,7 @@ def top_scores(song):
         )
 
 
-def test_get_leaderboard_without_player_returns_top_players(
-    song, player, rival1, rival2, rival3, top_scores
-):
+def test_get_leaderboard_without_player_returns_top_players(song, player, rival1, rival2, rival3, top_scores):
     leaderboard = song.get_leaderboard(num_entries=2)
 
     assert len(leaderboard) == 2
@@ -209,9 +207,7 @@ def test_player_might_have_up_to_3_rivals(song, player, rival1, rival2, rival3):
     assert {x.machine_tag for x in player.rivals.all()} == {"RIV1", "RIV2", "RIV3"}
 
 
-def test_get_leaderboard_when_entries_would_duplicate(
-    song, player, rival1, rival2, rival3
-):
+def test_get_leaderboard_when_entries_would_duplicate(song, player, rival1, rival2, rival3):
     leaderboard = song.get_leaderboard(num_entries=10, player=player)
 
     assert leaderboard[0]["name"] == "RIV3"

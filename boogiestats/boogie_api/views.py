@@ -119,9 +119,7 @@ def player_scores(request):
             final_response["player1"] = {
                 "chartHash": hash_p1,
                 "isRanked": True,
-                "gsLeaderboard": gs_response.get("player1", {}).get(
-                    "gsLeaderboard", []
-                ),
+                "gsLeaderboard": gs_response.get("player1", {}).get("gsLeaderboard", []),
             }
         else:
             final_response["player1"] = {
@@ -141,9 +139,7 @@ def player_scores(request):
             final_response["player2"] = {
                 "chartHash": hash_p2,
                 "isRanked": True,
-                "gsLeaderboard": gs_response.get("player2", {}).get(
-                    "gsLeaderboard", []
-                ),
+                "gsLeaderboard": gs_response.get("player2", {}).get("gsLeaderboard", []),
             }
         else:
             final_response["player2"] = {
@@ -227,9 +223,7 @@ def player_leaderboards(request):
             final_response["player1"] = {
                 "chartHash": hash_p1,
                 "isRanked": True,
-                "gsLeaderboard": gs_response.get("player1", {}).get(
-                    "gsLeaderboard", []
-                ),
+                "gsLeaderboard": gs_response.get("player1", {}).get("gsLeaderboard", []),
             }
         else:
             final_response["player1"] = {
@@ -249,9 +243,7 @@ def player_leaderboards(request):
             final_response["player2"] = {
                 "chartHash": hash_p2,
                 "isRanked": True,
-                "gsLeaderboard": gs_response.get("player2", {}).get(
-                    "gsLeaderboard", []
-                ),
+                "gsLeaderboard": gs_response.get("player2", {}).get("gsLeaderboard", []),
             }
         else:
             final_response["player2"] = {
@@ -331,9 +323,7 @@ def score_submit(request):
 
             if not p1:
                 bs_api_key = Player.gs_api_key_to_bs_api_key(api_key_p1)
-                p1 = Player.objects.create(  # TODO
-                    api_key=bs_api_key, machine_tag=bs_api_key[:4]
-                )
+                p1 = Player.objects.create(api_key=bs_api_key, machine_tag=bs_api_key[:4])  # TODO
 
             _, old_score = song1.get_highscore(p1)
             if old_score:
@@ -369,9 +359,7 @@ def score_submit(request):
 
             if not p2:
                 bs_api_key = Player.gs_api_key_to_bs_api_key(api_key_p2)
-                p2 = Player.objects.create(
-                    api_key=bs_api_key, machine_tag=bs_api_key[:4]
-                )
+                p2 = Player.objects.create(api_key=bs_api_key, machine_tag=bs_api_key[:4])
 
             _, old_score = song2.get_highscore(p2)
             if old_score:
