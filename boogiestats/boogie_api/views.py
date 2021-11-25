@@ -75,9 +75,7 @@ def player_scores(request):
 
     if hash_p1 and api_key_p1:
         has_p1 = True
-        p1 = Player.objects.filter(
-            api_key=api_key_p1
-        ).first()  # TODO might not exist? Create at first submission?
+        p1 = Player.get_by_gs_api_key(api_key_p1)  # TODO might not exist? Create at first submission?
         song1 = Song.objects.filter(hash=hash_p1).first()
 
         if song1:
@@ -88,7 +86,7 @@ def player_scores(request):
 
     if hash_p2 and api_key_p2:
         has_p2 = True
-        p2 = Player.objects.filter(api_key=api_key_p2).first()
+        p2 = Player.get_by_gs_api_key(api_key_p2)
         song2 = Song.objects.filter(hash=hash_p2).first()
 
         if song2:
@@ -185,9 +183,7 @@ def player_leaderboards(request):
 
     if hash_p1 and api_key_p1:
         has_p1 = True
-        p1 = Player.objects.filter(
-            api_key=api_key_p1
-        ).first()  # TODO might not exist? Create at first submission?
+        p1 = Player.get_by_gs_api_key(api_key_p1)
         song1 = Song.objects.filter(hash=hash_p1).first()
 
         if song1:
@@ -198,7 +194,7 @@ def player_leaderboards(request):
 
     if hash_p2 and api_key_p2:
         has_p2 = True
-        p2 = Player.objects.filter(api_key=api_key_p2).first()
+        p2 = Player.get_by_gs_api_key(api_key_p2)
         song2 = Song.objects.filter(hash=hash_p2).first()
 
         if song2:
@@ -331,11 +327,12 @@ def score_submit(request):
         else:
             song1, song_created = Song.objects.get_or_create(hash=hash_p1)
 
-            p1 = Player.objects.filter(api_key=api_key_p1).first()
+            p1 = Player.get_by_gs_api_key(api_key_p1)
 
             if not p1:
-                p1 = Player.objects.create(
-                    api_key=api_key_p1, machine_tag=api_key_p1[:4]
+                bs_api_key = Player.gs_api_key_to_bs_api_key(api_key_p1)
+                p1 = Player.objects.create(  # TODO
+                    api_key=bs_api_key, machine_tag=bs_api_key[:4]
                 )
 
             _, old_score = song1.get_highscore(p1)
@@ -368,11 +365,12 @@ def score_submit(request):
         else:
             song2, song_created = Song.objects.get_or_create(hash=hash_p2)
 
-            p2 = Player.objects.filter(api_key=api_key_p2).first()
+            p2 = Player.get_by_gs_api_key(api_key_p2)
 
             if not p2:
+                bs_api_key = Player.gs_api_key_to_bs_api_key(api_key_p2)
                 p2 = Player.objects.create(
-                    api_key=api_key_p2, machine_tag=api_key_p2[:4]
+                    api_key=bs_api_key, machine_tag=bs_api_key[:4]
                 )
 
             _, old_score = song2.get_highscore(p2)

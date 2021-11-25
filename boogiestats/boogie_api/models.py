@@ -1,3 +1,5 @@
+from hashlib import sha256
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import m2m_changed
@@ -72,7 +74,7 @@ class Song(models.Model):
 
 
 class Player(models.Model):
-    api_key = models.CharField(max_length=64, primary_key=True, db_index=True)
+    api_key = models.CharField(max_length=64, db_index=True, unique=True)
     machine_tag = models.CharField(max_length=4)
     rivals = models.ManyToManyField(
         "self",
@@ -82,6 +84,15 @@ class Player(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
+
+    @staticmethod
+    def get_by_gs_api_key(gs_api_key):
+        api_key = Player.gs_api_key_to_bs_api_key(gs_api_key)
+        return Player.objects.filter(api_key=api_key).first()
+
+    @staticmethod
+    def gs_api_key_to_bs_api_key(gs_api_key):
+        return sha256(gs_api_key[:32].encode("ascii")).hexdigest()
 
 
 def validate_rivals(sender, **kwargs):
