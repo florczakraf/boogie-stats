@@ -2,7 +2,7 @@ import json
 import logging
 
 import requests
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseServerError
 from django.views.decorators.csrf import csrf_exempt
 
 from boogie_api.models import Player, Song
@@ -91,12 +91,17 @@ def player_scores(request):
             headers["x-api-key-player-2"] = api_key_p2
 
     if params and headers:
-        gs_response = requests.get(
-            GROOVESTATS_ENDPOINT + "/player-scores.php",
-            params=params,
-            headers=headers,
-            timeout=GROOVESTATS_TIMEOUT,
-        ).json()
+        try:
+            gs_response = requests.get(
+                GROOVESTATS_ENDPOINT + "/player-scores.php",
+                params=params,
+                headers=headers,
+                timeout=GROOVESTATS_TIMEOUT,
+            ).json()
+        except requests.Timeout as e:
+            logger.error(f"Request to GrooveStats timed-out: {e}")
+            return HttpResponseServerError()
+
         logger.info(gs_response)
     else:
         gs_response = {}
@@ -192,12 +197,16 @@ def player_leaderboards(request):
             headers["x-api-key-player-2"] = api_key_p2
 
     if params and headers:
-        gs_response = requests.get(
-            GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
-            params=params,
-            headers=headers,
-            timeout=GROOVESTATS_TIMEOUT,
-        ).json()
+        try:
+            gs_response = requests.get(
+                GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
+                params=params,
+                headers=headers,
+                timeout=GROOVESTATS_TIMEOUT,
+            ).json()
+        except requests.Timeout as e:
+            logger.error(f"Request to GrooveStats timed-out: {e}")
+            return HttpResponseServerError()
         logger.info(gs_response)
     else:
         gs_response = {}
@@ -288,13 +297,17 @@ def score_submit(request):
         headers["x-api-key-player-2"] = api_key_p2
 
     if params and headers and body_parsed:
-        gs_response = requests.post(
-            GROOVESTATS_ENDPOINT + "/score-submit.php",
-            params=params,
-            headers=headers,
-            json=body_parsed,
-            timeout=GROOVESTATS_TIMEOUT,
-        ).json()
+        try:
+            gs_response = requests.post(
+                GROOVESTATS_ENDPOINT + "/score-submit.php",
+                params=params,
+                headers=headers,
+                json=body_parsed,
+                timeout=GROOVESTATS_TIMEOUT,
+            ).json()
+        except requests.Timeout as e:
+            logger.error(f"Request to GrooveStats timed-out: {e}")
+            return HttpResponseServerError()
         logger.info(gs_response)
     else:
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"])
