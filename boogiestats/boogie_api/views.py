@@ -43,7 +43,7 @@ GROOVESTATS_RESPONSES = {
         "error": "Couldn't contact GrooveStats API.",
     },
 }
-GROOVESTATS_TIMEOUT = 2
+GROOVESTATS_TIMEOUT = 4
 
 
 def new_session(request):  # TODO add proxying to groovestats / caching?
