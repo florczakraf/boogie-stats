@@ -115,6 +115,8 @@ def player_scores(request):
                 "isRanked": True,
                 "gsLeaderboard": gs_response.get("player1", {}).get("gsLeaderboard", []),
             }
+            if p1_itl := gs_response.get("player1", {}).get("itl"):
+                final_response["player1"]["itl"] = p1_itl
         else:
             final_response["player1"] = {
                 "chartHash": hash_p1,
@@ -135,6 +137,8 @@ def player_scores(request):
                 "isRanked": True,
                 "gsLeaderboard": gs_response.get("player2", {}).get("gsLeaderboard", []),
             }
+            if p2_itl := gs_response.get("player2", {}).get("itl"):
+                final_response["player2"]["itl"] = p2_itl
         else:
             final_response["player2"] = {
                 "chartHash": hash_p2,
@@ -220,6 +224,8 @@ def player_leaderboards(request):
                 "isRanked": True,
                 "gsLeaderboard": gs_response.get("player1", {}).get("gsLeaderboard", []),
             }
+            if p1_itl := gs_response.get("player1", {}).get("itl"):
+                final_response["player1"]["itl"] = p1_itl
         else:
             final_response["player1"] = {
                 "chartHash": hash_p1,
@@ -240,6 +246,8 @@ def player_leaderboards(request):
                 "isRanked": True,
                 "gsLeaderboard": gs_response.get("player2", {}).get("gsLeaderboard", []),
             }
+            if p2_itl := gs_response.get("player2", {}).get("itl"):
+                final_response["player2"]["itl"] = p2_itl
         else:
             final_response["player2"] = {
                 "chartHash": hash_p2,
@@ -308,10 +316,14 @@ def score_submit(request):
 
     if has_p1:
         p1_ranked = gs_response["player1"]["isRanked"]
+        p1_itl = None
+
         if p1_ranked:
             leaderboard1 = gs_response["player1"]["gsLeaderboard"]
             p1_result = gs_response["player1"]["result"]
             p1_delta = gs_response["player1"]["scoreDelta"]
+            if "itl" in gs_response["player1"]:
+                p1_itl = gs_response["player1"]["itl"]
         else:
             song1, song_created = Song.objects.get_or_create(hash=hash_p1)
 
@@ -344,10 +356,14 @@ def score_submit(request):
 
     if has_p2:
         p2_ranked = gs_response["player2"]["isRanked"]
+        p2_itl = None
+
         if p2_ranked:
             leaderboard2 = gs_response["player2"]["gsLeaderboard"]
             p2_result = gs_response["player2"]["result"]
             p2_delta = gs_response["player2"]["scoreDelta"]
+            if "itl" in gs_response["player2"]:
+                p2_itl = gs_response["player2"]["itl"]
         else:
             song2, song_created = Song.objects.get_or_create(hash=hash_p2)
 
@@ -387,6 +403,8 @@ def score_submit(request):
             "scoreDelta": p1_delta,
             "result": p1_result,
         }
+        if p1_itl:
+            final_response["player1"]["itl"] = p1_itl
 
     if has_p2:
         final_response["player2"] = {
@@ -396,5 +414,7 @@ def score_submit(request):
             "scoreDelta": p2_delta,
             "result": p2_result,
         }
+        if p2_itl:
+            final_response["player2"]["itl"] = p2_itl
 
     return JsonResponse(data=final_response)
