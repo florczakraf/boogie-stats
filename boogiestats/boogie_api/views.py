@@ -20,7 +20,7 @@ GROOVESTATS_RESPONSES = {
         "error": "Header 'x-api-key-player-1' or 'x-api-key-player-2' not found.",
     },
     "NEW_SESSION": {
-        "activeEvents": [{"name":"ITL 2022","shortName":"ITL2022","url":"https:\/\/itl2022.groovestats.com"}],
+        "activeEvents": [{"name": "ITL 2022", "shortName": "ITL2022", "url": r"https:\/\/itl2022.groovestats.com"}],
         "servicesResult": "OK",
         "servicesAllowed": {
             "scoreSubmit": True,
