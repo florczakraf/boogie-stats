@@ -20,13 +20,7 @@ GROOVESTATS_RESPONSES = {
         "error": "Header 'x-api-key-player-1' or 'x-api-key-player-2' not found.",
     },
     "NEW_SESSION": {
-        "activeEvents": [
-            {
-                "name": "Stamina RPG5",
-                "shortName": "SRPG5_POST",
-                "url": r"https:\/\/srpg5.groovestats.com",  # better not mess with srpg?
-            }
-        ],
+        "activeEvents": [{"name":"ITL 2022","shortName":"ITL2022","url":"https:\/\/itl2022.groovestats.com"}],
         "servicesResult": "OK",
         "servicesAllowed": {
             "scoreSubmit": True,
