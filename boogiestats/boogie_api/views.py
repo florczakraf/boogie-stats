@@ -1,5 +1,6 @@
 import json
 import logging
+from collections import defaultdict
 
 import requests
 from django.http import JsonResponse, HttpResponseServerError
@@ -11,16 +12,18 @@ logger = logging.getLogger("django.server.dupa")  # TODO
 groovestats_proxy_enabled = False  # TODO take from settings?
 GROOVESTATS_ENDPOINT = "https://api.groovestats.com"  # TODO take from settings?
 GROOVESTATS_RESPONSES = {
-    "MISSING_CHARTS": {
+    "PLAYERS_VALIDATION_ERROR": {
         "message": "Something went wrong.",
-        "error": "Required query parameter 'chartHashP1' or 'chartHashP2' not found.",
-    },
-    "MISSING_API_KEYS": {
-        "message": "Something went wrong.",
-        "error": "Header 'x-api-key-player-1' or 'x-api-key-player-2' not found.",
+        "error": "No valid players found.",
     },
     "NEW_SESSION": {
-        "activeEvents": [{"name": "ITL 2022", "shortName": "ITL2022", "url": r"https:\/\/itl2022.groovestats.com"}],
+        "activeEvents": [
+            {
+                "name": "ITL 2022",
+                "shortName": "ITL2022",
+                "url": r"https:\/\/itl2022.groovestats.com",
+            }
+        ],
         "servicesResult": "OK",
         "servicesAllowed": {
             "scoreSubmit": True,
@@ -44,45 +47,53 @@ def new_session(request):  # TODO add proxying to groovestats / caching?
     return JsonResponse(data=GROOVESTATS_RESPONSES["NEW_SESSION"])
 
 
+def validate_players(players):
+    for player_id, player in players.items():
+        chart_hash = player.get("chartHash")
+        gs_api_key = player.get("gsApiKey")
+
+        if not all((chart_hash, gs_api_key)):
+            raise ValueError(f"{player_id} is not valid.")
+
+
+def parse_players(request):
+    players = defaultdict(dict)
+
+    for k, v in request.GET.items():
+        if k.startswith("chartHashP"):
+            player_index = int(k.removeprefix("chartHashP"))
+            players[player_index]["chartHash"] = v
+
+    for k, v in request.headers.items():
+        if k.lower().startswith("x-api-key-player-"):
+            player_index = int(k.lower().removeprefix("x-api-key-player-"))
+            players[player_index]["gsApiKey"] = v
+
+    validate_players(players)
+
+    return players
+
+
 def player_scores(request):
-    has_p1 = has_p2 = False
-    leaderboard1 = []
-    leaderboard2 = []
     params = {}
     headers = {}
 
-    hash_p1 = request.GET.get("chartHashP1")
-    hash_p2 = request.GET.get("chartHashP2")
-    api_key_p1 = request.headers.get("x-api-key-player-1")
-    api_key_p2 = request.headers.get("x-api-key-player-2")
+    try:
+        players = parse_players(request)
+    except ValueError:
+        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"])
 
-    if not (hash_p1 or hash_p2):
-        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_CHARTS"])
+    for player_index, player in players.items():
+        gs_api_key = player["gsApiKey"]
+        chart_hash = player["chartHash"]
+        player_instance = Player.get_by_gs_api_key(gs_api_key)
+        song = Song.objects.filter(hash=chart_hash).first()
 
-    if not (api_key_p1 or api_key_p2):
-        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_API_KEYS"])
-
-    if hash_p1 and api_key_p1:
-        has_p1 = True
-        p1 = Player.get_by_gs_api_key(api_key_p1)  # TODO might not exist? Create at first submission?
-        song1 = Song.objects.filter(hash=hash_p1).first()
-
-        if song1:
-            leaderboard1 = song1.get_leaderboard(num_entries=1, player=p1)
+        if song:
+            player["leaderboard"] = song.get_leaderboard(num_entries=1, player=player_instance)
         else:
-            params["chartHashP1"] = hash_p1
-            headers["x-api-key-player-1"] = api_key_p1
-
-    if hash_p2 and api_key_p2:
-        has_p2 = True
-        p2 = Player.get_by_gs_api_key(api_key_p2)
-        song2 = Song.objects.filter(hash=hash_p2).first()
-
-        if song2:
-            leaderboard2 = song2.get_leaderboard(num_entries=1, player=p2)
-        else:
-            params["chartHashP2"] = hash_p2
-            headers["x-api-key-player-2"] = api_key_p2
+            params[f"chartHashP{player_index}"] = chart_hash
+            headers[f"x-api-key-player-{player_index}"] = gs_api_key
 
     if params and headers:
         try:
@@ -102,97 +113,56 @@ def player_scores(request):
 
     final_response = {}
 
-    if has_p1:
-        if leaderboard1:
-            final_response["player1"] = {
-                "chartHash": hash_p1,
-                "isRanked": True,
-                "gsLeaderboard": leaderboard1,
-            }
-        elif gs_response:
-            final_response["player1"] = {
-                "chartHash": hash_p1,
-                "isRanked": True,
-                "gsLeaderboard": gs_response.get("player1", {}).get("gsLeaderboard", []),
-            }
-            if p1_itl := gs_response.get("player1", {}).get("itl"):
-                final_response["player1"]["itl"] = p1_itl
-        else:
-            final_response["player1"] = {
-                "chartHash": hash_p1,
-                "isRanked": True,
-                "gsLeaderboard": [],
-            }
+    for player_index, player in players.items():
+        chart_hash = player["chartHash"]
+        player_id = f"player{player_index}"
 
-    if has_p2:
-        if leaderboard2:
-            final_response["player2"] = {
-                "chartHash": hash_p2,
-                "isRanked": True,
-                "gsLeaderboard": leaderboard2,
-            }
+        final_response[player_id] = {
+            "chartHash": chart_hash,
+            "isRanked": True,
+        }
+
+        if player.get("leaderboard"):
+            leaderboard = player["leaderboard"]
         elif gs_response:
-            final_response["player2"] = {
-                "chartHash": hash_p2,
-                "isRanked": True,
-                "gsLeaderboard": gs_response.get("player2", {}).get("gsLeaderboard", []),
-            }
-            if p2_itl := gs_response.get("player2", {}).get("itl"):
-                final_response["player2"]["itl"] = p2_itl
+            leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
+            player["itl"] = gs_response.get(player_id, {}).get("itl")
+            if player["itl"]:
+                final_response[player_id]["itl"] = player["itl"]
         else:
-            final_response["player2"] = {
-                "chartHash": hash_p2,
-                "isRanked": True,
-                "gsLeaderboard": [],
-            }
+            leaderboard = []
+
+        final_response[player_id]["gsLeaderboard"] = leaderboard
 
     return JsonResponse(data=final_response)
 
 
 def player_leaderboards(request):
-    has_p1 = has_p2 = False
-    leaderboard1 = []
-    leaderboard2 = []
     params = {}
     headers = {}
 
-    hash_p1 = request.GET.get("chartHashP1")
-    hash_p2 = request.GET.get("chartHashP2")
-    api_key_p1 = request.headers.get("x-api-key-player-1")
-    api_key_p2 = request.headers.get("x-api-key-player-2")
+    try:
+        players = parse_players(request)
+    except ValueError:
+        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"])
+
     max_results = int(request.GET.get("maxLeaderboardResults", 0))
 
     if not max_results:
         return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"])
     params["maxLeaderboardResults"] = max_results
 
-    if not (hash_p1 or hash_p2):
-        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_CHARTS"])
+    for player_index, player in players.items():
+        gs_api_key = player["gsApiKey"]
+        chart_hash = player["chartHash"]
+        player_instance = Player.get_by_gs_api_key(gs_api_key)
+        song = Song.objects.filter(hash=chart_hash).first()
 
-    if not (api_key_p1 or api_key_p2):
-        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_API_KEYS"])
-
-    if hash_p1 and api_key_p1:
-        has_p1 = True
-        p1 = Player.get_by_gs_api_key(api_key_p1)
-        song1 = Song.objects.filter(hash=hash_p1).first()
-
-        if song1:
-            leaderboard1 = song1.get_leaderboard(num_entries=max_results, player=p1)
+        if song:
+            player["leaderboard"] = song.get_leaderboard(num_entries=max_results, player=player_instance)
         else:
-            params["chartHashP1"] = hash_p1
-            headers["x-api-key-player-1"] = api_key_p1
-
-    if hash_p2 and api_key_p2:
-        has_p2 = True
-        p2 = Player.get_by_gs_api_key(api_key_p2)
-        song2 = Song.objects.filter(hash=hash_p2).first()
-
-        if song2:
-            leaderboard2 = song2.get_leaderboard(num_entries=max_results, player=p2)
-        else:
-            params["chartHashP2"] = hash_p2
-            headers["x-api-key-player-2"] = api_key_p2
+            params[f"chartHashP{player_index}"] = chart_hash
+            headers[f"x-api-key-player-{player_index}"] = gs_api_key
 
     if params and headers:
         try:
@@ -211,76 +181,45 @@ def player_leaderboards(request):
 
     final_response = {}
 
-    if has_p1:
-        if leaderboard1:
-            final_response["player1"] = {
-                "chartHash": hash_p1,
-                "isRanked": True,
-                "gsLeaderboard": leaderboard1,
-            }
-        elif gs_response:
-            final_response["player1"] = {
-                "chartHash": hash_p1,
-                "isRanked": True,
-                "gsLeaderboard": gs_response.get("player1", {}).get("gsLeaderboard", []),
-            }
-            if p1_itl := gs_response.get("player1", {}).get("itl"):
-                final_response["player1"]["itl"] = p1_itl
-        else:
-            final_response["player1"] = {
-                "chartHash": hash_p1,
-                "isRanked": True,
-                "gsLeaderboard": [],
-            }
+    for player_index, player in players.items():
+        chart_hash = player["chartHash"]
+        player_id = f"player{player_index}"
 
-    if has_p2:
-        if leaderboard2:
-            final_response["player2"] = {
-                "chartHash": hash_p2,
-                "isRanked": True,
-                "gsLeaderboard": leaderboard2,
-            }
+        final_response[player_id] = {
+            "chartHash": chart_hash,
+            "isRanked": True,
+        }
+
+        if player.get("leaderboard"):
+            leaderboard = player["leaderboard"]
         elif gs_response:
-            final_response["player2"] = {
-                "chartHash": hash_p2,
-                "isRanked": True,
-                "gsLeaderboard": gs_response.get("player2", {}).get("gsLeaderboard", []),
-            }
-            if p2_itl := gs_response.get("player2", {}).get("itl"):
-                final_response["player2"]["itl"] = p2_itl
+            leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
+            player["itl"] = gs_response.get(player_id, {}).get("itl")
+            if player["itl"]:
+                final_response[player_id]["itl"] = player["itl"]
         else:
-            final_response["player2"] = {
-                "chartHash": hash_p2,
-                "isRanked": True,
-                "gsLeaderboard": [],
-            }
+            leaderboard = []
+
+        final_response[player_id]["gsLeaderboard"] = leaderboard
 
     return JsonResponse(data=final_response)
 
 
 @csrf_exempt
 def score_submit(request):
-    has_p1 = has_p2 = False
-    leaderboard1 = []
-    leaderboard2 = []
     params = {}
     headers = {}
 
-    hash_p1 = request.GET.get("chartHashP1")
-    hash_p2 = request.GET.get("chartHashP2")
-    api_key_p1 = request.headers.get("x-api-key-player-1")
-    api_key_p2 = request.headers.get("x-api-key-player-2")
+    try:
+        players = parse_players(request)
+    except ValueError:
+        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"])
+
     max_results = int(request.GET.get("maxLeaderboardResults", 0))
 
     if not max_results:
         return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"])
     params["maxLeaderboardResults"] = max_results
-
-    if not (hash_p1 or hash_p2):
-        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_CHARTS"])
-
-    if not (api_key_p1 or api_key_p2):
-        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_API_KEYS"])
 
     try:
         body_parsed = json.loads(request.body)
@@ -288,15 +227,12 @@ def score_submit(request):
         # TODO early exit?
         body_parsed = {}
 
-    if hash_p1 and api_key_p1 and body_parsed.get("player1") is not None:
-        has_p1 = True
-        params["chartHashP1"] = hash_p1
-        headers["x-api-key-player-1"] = api_key_p1
+    for player_index, player in players.items():
+        gs_api_key = player["gsApiKey"]
+        chart_hash = player["chartHash"]
 
-    if hash_p2 and api_key_p2 and body_parsed.get("player2") is not None:
-        has_p2 = True
-        params["chartHashP2"] = hash_p2
-        headers["x-api-key-player-2"] = api_key_p2
+        params[f"chartHashP{player_index}"] = chart_hash
+        headers[f"x-api-key-player-{player_index}"] = gs_api_key
 
     if params and headers and body_parsed:
         try:
@@ -314,107 +250,62 @@ def score_submit(request):
     else:
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"])
 
-    if has_p1:
-        p1_ranked = gs_response["player1"]["isRanked"]
-        p1_itl = None
+    for player_index, player in players.items():
+        player_id = f"player{player_index}"
+        chart_hash = player["chartHash"]
+        gs_api_key = player["gsApiKey"]
+        is_ranked = gs_response.get(player_id, {}).get("isRanked", False)
 
-        if p1_ranked:
-            leaderboard1 = gs_response["player1"]["gsLeaderboard"]
-            p1_result = gs_response["player1"]["result"]
-            p1_delta = gs_response["player1"]["scoreDelta"]
-            if "itl" in gs_response["player1"]:
-                p1_itl = gs_response["player1"]["itl"]
+        if is_ranked:
+            player_response = gs_response[player_id]
+            player["leaderboard"] = player_response["gsLeaderboard"]
+            player["result"] = player_response["result"]
+            player["delta"] = player_response["scoreDelta"]
+            if "itl" in player_response:
+                player["itl"] = player_response["itl"]
         else:
-            song1, song_created = Song.objects.get_or_create(hash=hash_p1)
+            song, song_created = Song.objects.get_or_create(hash=chart_hash)
 
-            p1 = Player.get_by_gs_api_key(api_key_p1)
+            player_instance = Player.get_by_gs_api_key(gs_api_key)
 
-            if not p1:
-                bs_api_key = Player.gs_api_key_to_bs_api_key(api_key_p1)
-                p1 = Player.objects.create(api_key=bs_api_key, machine_tag=bs_api_key[:4])  # TODO
+            if not player_instance:
+                bs_api_key = Player.gs_api_key_to_bs_api_key(gs_api_key)
+                player_instance = Player.objects.create(
+                    api_key=bs_api_key, machine_tag=bs_api_key[:4]
+                )  # TODO generate machine tag instead of using hash
 
-            _, old_score = song1.get_highscore(p1)
+            _, old_score = song.get_highscore(player_instance)
             if old_score:
-                if old_score.score < body_parsed["player1"]["score"]:
-                    p1_result = "improved"
+                if old_score.score < body_parsed[player_id]["score"]:
+                    player["result"] = "improved"
                 else:
-                    p1_result = "score-not-improved"
+                    player["result"] = "score-not-improved"
 
-                p1_delta = body_parsed["player1"]["score"] - old_score.score
+                player["delta"] = body_parsed[player_id]["score"] - old_score.score
             else:
-                p1_result = "score-added"
-                p1_delta = body_parsed["player1"]["score"]
+                player["result"] = "score-added"
+                player["delta"] = body_parsed[player_id]["score"]
 
-            p1.scores.create(
-                song=song1,
-                score=body_parsed["player1"]["score"],
-                comment=body_parsed["player1"]["comment"],
+            player_instance.scores.create(
+                song=song,
+                score=body_parsed[player_id]["score"],
+                comment=body_parsed[player_id]["comment"],
                 profile_name=None,
             )
 
-            leaderboard1 = song1.get_leaderboard(num_entries=max_results, player=p1)
-
-    if has_p2:
-        p2_ranked = gs_response["player2"]["isRanked"]
-        p2_itl = None
-
-        if p2_ranked:
-            leaderboard2 = gs_response["player2"]["gsLeaderboard"]
-            p2_result = gs_response["player2"]["result"]
-            p2_delta = gs_response["player2"]["scoreDelta"]
-            if "itl" in gs_response["player2"]:
-                p2_itl = gs_response["player2"]["itl"]
-        else:
-            song2, song_created = Song.objects.get_or_create(hash=hash_p2)
-
-            p2 = Player.get_by_gs_api_key(api_key_p2)
-
-            if not p2:
-                bs_api_key = Player.gs_api_key_to_bs_api_key(api_key_p2)
-                p2 = Player.objects.create(api_key=bs_api_key, machine_tag=bs_api_key[:4])
-
-            _, old_score = song2.get_highscore(p2)
-            if old_score:
-                if old_score.score < body_parsed["player2"]["score"]:
-                    p2_result = "improved"
-                else:
-                    p2_result = "score-not-improved"
-
-                p2_delta = body_parsed["player2"]["score"] - old_score.score
-            else:
-                p2_result = "score-added"
-                p2_delta = body_parsed["player2"]["score"]
-
-            p2.scores.create(
-                song=song2,
-                score=body_parsed["player2"]["score"],
-                comment=body_parsed["player2"]["comment"],
-                profile_name=None,
-            )
-
-            leaderboard2 = song2.get_leaderboard(num_entries=max_results, player=p2)
+            player["leaderboard"] = song.get_leaderboard(num_entries=max_results, player=player_instance)
 
     final_response = {}
-    if has_p1:
-        final_response["player1"] = {
-            "chartHash": hash_p1,
-            "isRanked": True,
-            "gsLeaderboard": leaderboard1,
-            "scoreDelta": p1_delta,
-            "result": p1_result,
-        }
-        if p1_itl:
-            final_response["player1"]["itl"] = p1_itl
 
-    if has_p2:
-        final_response["player2"] = {
-            "chartHash": hash_p2,
+    for player_index, player in players.items():
+        final_response[f"player{player_index}"] = {
+            "chartHash": player["chartHash"],
             "isRanked": True,
-            "gsLeaderboard": leaderboard2,
-            "scoreDelta": p2_delta,
-            "result": p2_result,
+            "gsLeaderboard": player["leaderboard"],
+            "scoreDelta": player["delta"],
+            "result": player["result"],
         }
-        if p2_itl:
-            final_response["player2"]["itl"] = p2_itl
+        if player.get("itl"):
+            final_response[f"player{player_index}"]["itl"] = player["itl"]
 
     return JsonResponse(data=final_response)

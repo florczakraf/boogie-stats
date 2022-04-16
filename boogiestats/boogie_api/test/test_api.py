@@ -13,40 +13,40 @@ def requests_mock():
         yield mock
 
 
-def test_player_scores_without_chart_hash(client):
-    response = client.get("/player-scores.php")
-
-    assert response.json() == GROOVESTATS_RESPONSES["MISSING_CHARTS"]
-
-
 def test_player_scores_without_api_keys(client):
     response = client.get("/player-scores.php", data={"chartHashP1": "01234567890ABCDEF"})
 
-    assert response.json() == GROOVESTATS_RESPONSES["MISSING_API_KEYS"]
+    assert response.json() == GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"]
 
 
 @pytest.fixture
-def p1_gs_api_key():
+def gs_api_key():
     return "abcdef0123456789" * 4
 
 
-def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(client, p1_gs_api_key, requests_mock):
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
+    client, gs_api_key, requests_mock, player_index
+):
     unranked_song = {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": False,
             "gsLeaderboard": [],
         }
     }
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
     response = client.get(
         "/player-scores.php",
-        data={"chartHashP1": "0123456789ABCDEF"},
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
+        data={f"chartHashP{player_index}": "0123456789ABCDEF"},
+        **kwargs,
     )
 
     assert response.json() == {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": True,
             "gsLeaderboard": [],
@@ -54,9 +54,10 @@ def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(client
     }
 
 
-def test_player_scores_given_groovestats_ranked_song(client, p1_gs_api_key, requests_mock):
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_player_scores_given_groovestats_ranked_song(client, gs_api_key, requests_mock, player_index):
     ranked_song = {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "76957dd1f96f764d",
             "isRanked": True,
             "gsLeaderboard": [
@@ -74,11 +75,10 @@ def test_player_scores_given_groovestats_ranked_song(client, p1_gs_api_key, requ
         }
     }
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(ranked_song))
-    response = client.get(
-        "/player-scores.php",
-        data={"chartHashP1": "76957dd1f96f764d"},
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
-    )
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
+    response = client.get("/player-scores.php", data={f"chartHashP{player_index}": "76957dd1f96f764d"}, **kwargs)
 
     assert response.json() == ranked_song
 
@@ -114,17 +114,21 @@ def song(some_player, other_player):
     return s
 
 
+@pytest.mark.parametrize("player_index", [1, 2])
 def test_player_scores_given_groovestats_unranked_song_that_we_track_doesnt_call_groovestats(
-    client, song, p1_gs_api_key, other_player
+    client, song, gs_api_key, other_player, player_index
 ):
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
     response = client.get(
         "/player-scores.php",
-        data={"chartHashP1": "0123456789ABCDEF"},
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
+        data={f"chartHashP{player_index}": "0123456789ABCDEF"},
+        **kwargs,
     )
 
     assert response.json() == {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": True,
             "gsLeaderboard": [
@@ -143,18 +147,21 @@ def test_player_scores_given_groovestats_unranked_song_that_we_track_doesnt_call
     }
 
 
-def test_player_leaderboards_requires_max_leaderboard_results_param(client, p1_gs_api_key):
-    response = client.get(
-        "/player-leaderboards.php",
-        data={"chartHashP1": "0123456789ABCDEF"},
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
-    )
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_player_leaderboards_requires_max_leaderboard_results_param(client, gs_api_key, player_index):
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
+    response = client.get("/player-leaderboards.php", data={f"chartHashP{player_index}": "0123456789ABCDEF"}, **kwargs)
     assert response.json() == GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"]
 
 
-def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(client, p1_gs_api_key, requests_mock):
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
+    client, gs_api_key, requests_mock, player_index
+):
     unranked_song = {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": False,
             "gsLeaderboard": [],
@@ -164,14 +171,17 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
         GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
         text=json.dumps(unranked_song),
     )
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
     response = client.get(
         "/player-leaderboards.php",
-        data={"chartHashP1": "0123456789ABCDEF", "maxLeaderboardResults": 3},
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
+        data={f"chartHashP{player_index}": "0123456789ABCDEF", "maxLeaderboardResults": 3},
+        **kwargs,
     )
 
     assert response.json() == {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": True,
             "gsLeaderboard": [],
@@ -179,9 +189,10 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
     }
 
 
-def test_player_leaderboards_given_groovestats_ranked_song(client, p1_gs_api_key, requests_mock):
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_player_leaderboards_given_groovestats_ranked_song(client, gs_api_key, requests_mock, player_index):
     ranked_song = {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "76957dd1f96f764d",
             "isRanked": True,
             "gsLeaderboard": [
@@ -209,26 +220,33 @@ def test_player_leaderboards_given_groovestats_ranked_song(client, p1_gs_api_key
         }
     }
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-leaderboards.php", text=json.dumps(ranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
     response = client.get(
         "/player-leaderboards.php",
-        data={"chartHashP1": "76957dd1f96f764d", "maxLeaderboardResults": 3},
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
+        data={f"chartHashP{player_index}": "76957dd1f96f764d", "maxLeaderboardResults": 3},
+        **kwargs,
     )
 
     assert response.json() == ranked_song
 
 
+@pytest.mark.parametrize("player_index", [1, 2])
 def test_player_leaderboards_given_groovestats_unranked_song_that_we_track_doesnt_call_groovestats(
-    client, song, p1_gs_api_key, some_player, other_player
+    client, song, gs_api_key, some_player, other_player, player_index
 ):
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
     response = client.get(
         "/player-leaderboards.php",
-        data={"chartHashP1": "0123456789ABCDEF", "maxLeaderboardResults": 3},
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
+        data={f"chartHashP{player_index}": "0123456789ABCDEF", "maxLeaderboardResults": 3},
+        **kwargs,
     )
 
     assert response.json() == {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": True,
             "gsLeaderboard": [
@@ -257,9 +275,10 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_track_doesn
     }
 
 
-def test_score_submit_given_groovestats_ranked_song(client, p1_gs_api_key, requests_mock):
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests_mock, player_index):
     expected_result = {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "76957dd1f96f764d",
             "isRanked": True,
             "gsLeaderboard": [
@@ -299,17 +318,20 @@ def test_score_submit_given_groovestats_ranked_song(client, p1_gs_api_key, reque
         }
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(expected_result))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
     response = client.post(
-        "/score-submit.php?chartHashP1=76957dd1f96f764d&maxLeaderboardResults=3",
+        f"/score-submit.php?chartHashP{player_index}=76957dd1f96f764d&maxLeaderboardResults=3",
         data={
-            "player1": {
+            f"player{player_index}": {
                 "score": 5805,
                 "comment": "50e, 42g, 8d, 11wo, 4m, C300",
                 "rate": 100,
             }
         },
         content_type="application/json",
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
+        **kwargs,
     )
 
     assert Song.objects.count() == 0
@@ -318,9 +340,12 @@ def test_score_submit_given_groovestats_ranked_song(client, p1_gs_api_key, reque
     assert response.json() == expected_result
 
 
-def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(client, p1_gs_api_key, requests_mock):
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
+    client, gs_api_key, requests_mock, player_index
+):
     unranked_song = {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "76957dd1f96f764e",
             "isRanked": False,
             "gsLeaderboard": [],
@@ -328,17 +353,20 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(cli
         }
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+    }
     response = client.post(
-        "/score-submit.php?chartHashP1=76957dd1f96f764e&maxLeaderboardResults=3",
+        f"/score-submit.php?chartHashP{player_index}=76957dd1f96f764e&maxLeaderboardResults=3",
         data={
-            "player1": {
+            f"player{player_index}": {
                 "score": 5805,
                 "comment": "50e, 42g, 8d, 11wo, 4m, C300",
                 "rate": 100,
             }
         },
         content_type="application/json",
-        HTTP_X_Api_Key_Player_1=p1_gs_api_key,
+        **kwargs,
     )
 
     assert Song.objects.count() == 1
@@ -347,7 +375,7 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(cli
     assert Player.objects.count() == 1
     player = Player.objects.first()
     assert response.json() == {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "76957dd1f96f764e",
             "isRanked": True,
             "gsLeaderboard": [
@@ -368,11 +396,12 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(cli
     }
 
 
+@pytest.mark.parametrize("player_index", [1, 2])
 def test_score_submit_given_groovestats_unranked_song_and_better_score(
-    client, song, some_player, other_player, requests_mock, some_player_gs_api_key
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
 ):
     unranked_song = {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": False,
             "gsLeaderboard": [],
@@ -380,17 +409,20 @@ def test_score_submit_given_groovestats_unranked_song_and_better_score(
         }
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
     response = client.post(
-        "/score-submit.php?chartHashP1=0123456789ABCDEF&maxLeaderboardResults=3",
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
         data={
-            "player1": {
+            f"player{player_index}": {
                 "score": 9999,
                 "comment": "50e, 42g, 8d, 11wo, 4m, C300",
                 "rate": 100,
             }
         },
         content_type="application/json",
-        HTTP_X_Api_Key_Player_1=some_player_gs_api_key,
+        **kwargs,
     )
 
     assert Song.objects.count() == 1
@@ -398,7 +430,7 @@ def test_score_submit_given_groovestats_unranked_song_and_better_score(
     assert Score.objects.count() == 3
     assert Player.objects.count() == 2
     assert response.json() == {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": True,
             "gsLeaderboard": [
@@ -429,11 +461,12 @@ def test_score_submit_given_groovestats_unranked_song_and_better_score(
     }
 
 
+@pytest.mark.parametrize("player_index", [1, 2])
 def test_score_submit_given_groovestats_unranked_song_and_worse_score(
-    client, song, some_player, other_player, requests_mock, some_player_gs_api_key
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
 ):
     unranked_song = {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": False,
             "gsLeaderboard": [],
@@ -441,17 +474,20 @@ def test_score_submit_given_groovestats_unranked_song_and_worse_score(
         }
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
     response = client.post(
-        "/score-submit.php?chartHashP1=0123456789ABCDEF&maxLeaderboardResults=3",
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
         data={
-            "player1": {
+            f"player{player_index}": {
                 "score": 1000,
                 "comment": "50e, 42g, 8d, 11wo, 4m, C300",
                 "rate": 100,
             }
         },
         content_type="application/json",
-        HTTP_X_Api_Key_Player_1=some_player_gs_api_key,
+        **kwargs,
     )
 
     assert Song.objects.count() == 1
@@ -459,7 +495,7 @@ def test_score_submit_given_groovestats_unranked_song_and_worse_score(
     assert Score.objects.count() == 3
     assert Player.objects.count() == 2
     assert response.json() == {
-        "player1": {
+        f"player{player_index}": {
             "chartHash": "0123456789ABCDEF",
             "isRanked": True,
             "gsLeaderboard": [
