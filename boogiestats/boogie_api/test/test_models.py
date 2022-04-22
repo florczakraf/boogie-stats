@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from boogie_api.models import Song, Player
+from boogiestats.boogie_api.models import Song, Player
 
 
 @pytest.fixture

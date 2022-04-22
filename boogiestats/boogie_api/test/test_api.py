@@ -3,8 +3,8 @@ import json
 import pytest
 import requests_mock as requests_mock_lib
 
-from boogie_api.models import Song, Player, Score
-from boogie_api.views import GROOVESTATS_ENDPOINT, GROOVESTATS_RESPONSES
+from boogiestats.boogie_api.models import Song, Player, Score
+from boogiestats.boogie_api.views import GROOVESTATS_ENDPOINT, GROOVESTATS_RESPONSES
 
 
 @pytest.fixture(autouse=True)

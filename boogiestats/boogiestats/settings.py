@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "boogie_api",
+    "boogiestats.boogie_api",
 ]
 
 MIDDLEWARE = [
@@ -50,7 +50,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "boogiestats.urls"
+ROOT_URLCONF = "boogiestats.boogiestats.urls"
 
 TEMPLATES = [
     {
@@ -68,7 +68,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "boogiestats.wsgi.application"
+WSGI_APPLICATION = "boogiestats.boogiestats.wsgi.application"
 
 
 # Database
@@ -109,8 +109,6 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 
 USE_I18N = True
-
-USE_L10N = True
 
 USE_TZ = True
 

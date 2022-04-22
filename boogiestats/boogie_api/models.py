@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models.signals import m2m_changed
 from django.utils.timezone import now
 
-from boogie_api.managers import ScoreManager
+from boogiestats.boogie_api.managers import ScoreManager
 
 MAX_RIVALS = 3
 

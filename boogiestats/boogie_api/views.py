@@ -6,7 +6,7 @@ import requests
 from django.http import JsonResponse, HttpResponseServerError
 from django.views.decorators.csrf import csrf_exempt
 
-from boogie_api.models import Player, Song
+from boogiestats.boogie_api.models import Player, Song
 
 logger = logging.getLogger("django.server.dupa")  # TODO
 groovestats_proxy_enabled = False  # TODO take from settings?
