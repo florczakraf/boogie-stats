@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 from collections import defaultdict
 
 import requests
@@ -270,9 +271,8 @@ def score_submit(request):
 
             if not player_instance:
                 bs_api_key = Player.gs_api_key_to_bs_api_key(gs_api_key)
-                player_instance = Player.objects.create(
-                    api_key=bs_api_key, machine_tag=bs_api_key[:4]
-                )  # TODO generate machine tag instead of using hash
+                machine_tag = uuid.uuid4().hex[:4].upper()
+                player_instance = Player.objects.create(api_key=bs_api_key, machine_tag=machine_tag)
 
             _, old_score = song.get_highscore(player_instance)
             if old_score:

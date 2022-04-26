@@ -374,6 +374,7 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
     assert Score.objects.count() == 1
     assert Player.objects.count() == 1
     player = Player.objects.first()
+    machine_tag = player.machine_tag
     assert response.json() == {
         f"player{player_index}": {
             "chartHash": "76957dd1f96f764e",
@@ -381,13 +382,13 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
             "gsLeaderboard": [
                 {
                     "rank": 1,
-                    "name": "bc37",
+                    "name": machine_tag,
                     "score": 5805,
                     "date": song.get_highscore(player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": True,
                     "isRival": False,
                     "isFail": False,
-                    "machineTag": "bc37",
+                    "machineTag": machine_tag,
                 }
             ],
             "scoreDelta": 5805,
