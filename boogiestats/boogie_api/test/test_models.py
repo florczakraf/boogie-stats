@@ -17,7 +17,7 @@ def other_song():
 
 @pytest.fixture
 def player(song, other_song):
-    p = Player.objects.create(api_key="playerkey", machine_tag="PL")
+    p = Player.objects.create(gs_api_key="playerkey", machine_tag="PL")
     p.scores.create(
         song=song,
         score=6442,
@@ -35,7 +35,7 @@ def player(song, other_song):
 
 @pytest.fixture
 def rival1(player, song):
-    rival = Player.objects.create(api_key="rival1key", machine_tag="RIV1")
+    rival = Player.objects.create(gs_api_key="rival1key", machine_tag="RIV1")
     rival.scores.create(
         song=song,
         score=4553,
@@ -49,7 +49,7 @@ def rival1(player, song):
 
 @pytest.fixture
 def rival2(player, song):
-    rival = Player.objects.create(api_key="rival2key", machine_tag="RIV2")
+    rival = Player.objects.create(gs_api_key="rival2key", machine_tag="RIV2")
     rival.scores.create(
         song=song,
         score=7588,
@@ -63,7 +63,7 @@ def rival2(player, song):
 
 @pytest.fixture
 def rival3(player, song):
-    rival = Player.objects.create(api_key="rival3key", machine_tag="RIV3")
+    rival = Player.objects.create(gs_api_key="rival3key", machine_tag="RIV3")
     rival.scores.create(
         song=song,
         score=7700,
@@ -78,7 +78,7 @@ def rival3(player, song):
 @pytest.fixture
 def top_scores(song):
     for i in range(1, 21):
-        p = Player.objects.create(api_key=f"top{i}key", machine_tag=f"T{i}")
+        p = Player.objects.create(gs_api_key=f"top{i}key", machine_tag=f"T{i}")
         p.scores.create(
             song=song,
             score=10_000 - i * 100,
@@ -192,7 +192,7 @@ def test_get_leaderboard_given_player_returns_leaderboard_with_their_score_and_r
 def test_player_might_have_up_to_3_rivals(song, player, rival1, rival2, rival3):
     assert player.rivals.count() == 3
 
-    rival = Player.objects.create(api_key="rival4key", machine_tag="RIV4")
+    rival = Player.objects.create(gs_api_key="rival4key", machine_tag="RIV4")
     rival.scores.create(
         song=song,
         score=7700,

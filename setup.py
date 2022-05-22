@@ -12,6 +12,7 @@ setuptools.setup(
         "requests >=2.26.0, <3",
         "Django >=4, <5",
         "gunicorn >=20.1.0, <21",
+        "django-mathfilters >=1.0.0, <2",
     ],
     extras_require={
         "dev": [

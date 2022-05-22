@@ -1,0 +1,34 @@
+{% load mathfilters %}
+
+<ul>
+    <li><a href="{% url "edit" %}">Edit Profile</a></li>
+    {% if user.is_authenticated %}
+        <li><a href="{% url "logout" %}">Logout</a></li>
+    {% endif %}
+</ul>
+
+<hr>
+
+<h2>Latest scores</h2>
+{% if latest_scores %}
+    <ul>
+    {% for score in latest_scores %}
+        <li>
+            {{ score.submission_date }} -
+            {{ score.score|div:100|stringformat:".2f" }}% -
+            {{ score.song.hash }} -
+            {{ score.player.machine_tag }} -
+            {{ score.comment }}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No scores are available.</p>
+{% endif %}
+
+<h2>Instance stats</h2>
+<ul>
+    <li>Songs: {{ n_songs }}</li>
+    <li>Scores: {{ n_scores }}</li>
+    <li><a href="{% url "players" %}">Players: {{ n_players }}</a></li>
+</ul>

@@ -90,8 +90,7 @@ def some_player_gs_api_key():
 
 @pytest.fixture
 def some_player(some_player_gs_api_key):
-    bs_api_key = Player.gs_api_key_to_bs_api_key(some_player_gs_api_key)
-    return Player.objects.create(api_key=bs_api_key, machine_tag="1234")
+    return Player.objects.create(gs_api_key=some_player_gs_api_key, machine_tag="1234")
 
 
 @pytest.fixture
@@ -101,8 +100,7 @@ def other_player_gs_api_key():
 
 @pytest.fixture
 def other_player(other_player_gs_api_key):
-    bs_api_key = Player.gs_api_key_to_bs_api_key(other_player_gs_api_key)
-    return Player.objects.create(api_key=bs_api_key, machine_tag="ABCD")
+    return Player.objects.create(gs_api_key=other_player_gs_api_key, machine_tag="ABCD")
 
 
 @pytest.fixture
