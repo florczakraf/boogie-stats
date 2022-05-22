@@ -14,7 +14,7 @@ MAX_RIVALS = 3
 def make_leaderboard_entry(rank, score, is_rival=False, is_self=False):
     return {
         "rank": rank,
-        "name": score.player.machine_tag,  # TODO should be name not tag
+        "name": score.player.name or score.player.machine_tag,  # use name if available
         "score": score.score,
         "date": score.submission_date.strftime("%Y-%m-%d %H:%M:%S"),
         "isSelf": is_self,
@@ -76,6 +76,7 @@ class Player(models.Model):
     user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)  # to utilize standard auth stuff
     api_key = models.CharField(max_length=64, db_index=True, unique=True)
     machine_tag = models.CharField(max_length=4)
+    name = models.CharField(max_length=64, blank=True, null=True)
     rivals = models.ManyToManyField(
         "self",
         symmetrical=False,

@@ -37,7 +37,7 @@ class EditPlayerView(LoginRequiredMixin, generic.UpdateView):
     login_url = "/login/"
     template_name = "boogie_ui/player_update.html"
     model = Player
-    fields = ["machine_tag", "rivals"]  # TODO api key?
+    fields = ["machine_tag", "rivals", "name"]  # TODO api key?
 
     def get_object(self, **kwargs):
         return self.request.user.player

@@ -37,6 +37,7 @@ class ScoreManager(models.Manager):
 class PlayerManager(models.Manager):
     def create(self, gs_api_key, machine_tag, **kwargs):
         user = User.objects.create_user(username=uuid.uuid4().hex)
+        kwargs.setdefault("name", machine_tag)
         player = self.model(
             user=user,
             api_key=self.model.gs_api_key_to_bs_api_key(gs_api_key),
