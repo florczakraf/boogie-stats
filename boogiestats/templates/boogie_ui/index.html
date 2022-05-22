@@ -1,0 +1,25 @@
+{% load mathfilters %}
+
+<h2>Latest scores</h2>
+{% if latest_scores %}
+    <ul>
+    {% for score in latest_scores %}
+        <li>
+            {{ score.submission_date }} -
+            {{ score.score|div:100|stringformat:".2f" }}% -
+            {{ score.song.hash }} -
+            {{ score.player.machine_tag }} -
+            {{ score.comment }}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No scores are available.</p>
+{% endif %}
+
+<h2>Instance stats</h2>
+<ul>
+    <li>Songs: {{ n_songs }}</li>
+    <li>Scores: {{ n_scores }}</li>
+    <li>Players: {{ n_players }}</li>
+</ul>
