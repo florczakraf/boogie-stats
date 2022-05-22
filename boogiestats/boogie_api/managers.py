@@ -1,3 +1,6 @@
+import uuid
+
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
@@ -29,3 +32,17 @@ class ScoreManager(models.Manager):
         score_object.save()
 
         return score_object
+
+
+class PlayerManager(models.Manager):
+    def create(self, gs_api_key, machine_tag, **kwargs):
+        user = User.objects.create_user(username=uuid.uuid4().hex)
+        player = self.model(
+            user=user,
+            api_key=self.model.gs_api_key_to_bs_api_key(gs_api_key),
+            machine_tag=machine_tag,
+            **kwargs,
+        )
+        player.save()
+
+        return player

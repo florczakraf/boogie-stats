@@ -270,9 +270,8 @@ def score_submit(request):
             player_instance = Player.get_by_gs_api_key(gs_api_key)
 
             if not player_instance:
-                bs_api_key = Player.gs_api_key_to_bs_api_key(gs_api_key)
                 machine_tag = uuid.uuid4().hex[:4].upper()
-                player_instance = Player.objects.create(api_key=bs_api_key, machine_tag=machine_tag)
+                player_instance = Player.objects.create(gs_api_key=gs_api_key, machine_tag=machine_tag)
 
             _, old_score = song.get_highscore(player_instance)
             if old_score:
