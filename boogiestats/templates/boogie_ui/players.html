@@ -1,0 +1,14 @@
+<h2>Players</h2>
+{% if players %}
+    <ul>
+    {% for player in players %}
+        <li>
+            ID {{ player.id }} -
+            {{ player.machine_tag }} -
+            {{ player.num_scores }} scores
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No players.</p>
+{% endif %}

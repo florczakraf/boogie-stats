@@ -1,3 +1,4 @@
+from django.db.models import Count
 from django.views import generic
 
 from boogiestats.boogie_api.models import Score, Player, Song
@@ -16,3 +17,12 @@ class IndexView(generic.ListView):
         context["n_scores"] = Score.objects.count()
         context["n_players"] = Player.objects.count()
         return context
+
+
+class PlayersListView(generic.ListView):
+    template_name = "boogie_ui/players.html"
+    context_object_name = "players"
+
+    def get_queryset(self):
+        return Player.objects.all().annotate(num_scores=Count("scores")).order_by("machine_tag")
+        # return Player.objects.order_by("-scores__count")
