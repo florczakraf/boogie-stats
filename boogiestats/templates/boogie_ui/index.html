@@ -1,13 +1,6 @@
 {% load mathfilters %}
 
-<ul>
-    <li><a href="{% url "edit" %}">Edit Profile</a></li>
-    {% if user.is_authenticated %}
-        <li><a href="{% url "logout" %}">Logout</a></li>
-    {% endif %}
-</ul>
-
-<hr>
+{% include "boogie_ui/header.html" %}
 
 <h2>Latest scores</h2>
 {% if latest_scores %}
@@ -16,8 +9,8 @@
         <li>
             {{ score.submission_date }} -
             {{ score.score|div:100|stringformat:".2f" }}% -
-            {{ score.song.hash }} -
-            {{ score.player.machine_tag }} -
+            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.hash }}</a> -
+            <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
             {{ score.comment }}
         </li>
     {% endfor %}
@@ -28,7 +21,7 @@
 
 <h2>Instance stats</h2>
 <ul>
-    <li>Songs: {{ n_songs }}</li>
+    <li><a href="{% url "songs" %}">Songs: {{ n_songs }}</a></li>
     <li>Scores: {{ n_scores }}</li>
     <li><a href="{% url "players" %}">Players: {{ n_players }}</a></li>
 </ul>

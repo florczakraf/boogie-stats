@@ -1,12 +1,15 @@
+{% include "boogie_ui/header.html" %}
+
 <h2>Players</h2>
 {% if players %}
     <ul>
     {% for player in players %}
-        <li>
+        <li><a href="{% url "player" player_id=player.id %}">
             ID {{ player.id }} -
+            {{ player.name }} -
             {{ player.machine_tag }} -
             {{ player.num_scores }} scores
-        </li>
+        </a></li>
     {% endfor %}
     </ul>
 {% else %}

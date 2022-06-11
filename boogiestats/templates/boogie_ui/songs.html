@@ -1,0 +1,26 @@
+{% load mathfilters %}
+
+{% include "boogie_ui/header.html" %}
+
+<h2>Songs</h2>
+
+{% include "boogie_ui/paginator.html" %}
+
+{% if songs %}
+    <ul>
+    {% for song in songs %}
+        <li>
+            <a href="{% url "song" song_hash=song.hash %}">{{ song.hash }}</a> -
+            {{ song.num_scores }} scores
+            {% if song.highscore %}
+                -
+                Highscore: {{ song.highscore.score|div:100|stringformat:".2f" }} by <a href="{% url "player" player_id=song.highscore.player.id %}">{{ song.highscore.player.name }}</a>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No songs.</p>
+{% endif %}
+
+{% include "boogie_ui/paginator.html" %}

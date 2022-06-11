@@ -1,8 +1,4 @@
-<ul>
-    {% if user.is_authenticated %}
-        <li><a href="{% url "logout" %}">Logout</a></li>
-    {% endif %}
-</ul>
+{% include "boogie_ui/header.html" %}
 
 <hr>
 

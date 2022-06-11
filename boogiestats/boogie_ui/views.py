@@ -8,6 +8,8 @@ from django.views import generic
 
 from boogiestats.boogie_api.models import Score, Player, Song
 
+ENTRIES_PER_PAGE = 50
+
 
 class IndexView(generic.ListView):
     template_name = "boogie_ui/index.html"
@@ -31,6 +33,51 @@ class PlayersListView(generic.ListView):
 
     def get_queryset(self):
         return Player.objects.all().annotate(num_scores=Count("scores")).order_by("machine_tag")
+
+
+class PlayerView(generic.ListView):
+    template_name = "boogie_ui/player.html"
+    context_object_name = "scores"
+    paginate_by = ENTRIES_PER_PAGE
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        player_id = self.kwargs["player_id"]
+        context["player"] = Player.objects.get(id=player_id)
+
+        return context
+
+    def get_queryset(self):
+        player_id = self.kwargs["player_id"]
+        return Player.objects.get(id=player_id).scores.filter(is_top=True).order_by("-submission_date")
+
+
+class SongView(generic.ListView):
+    template_name = "boogie_ui/song.html"
+    context_object_name = "scores"
+    paginate_by = ENTRIES_PER_PAGE
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        song_hash = self.kwargs["song_hash"]
+        context["song"] = Song.objects.get(hash=song_hash)
+
+        return context
+
+    def get_queryset(self):
+        song_hash = self.kwargs["song_hash"]
+        return Song.objects.get(hash=song_hash).scores.order_by("-score", "-submission_date")
+
+
+class SongsListView(generic.ListView):
+    template_name = "boogie_ui/songs.html"
+    context_object_name = "songs"
+    paginate_by = ENTRIES_PER_PAGE
+
+    def get_queryset(self):
+        return Song.objects.all().annotate(num_scores=Count("scores")).order_by("-num_scores")
 
 
 class EditPlayerView(LoginRequiredMixin, generic.UpdateView):

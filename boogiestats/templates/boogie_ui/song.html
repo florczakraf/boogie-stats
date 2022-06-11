@@ -1,0 +1,23 @@
+{% load mathfilters %}
+
+{% include "boogie_ui/header.html" %}
+
+<h2>{{ song.hash }}</h2>
+
+{% include "boogie_ui/paginator.html" %}
+
+{% if song.scores %}
+    <ul>
+    {% for score in scores %}
+        <li>
+            Score: {{ score.score|div:100|stringformat:".2f" }} by <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a> -
+            {{ score.submission_date }} -
+            {{ score.comment }}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No songs.</p>
+{% endif %}
+
+{% include "boogie_ui/paginator.html" %}

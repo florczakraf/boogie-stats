@@ -1,3 +1,5 @@
+{% include "boogie_ui/header.html" %}
+
 <form action="{% url "login" %}" method="post">
     {% csrf_token %}
     {% if next %}

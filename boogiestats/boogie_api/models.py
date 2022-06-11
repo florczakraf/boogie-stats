@@ -69,6 +69,10 @@ class Song(models.Model):
 
         return Score.rank(highscore), highscore
 
+    @property
+    def highscore(self):
+        return self.scores.filter(is_top=True).order_by("-score", "-submission_date").first()
+
 
 class Player(models.Model):
     objects = PlayerManager()
