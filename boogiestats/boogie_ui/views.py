@@ -68,7 +68,7 @@ class SongView(generic.ListView):
 
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
-        return Song.objects.get(hash=song_hash).scores.order_by("-score", "-submission_date")
+        return Song.objects.get(hash=song_hash).scores.order_by("-score", "submission_date")
 
 
 class SongsListView(generic.ListView):
