@@ -9,10 +9,12 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from typing import Optional
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -125,3 +127,8 @@ STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTHENTICATION_BACKENDS = ["boogiestats.boogie_api.auth_backend.GSApiKeyBackend"]
+
+# Path to chart database in a compatible format, as defined in https://github.com/florczakraf/stepmania-chart-db-generator
+# When provided, UI will try to utilize it to display information about charts.
+# When it's set to None, the charts will only be identified by their hashes.
+BS_CHART_DB_PATH: Optional[os.PathLike] = None

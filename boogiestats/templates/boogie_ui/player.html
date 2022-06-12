@@ -10,7 +10,7 @@
     <ul>
     {% for score in scores %}
         <li>
-            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.hash }}</a> -
+            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a> -
             Score: {{ score.score|div:100|stringformat:".2f" }} -
             {{ score.submission_date }} -
             {{ score.comment }}

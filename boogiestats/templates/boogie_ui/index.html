@@ -9,8 +9,8 @@
         <li>
             {{ score.submission_date }} -
             {{ score.score|div:100|stringformat:".2f" }}% -
-            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.hash }}</a> -
-            <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
+            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a> -
+            <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a> -
             {{ score.comment }}
         </li>
     {% endfor %}

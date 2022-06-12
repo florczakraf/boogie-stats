@@ -10,7 +10,7 @@
     <ul>
     {% for song in songs %}
         <li>
-            <a href="{% url "song" song_hash=song.hash %}">{{ song.hash }}</a> -
+            <a href="{% url "song" song_hash=song.hash %}">{{ song.display_name }}</a> -
             {{ song.num_scores }} scores
             {% if song.highscore %}
                 -

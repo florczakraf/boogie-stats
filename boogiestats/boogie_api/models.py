@@ -1,5 +1,8 @@
+import json
 from hashlib import sha256
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -72,6 +75,33 @@ class Song(models.Model):
     @property
     def highscore(self):
         return self.scores.filter(is_top=True).order_by("-score", "-submission_date").first()
+
+    @property
+    def chart_info(self):
+        """Chart info based on an external (optional) chart database"""
+        if settings.BS_CHART_DB_PATH is not None:
+            path = Path(settings.BS_CHART_DB_PATH) / self.hash[:2] / f"{self.hash[2:]}.json"
+            if path.exists():
+                return json.loads(path.read_bytes().decode("utf8", errors="replace"))  # some charts have weird bytes
+        return None
+
+    @property
+    def display_name(self):
+        if info := self.chart_info:
+            artist = info["artisttranslit"] or info["artist"]
+            title = info["titletranslit"] or info["title"]
+
+            subtitle = info["subtitletranslit"] or info["subtitle"]
+            if subtitle:
+                if not (subtitle.startswith("(") and subtitle.endswith(")")):  # fix inconsistent braces
+                    subtitle = f"({subtitle})"
+                subtitle = f" {subtitle}"
+
+            diff = info["diff"]
+            steps_type = info["steps_type"]
+            return f"{artist} - {title}{subtitle} [{diff}, {steps_type}]"
+
+        return self.hash
 
 
 class Player(models.Model):
