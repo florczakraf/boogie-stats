@@ -131,7 +131,7 @@ class Player(models.Model):
         return sha256(gs_api_key[:32].encode("ascii")).hexdigest()
 
     def __str__(self):
-        return f"{self.id} - {self.machine_tag}"
+        return f"{self.id} - {self.name} ({self.machine_tag})"
 
 
 def validate_rivals(sender, **kwargs):
