@@ -1,4 +1,4 @@
-{% extends 'boogie_ui/root.html' %}
+{% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
 {% block title %}
     {{ player.name }} ({{ player.machine_tag }})
@@ -21,4 +21,4 @@
         <p>No songs.</p>
     {% endif %}
     {% include "boogie_ui/paginator.html" %}
-{% endblock %}
+{% endblock content %}

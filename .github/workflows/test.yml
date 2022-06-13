@@ -72,4 +72,4 @@ jobs:
           pip install .[dev]
       - name: Run djlint
         run: |
-          djlint --profile django --check .
+          djlint --profile django --check --lint .

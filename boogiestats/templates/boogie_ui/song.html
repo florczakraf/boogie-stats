@@ -1,4 +1,4 @@
-{% extends 'boogie_ui/root.html' %}
+{% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
 {% block title %}
     {{ song.display_name }}
@@ -20,4 +20,4 @@
         <p>No songs.</p>
     {% endif %}
     {% include "boogie_ui/paginator.html" %}
-{% endblock %}
+{% endblock content %}
