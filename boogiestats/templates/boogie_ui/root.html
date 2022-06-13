@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
     <head>
@@ -5,6 +6,9 @@
         <meta name="keywords" content="boogiestats,stepmania,groovestats"/>
         <meta name="Description"
               content="A pass-through proxy for groovestats.com that records non-ranked song scores."/>
+        <link rel="stylesheet"
+              href="{% static "boogie_ui/vendor/bootstrap-3.4.1-dist/css/bootstrap.min.css" %}"/>
+        <link rel="stylesheet" href="{% static "boogie_ui/boogiestats.css" %}"/>
         <title>
             {% block title %}
                 {{ page_title|default:"BoogieStats" }}
@@ -13,10 +17,13 @@
         </title>
     </head>
     <body>
-        <div id="header">{% include "boogie_ui/header.html" %}</div>
-        <div id="content">
+        {% include "boogie_ui/header.html" %}
+        <div class="container">
             {% block content %}
             {% endblock content %}
         </div>
+        {% include "boogie_ui/footer.html" %}
+        <script src="{% static "boogie_ui/vendor/jquery-3.6.0.min.js" %}"></script>
+        <script src="{% static "boogie_ui/vendor/bootstrap-3.4.1-dist/js/bootstrap.min.js" %}"></script>
     </body>
 </html>

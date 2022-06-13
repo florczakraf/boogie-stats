@@ -8,7 +8,7 @@ from django.views import generic
 
 from boogiestats.boogie_api.models import Score, Player, Song
 
-ENTRIES_PER_PAGE = 50
+ENTRIES_PER_PAGE = 30
 
 
 class IndexView(generic.ListView):

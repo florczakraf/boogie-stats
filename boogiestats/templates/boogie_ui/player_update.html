@@ -3,6 +3,7 @@
     Edit Profile
 {% endblock title %}
 {% block content %}
+    <h2>Edit Profile</h2>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
