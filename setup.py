@@ -21,6 +21,7 @@ setuptools.setup(
             "black >=22.3.0, <22.4",
             "requests-mock >=1.9.3, <2",
             "flake8 >=4.0.1, <5",
+            "djlint >= 1.1.1, <2",
         ],
     },
 )

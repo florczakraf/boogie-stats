@@ -1,9 +1,19 @@
 <ul>
-    <li><a href="{% url "index" %}">Home</a></li>
-    <li><a href="{% url "players" %}">Players</a></li>
-    <li><a href="{% url "songs" %}">Songs</a></li>
-    <li><a href="{% url "edit" %}">Edit Profile</a></li>
+    <li>
+        <a href="{% url "index" %}">Home</a>
+    </li>
+    <li>
+        <a href="{% url "players" %}">Players</a>
+    </li>
+    <li>
+        <a href="{% url "songs" %}">Songs</a>
+    </li>
+    <li>
+        <a href="{% url "edit" %}">Edit Profile</a>
+    </li>
     {% if user.is_authenticated %}
-        <li><a href="{% url "logout" %}">Logout</a></li>
+        <li>
+            <a href="{% url "logout" %}">Logout</a>
+        </li>
     {% endif %}
 </ul>

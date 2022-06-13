@@ -40,7 +40,7 @@ jobs:
         run: |
           black --check --diff .
 
-  lint:
+  flake8:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -57,3 +57,19 @@ jobs:
           flake8
         # flake fails at the moment because of the over-the-roof cyclomatic complexity in views
         continue-on-error: true
+
+  djlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install .[dev]
+      - name: Run djlint
+        run: |
+          djlint --profile django --check .

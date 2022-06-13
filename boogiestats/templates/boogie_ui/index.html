@@ -1,32 +1,33 @@
 {% extends 'boogie_ui/root.html' %}
-
 {% load mathfilters %}
-
-{% block title %}Home{% endblock title %}
-
+{% block title %}
+    Home
+{% endblock title %}
 {% block content %}
-<h2>Latest Scores</h2>
-
-{% if latest_scores %}
+    <h2>Latest Scores</h2>
+    {% if latest_scores %}
+        <ul>
+            {% for score in latest_scores %}
+                <li>
+                    {{ score.submission_date }} -
+                    {{ score.score|div:100|stringformat:".2f" }}% -
+                    <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a> -
+                    <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a> -
+                    {{ score.comment }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No scores are available.</p>
+    {% endif %}
+    <h2>Instance Stats</h2>
     <ul>
-    {% for score in latest_scores %}
         <li>
-            {{ score.submission_date }} -
-            {{ score.score|div:100|stringformat:".2f" }}% -
-            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a> -
-            <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a> -
-            {{ score.comment }}
+            <a href="{% url "songs" %}">Songs: {{ n_songs }}</a>
         </li>
-    {% endfor %}
+        <li>Scores: {{ n_scores }}</li>
+        <li>
+            <a href="{% url "players" %}">Players: {{ n_players }}</a>
+        </li>
     </ul>
-{% else %}
-    <p>No scores are available.</p>
-{% endif %}
-
-<h2>Instance Stats</h2>
-<ul>
-    <li><a href="{% url "songs" %}">Songs: {{ n_songs }}</a></li>
-    <li>Scores: {{ n_scores }}</li>
-    <li><a href="{% url "players" %}">Players: {{ n_players }}</a></li>
-</ul>
 {% endblock content %}

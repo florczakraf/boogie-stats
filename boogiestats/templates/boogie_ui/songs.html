@@ -1,32 +1,26 @@
 {% extends 'boogie_ui/root.html' %}
-
 {% load mathfilters %}
-
-{% block title %}Songs{% endblock title %}
-
+{% block title %}
+    Songs
+{% endblock title %}
 {% block content %}
-
-<h2>Songs</h2>
-
-{% include "boogie_ui/paginator.html" %}
-
-{% if songs %}
-    <ul>
-    {% for song in songs %}
-        <li>
-            <a href="{% url "song" song_hash=song.hash %}">{{ song.display_name }}</a> -
-            {{ song.num_scores }} scores
-            {% if song.highscore %}
-                -
-                Highscore: {{ song.highscore.score|div:100|stringformat:".2f" }} by <a href="{% url "player" player_id=song.highscore.player.id %}">{{ song.highscore.player.name }}</a>
-            {% endif %}
-        </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No songs.</p>
-{% endif %}
-
-{% include "boogie_ui/paginator.html" %}
-
+    <h2>Songs</h2>
+    {% include "boogie_ui/paginator.html" %}
+    {% if songs %}
+        <ul>
+            {% for song in songs %}
+                <li>
+                    <a href="{% url "song" song_hash=song.hash %}">{{ song.display_name }}</a> -
+                    {{ song.num_scores }} scores
+                    {% if song.highscore %}
+                        -
+                        Highscore: {{ song.highscore.score|div:100|stringformat:".2f" }} by <a href="{% url "player" player_id=song.highscore.player.id %}">{{ song.highscore.player.name }}</a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No songs.</p>
+    {% endif %}
+    {% include "boogie_ui/paginator.html" %}
 {% endblock %}

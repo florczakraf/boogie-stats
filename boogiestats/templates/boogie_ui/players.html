@@ -1,23 +1,23 @@
 {% extends 'boogie_ui/root.html' %}
-
-{% block title %}Players{% endblock title %}
-
+{% block title %}
+    Players
+{% endblock title %}
 {% block content %}
-
-<h2>Players</h2>
-{% if players %}
-    <ul>
-    {% for player in players %}
-        <li><a href="{% url "player" player_id=player.id %}">
-            ID {{ player.id }} -
-            {{ player.name }} -
-            {{ player.machine_tag }} -
-            {{ player.num_scores }} scores
-        </a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No players.</p>
-{% endif %}
-
+    <h2>Players</h2>
+    {% if players %}
+        <ul>
+            {% for player in players %}
+                <li>
+                    <a href="{% url "player" player_id=player.id %}">
+                        ID {{ player.id }} -
+                        {{ player.name }} -
+                        {{ player.machine_tag }} -
+                        {{ player.num_scores }} scores
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No players.</p>
+    {% endif %}
 {% endblock %}

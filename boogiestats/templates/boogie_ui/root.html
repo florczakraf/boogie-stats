@@ -4,17 +4,16 @@
         <meta charset="utf-8">
         <title>
             {% block title %}
-            {{ page_title|default:"BoogieStats" }}
-            {% endblock title %} — BoogieStats
+                {{ page_title|default:"BoogieStats" }}
+            {% endblock title %}
+            — BoogieStats
         </title>
     </head>
-
     <body>
-        <div id="header">
-            {% include "boogie_ui/header.html" %}
-        </div>
+        <div id="header">{% include "boogie_ui/header.html" %}</div>
         <div id="content">
-            {% block content %}{% endblock content %}
+            {% block content %}
+            {% endblock content %}
         </div>
     </body>
 </html>
