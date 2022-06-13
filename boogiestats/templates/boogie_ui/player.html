@@ -1,6 +1,10 @@
+{% extends 'boogie_ui/root.html' %}
+
 {% load mathfilters %}
 
-{% include "boogie_ui/header.html" %}
+{% block title %}{{ player.name }} ({{ player.machine_tag }}){% endblock title %}
+
+{% block content %}
 
 <h2>{{ player.name }} ({{ player.machine_tag }})</h2>
 
@@ -22,3 +26,5 @@
 {% endif %}
 
 {% include "boogie_ui/paginator.html" %}
+
+{% endblock %}

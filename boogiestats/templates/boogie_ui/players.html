@@ -1,4 +1,8 @@
-{% include "boogie_ui/header.html" %}
+{% extends 'boogie_ui/root.html' %}
+
+{% block title %}Players{% endblock title %}
+
+{% block content %}
 
 <h2>Players</h2>
 {% if players %}
@@ -15,3 +19,5 @@
 {% else %}
     <p>No players.</p>
 {% endif %}
+
+{% endblock %}

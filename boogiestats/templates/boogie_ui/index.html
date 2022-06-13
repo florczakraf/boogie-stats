@@ -1,8 +1,12 @@
+{% extends 'boogie_ui/root.html' %}
+
 {% load mathfilters %}
 
-{% include "boogie_ui/header.html" %}
+{% block title %}Home{% endblock title %}
 
-<h2>Latest scores</h2>
+{% block content %}
+<h2>Latest Scores</h2>
+
 {% if latest_scores %}
     <ul>
     {% for score in latest_scores %}
@@ -19,9 +23,10 @@
     <p>No scores are available.</p>
 {% endif %}
 
-<h2>Instance stats</h2>
+<h2>Instance Stats</h2>
 <ul>
     <li><a href="{% url "songs" %}">Songs: {{ n_songs }}</a></li>
     <li>Scores: {{ n_scores }}</li>
     <li><a href="{% url "players" %}">Players: {{ n_players }}</a></li>
 </ul>
+{% endblock content %}

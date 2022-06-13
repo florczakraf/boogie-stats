@@ -1,8 +1,12 @@
-{% include "boogie_ui/header.html" %}
+{% extends 'boogie_ui/root.html' %}
 
-<hr>
+{% block title %}Edit Profile{% endblock title %}
+
+{% block content %}
 
 <form method="post">{% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Update">
 </form>
+
+{% endblock %}

@@ -1,6 +1,10 @@
+{% extends 'boogie_ui/root.html' %}
+
 {% load mathfilters %}
 
-{% include "boogie_ui/header.html" %}
+{% block title %}Songs{% endblock title %}
+
+{% block content %}
 
 <h2>Songs</h2>
 
@@ -24,3 +28,5 @@
 {% endif %}
 
 {% include "boogie_ui/paginator.html" %}
+
+{% endblock %}
