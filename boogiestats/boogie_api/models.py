@@ -112,9 +112,7 @@ class Player(models.Model):
     machine_tag = models.CharField(max_length=4)
     name = models.CharField(max_length=64, blank=True, null=True)
     rivals = models.ManyToManyField(
-        "self",
-        symmetrical=False,
-        blank=True,
+        "self", symmetrical=False, blank=True, help_text="Hold ctrl to select/unselect multiple"
     )
 
     def save(self, *args, **kwargs):
