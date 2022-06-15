@@ -5,6 +5,17 @@
 {% endblock title %}
 {% block content %}
     <h2>{{ player.name }} ({{ player.machine_tag }})</h2>
+    {% if player.rivals.count %}
+        <h3>Rivals</h3>
+        <ul>
+            {% for rival in player.rivals.all %}
+                <li>
+                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <h3>Recent Scores</h3>
     {% include "boogie_ui/paginator.html" %}
     {% if scores %}
         <ul>
