@@ -1,7 +1,8 @@
-from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db.models import Count
 from django.urls import reverse
 from django.views import generic
@@ -101,5 +102,14 @@ def login_user(request):
         if user is not None:
             login(request, user)
             return HttpResponseRedirect(request.POST.get("next") or "/")
+        else:
+            messages.error(request, "Invalid GS API Key, please try again", extra_tags="alert-danger")
 
-    return render(request, template_name="boogie_ui/login.html", context={"next": request.GET.get("next")})
+    next = request.GET.get("next") or request.POST.get("next")
+    return render(request, template_name="boogie_ui/login.html", context={"next": next})
+
+
+def logout_user(request):
+    logout(request)
+    messages.success(request, "Logged out successfully.", extra_tags="alert-success")
+    return redirect(reverse("index"))
