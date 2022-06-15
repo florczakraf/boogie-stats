@@ -19,6 +19,7 @@
     <body>
         {% include "boogie_ui/header.html" %}
         <div class="container">
+            {% for message in messages %}<div class="alert {{ message.tags }}" role="alert">{{ message }}</div>{% endfor %}
             {% block content %}
             {% endblock content %}
         </div>
