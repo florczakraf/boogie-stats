@@ -6,7 +6,9 @@
     <h2>Edit Profile</h2>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Update"/>
+        <table>
+            {{ form.as_table }}
+        </table>
+        <input class="btn btn-primary" type="submit" value="Update"/>
     </form>
 {% endblock content %}
