@@ -5,19 +5,32 @@
 {% endblock title %}
 {% block content %}
     <h2>{{ song.display_name }} ({{ song.hash }})</h2>
-    {% include "boogie_ui/paginator.html" %}
     {% if song.scores %}
-        <ul>
-            {% for score in scores %}
-                <li>
-                    Score: {{ score.score|div:100|stringformat:".2f" }} by <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a> -
-                    {{ score.submission_date }} -
-                    {{ score.comment }}
-                </li>
-            {% endfor %}
-        </ul>
+        {% include "boogie_ui/paginator.html" %}
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col">Score</th>
+                    <th scope="col">Player</th>
+                    <th scope="col">Comment</th>
+                    <th scope="col">Submission Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score in scores %}
+                    <tr>
+                        <td>{{ score.score|div:100|stringformat:".2f" }}%</td>
+                        <td>
+                            <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
+                        </td>
+                        <td>{{ score.comment }}</td>
+                        <td>{{ score.submission_date }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "boogie_ui/paginator.html" %}
     {% else %}
         <p>No songs.</p>
     {% endif %}
-    {% include "boogie_ui/paginator.html" %}
 {% endblock content %}
