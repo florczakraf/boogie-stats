@@ -6,17 +6,30 @@
 {% block content %}
     <h2>Latest Scores</h2>
     {% if latest_scores %}
-        <ul>
-            {% for score in latest_scores %}
-                <li>
-                    {{ score.submission_date }} -
-                    {{ score.score|div:100|stringformat:".2f" }}% -
-                    <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a> -
-                    <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a> -
-                    {{ score.comment }}
-                </li>
-            {% endfor %}
-        </ul>
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col">Submission Date</th>
+                    <th scope="col">Song</th>
+                    <th scope="col">Score</th>
+                    <th scope="col">Player</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score in latest_scores %}
+                    <tr>
+                        <td>{{ score.submission_date }}</td>
+                        <td>
+                            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a>
+                        </td>
+                        <td>{{ score.score|div:100|stringformat:".2f" }}%</td>
+                        <td>
+                            <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% else %}
         <p>No scores are available.</p>
     {% endif %}
