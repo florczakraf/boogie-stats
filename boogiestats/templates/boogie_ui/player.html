@@ -17,20 +17,32 @@
         </ul>
     {% endif %}
     <h3>Recent Scores</h3>
-    {% include "boogie_ui/paginator.html" %}
     {% if scores %}
-        <ul>
-            {% for score in scores %}
-                <li>
-                    <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a> -
-                    Score: {{ score.score|div:100|stringformat:".2f" }} -
-                    {{ score.submission_date }} -
-                    {{ score.comment }}
-                </li>
-            {% endfor %}
-        </ul>
+        {% include "boogie_ui/paginator.html" %}
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col">Song</th>
+                    <th scope="col">Score</th>
+                    <th scope="col">Comment</th>
+                    <th scope="col">Submission Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score in scores %}
+                    <tr>
+                        <td>
+                            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a>
+                        </td>
+                        <td>{{ score.score|div:100|stringformat:".2f" }}%</td>
+                        <td>{{ score.comment }}</td>
+                        <td>{{ score.submission_date }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "boogie_ui/paginator.html" %}
     {% else %}
         <p>No songs.</p>
     {% endif %}
-    {% include "boogie_ui/paginator.html" %}
 {% endblock content %}
