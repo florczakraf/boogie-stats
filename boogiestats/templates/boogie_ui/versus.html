@@ -29,7 +29,9 @@
                 {% for p1_score, p2_score in scores %}
                     <tr>
                         <td>
-                            <a href="{% url "song" song_hash=p1_score.song.hash %}">{{ p1_score.song.display_name }}</a>
+                            {% with song=p1_score.song %}
+                                {% include "boogie_ui/song_link.html" %}
+                            {% endwith %}
                         </td>
                         <td class="{% if p1_score.score >= p2_score.score %}table-success{% else %}table-danger{% endif %}">
                             {{ p1_score.score|div:100|stringformat:".2f" }}%

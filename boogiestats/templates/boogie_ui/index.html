@@ -20,7 +20,9 @@
                     <tr>
                         <td>{{ score.submission_date }}</td>
                         <td>
-                            <a href="{% url "song" song_hash=score.song.hash %}">{{ score.song.display_name }}</a>
+                            {% with song=score.song %}
+                                {% include "boogie_ui/song_link.html" %}
+                            {% endwith %}
                         </td>
                         <td>{{ score.score|div:100|stringformat:".2f" }}%</td>
                         <td>

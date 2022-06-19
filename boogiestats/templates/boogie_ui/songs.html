@@ -18,9 +18,7 @@
             <tbody>
                 {% for song in songs %}
                     <tr>
-                        <td>
-                            <a href="{% url "song" song_hash=song.hash %}">{{ song.display_name }}</a>
-                        </td>
+                        <td>{% include "boogie_ui/song_link.html" %}</td>
                         <td>{{ song.num_scores }}</td>
                         <td>
                             {% if song.highscore %}
