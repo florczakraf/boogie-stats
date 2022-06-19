@@ -7,7 +7,7 @@
         <meta name="Description"
               content="A pass-through proxy for groovestats.com that records non-ranked song scores."/>
         <link rel="stylesheet"
-              href="{% static "boogie_ui/vendor/bootstrap-3.4.1-dist/css/bootstrap.min.css" %}"/>
+              href="{% static "boogie_ui/vendor/bootstrap-5.2.0-beta1-dist/css/bootstrap.min.css" %}"/>
         <link rel="stylesheet" href="{% static "boogie_ui/boogiestats.css" %}"/>
         <title>
             {% block title %}
@@ -18,13 +18,13 @@
     </head>
     <body>
         {% include "boogie_ui/header.html" %}
-        <div class="container">
+        <div class="container-fluid">
             {% for message in messages %}<div class="alert {{ message.tags }}" role="alert">{{ message }}</div>{% endfor %}
             {% block content %}
             {% endblock content %}
         </div>
         {% include "boogie_ui/footer.html" %}
         <script src="{% static "boogie_ui/vendor/jquery-3.6.0.min.js" %}"></script>
-        <script src="{% static "boogie_ui/vendor/bootstrap-3.4.1-dist/js/bootstrap.min.js" %}"></script>
+        <script src="{% static "boogie_ui/vendor/bootstrap-5.2.0-beta1-dist/js/bootstrap.min.js" %}"></script>
     </body>
 </html>
