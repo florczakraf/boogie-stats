@@ -1,0 +1,9 @@
+{{ song.display_name }}
+{% if song.hash == song.display_name %}
+    <a target="_blank"
+       class="btn btn-info btn-sm"
+       href="https://github.com/florczakraf/stepmania-chart-db"
+       title="Consider contributing missing songs to the database!">
+        ?
+    </a>
+{% endif %}

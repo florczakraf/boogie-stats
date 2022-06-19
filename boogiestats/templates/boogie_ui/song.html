@@ -4,7 +4,7 @@
     {{ song.display_name }}
 {% endblock title %}
 {% block content %}
-    <h2>{{ song.display_name }} ({{ song.hash }})</h2>
+    <h2>{% include "boogie_ui/song_display_name.html" %}</h2>
     {% if song.scores %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">
