@@ -5,18 +5,36 @@
 {% block content %}
     <h2>Players</h2>
     {% if players %}
-        <ul>
-            {% for player in players %}
-                <li>
-                    <a href="{% url "player" player_id=player.id %}">
-                        ID {{ player.id }} -
-                        {{ player.name }} -
-                        {{ player.machine_tag }} -
-                        {{ player.num_scores }} scores
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
+        {% include "boogie_ui/paginator.html" %}
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Machine Tag</th>
+                    <th scope="col">#Scores</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in players %}
+                    <tr>
+                        <td>
+                            <a href="{% url "player" player_id=player.id %}">{{ player.id }}</a>
+                        </td>
+                        <td>
+                            <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
+                        </td>
+                        <td>
+                            <a href="{% url "player" player_id=player.id %}">{{ player.machine_tag }}</a>
+                        </td>
+                        <td>
+                            <a href="{% url "player" player_id=player.id %}">{{ player.num_scores }}</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "boogie_ui/paginator.html" %}
     {% else %}
         <p>No players.</p>
     {% endif %}
