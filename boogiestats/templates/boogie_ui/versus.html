@@ -1,0 +1,48 @@
+{% extends "boogie_ui/root.html" %}
+{% load mathfilters %}
+{% block title %}
+    {{ p1.name }} ({{ p1.machine_tag }})
+    vs
+    {{ p2.name }} ({{ p2.machine_tag }})
+{% endblock title %}
+{% block content %}
+    <h2>
+        <a href="{% url "player" player_id=p1.id %}">{{ p1.name }} ({{ p1.machine_tag }})</a>
+        vs
+        <a href="{% url "player" player_id=p2.id %}">{{ p2.name }} ({{ p2.machine_tag }})</a>
+    </h2>
+    {% include "boogie_ui/paginator.html" %}
+    {% if scores %}
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col">Song</th>
+                    <th scope="col">
+                        <a href="{% url "player" player_id=p1.id %}">{{ p1.name }} ({{ p1.machine_tag }})</a> score
+                    </th>
+                    <th scope="col">
+                        <a href="{% url "player" player_id=p2.id %}">{{ p2.name }} ({{ p2.machine_tag }})</a> score
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p1_score, p2_score in scores %}
+                    <tr>
+                        <td>
+                            <a href="{% url "song" song_hash=p1_score.song.hash %}">{{ p1_score.song.display_name }}</a>
+                        </td>
+                        <td class="{% if p1_score.score >= p2_score.score %}table-success{% else %}table-danger{% endif %}">
+                            {{ p1_score.score|div:100|stringformat:".2f" }}%
+                        </td>
+                        <td class="{% if p1_score.score < p2_score.score %}table-success{% else %}table-danger{% endif %}">
+                            {{ p2_score.score|div:100|stringformat:".2f" }}%
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No common songs.</p>
+    {% endif %}
+    {% include "boogie_ui/paginator.html" %}
+{% endblock content %}

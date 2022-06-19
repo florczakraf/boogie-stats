@@ -54,6 +54,48 @@ class PlayerView(generic.ListView):
         return Player.objects.get(id=player_id).scores.filter(is_top=True).order_by("-submission_date")
 
 
+class VersusView(generic.ListView):
+    template_name = "boogie_ui/versus.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        p1, p2 = self.get_players()
+        p1_scores_qs = p1.scores.filter(is_top=True).order_by("-score").all()
+        p2_scores_qs = p2.scores.filter(is_top=True, song__hash__in=[score.song_id for score in p1_scores_qs])
+        p2_scores_dict = {score.song_id: score for score in p2_scores_qs}
+        scores = sorted(
+            [
+                (p1_score, p2_scores_dict[p1_score.song_id])
+                for p1_score in p1_scores_qs
+                if p1_score.song_id in p2_scores_dict
+            ],
+            key=lambda x: x[0].score,
+            reverse=True,
+        )
+        paginator, page, score_page, is_paginated = self.paginate_queryset(scores, ENTRIES_PER_PAGE)
+
+        context.update(
+            {
+                "paginator": paginator,
+                "page_obj": page,
+                "is_paginated": is_paginated,
+                "scores": score_page,
+                "p1": p1,
+                "p2": p2,
+            }
+        )
+
+        return context
+
+    def get_players(self):
+        p1_id = self.kwargs["p1"]
+        p2_id = self.kwargs["p2"]
+        return Player.objects.get(id=p1_id), Player.objects.get(id=p2_id)
+
+    def get_queryset(self):
+        return None
+
+
 class SongView(generic.ListView):
     template_name = "boogie_ui/song.html"
     context_object_name = "scores"

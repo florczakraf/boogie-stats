@@ -10,7 +10,8 @@
         <ul>
             {% for rival in player.rivals.all %}
                 <li>
-                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a>
+                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
+                    <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
                 </li>
             {% endfor %}
         </ul>
