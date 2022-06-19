@@ -11,8 +11,8 @@
         vs
         <a href="{% url "player" player_id=p2.id %}">{{ p2.name }} ({{ p2.machine_tag }})</a>
     </h2>
-    {% include "boogie_ui/paginator.html" %}
     {% if scores %}
+        {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
@@ -41,8 +41,8 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% include "boogie_ui/paginator.html" %}
     {% else %}
         <p>No common songs.</p>
     {% endif %}
-    {% include "boogie_ui/paginator.html" %}
 {% endblock content %}
