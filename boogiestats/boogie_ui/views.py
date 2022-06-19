@@ -31,6 +31,7 @@ class IndexView(generic.ListView):
 class PlayersListView(generic.ListView):
     template_name = "boogie_ui/players.html"
     context_object_name = "players"
+    paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
         return Player.objects.all().annotate(num_scores=Count("scores")).order_by("machine_tag")
