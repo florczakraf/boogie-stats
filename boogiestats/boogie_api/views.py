@@ -7,6 +7,7 @@ import requests
 from django.http import JsonResponse, HttpResponseServerError
 from django.views.decorators.csrf import csrf_exempt
 
+from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.models import Player, Song
 
 logger = logging.getLogger("django.server.dupa")  # TODO
@@ -75,9 +76,16 @@ def parse_players(request):
     return players
 
 
+def create_headers(request):
+    return {
+        "User-Agent": f"{request.headers.get('User-Agent', 'Anonymous')} via BoogieStats/{boogiestats_version}",
+    }
+
+
 def player_scores(request):
     params = {}
-    headers = {}
+    headers = create_headers(request)
+    make_request = False
 
     try:
         players = parse_players(request)
@@ -95,8 +103,9 @@ def player_scores(request):
         else:
             params[f"chartHashP{player_index}"] = chart_hash
             headers[f"x-api-key-player-{player_index}"] = gs_api_key
+            make_request = True
 
-    if params and headers:
+    if make_request:
         try:
             gs_response = requests.get(
                 GROOVESTATS_ENDPOINT + "/player-scores.php",
@@ -140,7 +149,8 @@ def player_scores(request):
 
 def player_leaderboards(request):
     params = {}
-    headers = {}
+    headers = create_headers(request)
+    make_request = False
 
     try:
         players = parse_players(request)
@@ -164,8 +174,9 @@ def player_leaderboards(request):
         else:
             params[f"chartHashP{player_index}"] = chart_hash
             headers[f"x-api-key-player-{player_index}"] = gs_api_key
+            make_request = True
 
-    if params and headers:
+    if make_request:
         try:
             gs_response = requests.get(
                 GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
@@ -209,7 +220,7 @@ def player_leaderboards(request):
 @csrf_exempt
 def score_submit(request):
     params = {}
-    headers = {}
+    headers = create_headers(request)
 
     try:
         players = parse_players(request)
