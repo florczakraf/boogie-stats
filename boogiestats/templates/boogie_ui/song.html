@@ -5,6 +5,8 @@
 {% endblock title %}
 {% block content %}
     <h2>{% include "boogie_ui/song_display_name.html" %}</h2>
+    <a href="{% url "song" song_hash=song.hash %}">All Scores</a> |
+    <a href="{% url "song_highscores" song_hash=song.hash %}">Highscores</a>
     {% if song.scores %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">

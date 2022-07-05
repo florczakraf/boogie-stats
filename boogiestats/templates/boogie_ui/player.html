@@ -16,7 +16,9 @@
             {% endfor %}
         </ul>
     {% endif %}
-    <h3>Recent Scores</h3>
+    <a href="{% url "player" player_id=player.id %}">Recent Scores</a> |
+    <a href="{% url "player_highscores" player_id=player.id %}">Highscores</a>
+    <h3>Scores</h3>
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">

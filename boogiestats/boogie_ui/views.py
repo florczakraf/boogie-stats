@@ -52,7 +52,13 @@ class PlayerView(generic.ListView):
 
     def get_queryset(self):
         player_id = self.kwargs["player_id"]
-        return Player.objects.get(id=player_id).scores.filter(is_top=True).order_by("-submission_date")
+        return Player.objects.get(id=player_id).scores.order_by("-submission_date")
+
+
+class PlayerHighscoresView(PlayerView):
+    def get_queryset(self):
+        player_id = self.kwargs["player_id"]
+        return Player.objects.get(id=player_id).scores.filter(is_top=True).order_by("-score")
 
 
 class VersusView(generic.ListView):
@@ -113,6 +119,12 @@ class SongView(generic.ListView):
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
         return Song.objects.get(hash=song_hash).scores.order_by("-score", "submission_date")
+
+
+class SongHighscoresView(SongView):
+    def get_queryset(self):
+        song_hash = self.kwargs["song_hash"]
+        return Song.objects.get(hash=song_hash).scores.filter(is_top=True).order_by("-score", "submission_date")
 
 
 class SongsListView(generic.ListView):
