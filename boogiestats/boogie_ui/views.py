@@ -61,6 +61,26 @@ class PlayerHighscoresView(PlayerView):
         return Player.objects.get(id=player_id).scores.filter(is_top=True).order_by("-score")
 
 
+class PlayerStatsView(generic.base.TemplateView):
+    template_name = "boogie_ui/player_stats.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        player_id = self.kwargs["player_id"]
+        context["player"] = Player.objects.get(id=player_id)
+        scores = Player.objects.get(id=player_id).scores
+
+        context["num_scores"] = scores.count()
+        context["num_charts_played"] = scores.filter(is_top=True).count()
+        context["one_or_more_stars"] = scores.filter(is_top=True, score__gte=9600).count()
+        context["two_or_more_stars"] = scores.filter(is_top=True, score__gte=9800).count()
+        context["three_or_more_stars"] = scores.filter(is_top=True, score__gte=9900).count()
+        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+
+        return context
+
+
 class VersusView(generic.ListView):
     template_name = "boogie_ui/versus.html"
 
