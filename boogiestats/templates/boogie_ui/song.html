@@ -4,7 +4,8 @@
     {{ song.display_name }}
 {% endblock title %}
 {% block content %}
-    <h2>{% include "boogie_ui/song_display_name.html" %}</h2>
+    <h2 class="mt-2">{% include "boogie_ui/song_display_name.html" %}</h2>
+    <p>Pack: {{ song.chart_info.pack_name }}</p>
     <a href="{% url "song" song_hash=song.hash %}">All Scores</a> |
     <a href="{% url "song_highscores" song_hash=song.hash %}">Highscores</a>
     {% if song.scores %}

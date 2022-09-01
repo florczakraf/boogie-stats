@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.utils.timezone import now
+from django.utils.functional import cached_property
 
 from boogiestats.boogie_api.managers import ScoreManager, PlayerManager
 
@@ -76,7 +77,7 @@ class Song(models.Model):
     def highscore(self):
         return self.scores.filter(is_top=True).order_by("-score", "-submission_date").first()
 
-    @property
+    @cached_property
     def chart_info(self):
         """Chart info based on an external (optional) chart database"""
         if settings.BS_CHART_DB_PATH is not None:
@@ -87,6 +88,8 @@ class Song(models.Model):
 
     @property
     def display_name(self):
+        final_name = self.hash
+
         if info := self.chart_info:
             artist = info["artisttranslit"] or info["artist"]
             title = info["titletranslit"] or info["title"]
@@ -97,11 +100,14 @@ class Song(models.Model):
                     subtitle = f"({subtitle})"
                 subtitle = f" {subtitle}"
 
-            diff = info["diff"]
-            steps_type = info["steps_type"]
-            return f"{artist} - {title}{subtitle} [{diff}, {steps_type}]"
+            base_display_name = f"{artist} - {title}{subtitle}"
+            final_name = base_display_name
 
-        return self.hash
+            steps_type = info["steps_type"]
+            if steps_type != "dance-single":  # don't display dance-single because it's most common chart type
+                final_name += f" ({steps_type})"
+
+        return final_name
 
 
 class Player(models.Model):

@@ -10,3 +10,50 @@ form table td {
 form label {
   margin-right: 30px;
 }
+
+.diff-beginner {
+  background-color: #a355b8;
+}
+
+.diff-easy {
+  background-color: #1ec51d;
+}
+
+.diff-medium {
+  background-color: #d6db41;
+}
+
+.diff-hard {
+  background-color: #ba3049;
+}
+
+.diff-challenge {
+  background-color: #2691c5;
+}
+
+/* h2 {
+  margin-top: 10px;
+} */
+
+.diff-box {
+  display: inline-block;
+  color: white;
+  width: 1.5em;
+  height: 1.5em;
+  /* width: 2.5em;
+  height: 2.5em; */
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid black;
+  display: table-cell;
+  vertical-align: middle;
+  text-decoration: none;
+}
+
+.display-table {
+  display: table;
+}
+
+.display-table-cell {
+  display: table-cell;
+}
