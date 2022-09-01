@@ -27,7 +27,11 @@
                             <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
                         </td>
                         <td>{{ score.comment }}</td>
-                        <td>{{ score.submission_date }}</td>
+                        <td>
+                            {% with datetime=score.submission_date %}
+                                {% include "boogie_ui/convert_timestamp.html" %}
+                            {% endwith %}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

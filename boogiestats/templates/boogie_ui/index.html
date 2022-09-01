@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load tz %}
 {% block title %}
     Home
 {% endblock title %}
@@ -18,7 +19,11 @@
             <tbody>
                 {% for score in latest_scores %}
                     <tr>
-                        <td>{{ score.submission_date }}</td>
+                        <td>
+                            {% with datetime=score.submission_date %}
+                                {% include "boogie_ui/convert_timestamp.html" %}
+                            {% endwith %}
+                        </td>
                         <td>
                             {% with song=score.song %}
                                 {% include "boogie_ui/song_link.html" %}

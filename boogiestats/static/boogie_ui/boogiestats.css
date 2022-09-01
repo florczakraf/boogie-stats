@@ -57,3 +57,7 @@ form label {
 .display-table-cell {
   display: table-cell;
 }
+
+.convert-timestamp {
+  display: none;
+}
