@@ -113,39 +113,6 @@ def song(some_player, other_player):
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_player_scores_given_groovestats_unranked_song_that_we_track_doesnt_call_groovestats(
-    client, song, gs_api_key, other_player, player_index
-):
-    kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
-    }
-    response = client.get(
-        "/player-scores.php",
-        data={f"chartHashP{player_index}": "0123456789ABCDEF"},
-        **kwargs,
-    )
-
-    assert response.json() == {
-        f"player{player_index}": {
-            "chartHash": "0123456789ABCDEF",
-            "isRanked": True,
-            "gsLeaderboard": [
-                {
-                    "date": song.get_highscore(other_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    "isFail": False,
-                    "isRival": False,
-                    "isSelf": False,
-                    "machineTag": "ABCD",
-                    "name": "ABCD",
-                    "rank": 1,
-                    "score": 8595,
-                }
-            ],
-        }
-    }
-
-
-@pytest.mark.parametrize("player_index", [1, 2])
 def test_player_leaderboards_requires_max_leaderboard_results_param(client, gs_api_key, player_index):
     kwargs = {
         f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
@@ -228,49 +195,6 @@ def test_player_leaderboards_given_groovestats_ranked_song(client, gs_api_key, r
     )
 
     assert response.json() == ranked_song
-
-
-@pytest.mark.parametrize("player_index", [1, 2])
-def test_player_leaderboards_given_groovestats_unranked_song_that_we_track_doesnt_call_groovestats(
-    client, song, gs_api_key, some_player, other_player, player_index
-):
-    kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
-    }
-    response = client.get(
-        "/player-leaderboards.php",
-        data={f"chartHashP{player_index}": "0123456789ABCDEF", "maxLeaderboardResults": 3},
-        **kwargs,
-    )
-
-    assert response.json() == {
-        f"player{player_index}": {
-            "chartHash": "0123456789ABCDEF",
-            "isRanked": True,
-            "gsLeaderboard": [
-                {
-                    "date": song.get_highscore(other_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    "isFail": False,
-                    "isRival": False,
-                    "isSelf": False,
-                    "machineTag": "ABCD",
-                    "name": "ABCD",
-                    "rank": 1,
-                    "score": 8595,
-                },
-                {
-                    "date": song.get_highscore(some_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    "isFail": False,
-                    "isRival": False,
-                    "isSelf": False,
-                    "machineTag": "1234",
-                    "name": "1234",
-                    "rank": 2,
-                    "score": 8495,
-                },
-            ],
-        }
-    }
 
 
 @pytest.mark.parametrize("player_index", [1, 2])

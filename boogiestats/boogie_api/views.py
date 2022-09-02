@@ -85,7 +85,6 @@ def create_headers(request):
 def player_scores(request):
     params = {}
     headers = create_headers(request)
-    make_request = False
 
     try:
         players = parse_players(request)
@@ -100,26 +99,22 @@ def player_scores(request):
 
         if song:
             player["leaderboard"] = song.get_leaderboard(num_entries=1, player=player_instance)
-        else:
-            params[f"chartHashP{player_index}"] = chart_hash
-            headers[f"x-api-key-player-{player_index}"] = gs_api_key
-            make_request = True
 
-    if make_request:
-        try:
-            gs_response = requests.get(
-                GROOVESTATS_ENDPOINT + "/player-scores.php",
-                params=params,
-                headers=headers,
-                timeout=GROOVESTATS_TIMEOUT,
-            ).json()
-        except requests.Timeout as e:
-            logger.error(f"Request to GrooveStats timed-out: {e}")
-            return HttpResponseServerError()
+        params[f"chartHashP{player_index}"] = chart_hash
+        headers[f"x-api-key-player-{player_index}"] = gs_api_key
 
-        logger.info(gs_response)
-    else:
-        gs_response = {}
+    try:
+        gs_response = requests.get(
+            GROOVESTATS_ENDPOINT + "/player-scores.php",
+            params=params,
+            headers=headers,
+            timeout=GROOVESTATS_TIMEOUT,
+        ).json()
+    except requests.Timeout as e:
+        logger.error(f"Request to GrooveStats timed-out: {e}")
+        return HttpResponseServerError()
+
+    logger.info(gs_response)
 
     final_response = {}
 
@@ -132,22 +127,18 @@ def player_scores(request):
             "isRanked": True,
         }
 
-        if player.get("leaderboard"):
-            leaderboard = player["leaderboard"]
-        elif gs_response:
-            leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
-
-            player["itl"] = gs_response.get(player_id, {}).get("itl")
-            if player["itl"]:
-                final_response[player_id]["itl"] = player["itl"]
-
-            player["rpg"] = gs_response.get(player_id, {}).get("rpg")
-            if player["rpg"]:
-                final_response[player_id]["rpg"] = player["rpg"]
-        else:
-            leaderboard = []
+        gs_leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
+        leaderboard = gs_leaderboard or player.get("leaderboard", [])
 
         final_response[player_id]["gsLeaderboard"] = leaderboard
+
+        player["itl"] = gs_response.get(player_id, {}).get("itl")
+        if player["itl"]:
+            final_response[player_id]["itl"] = player["itl"]
+
+        player["rpg"] = gs_response.get(player_id, {}).get("rpg")
+        if player["rpg"]:
+            final_response[player_id]["rpg"] = player["rpg"]
 
     return JsonResponse(data=final_response)
 
@@ -155,7 +146,6 @@ def player_scores(request):
 def player_leaderboards(request):
     params = {}
     headers = create_headers(request)
-    make_request = False
 
     try:
         players = parse_players(request)
@@ -176,25 +166,21 @@ def player_leaderboards(request):
 
         if song:
             player["leaderboard"] = song.get_leaderboard(num_entries=max_results, player=player_instance)
-        else:
-            params[f"chartHashP{player_index}"] = chart_hash
-            headers[f"x-api-key-player-{player_index}"] = gs_api_key
-            make_request = True
 
-    if make_request:
-        try:
-            gs_response = requests.get(
-                GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
-                params=params,
-                headers=headers,
-                timeout=GROOVESTATS_TIMEOUT,
-            ).json()
-        except requests.Timeout as e:
-            logger.error(f"Request to GrooveStats timed-out: {e}")
-            return HttpResponseServerError()
-        logger.info(gs_response)
-    else:
-        gs_response = {}
+        params[f"chartHashP{player_index}"] = chart_hash
+        headers[f"x-api-key-player-{player_index}"] = gs_api_key
+
+    try:
+        gs_response = requests.get(
+            GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
+            params=params,
+            headers=headers,
+            timeout=GROOVESTATS_TIMEOUT,
+        ).json()
+    except requests.Timeout as e:
+        logger.error(f"Request to GrooveStats timed-out: {e}")
+        return HttpResponseServerError()
+    logger.info(gs_response)
 
     final_response = {}
 
@@ -207,22 +193,18 @@ def player_leaderboards(request):
             "isRanked": True,
         }
 
-        if player.get("leaderboard"):
-            leaderboard = player["leaderboard"]
-        elif gs_response:
-            leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
-
-            player["itl"] = gs_response.get(player_id, {}).get("itl")
-            if player["itl"]:
-                final_response[player_id]["itl"] = player["itl"]
-
-            player["rpg"] = gs_response.get(player_id, {}).get("rpg")
-            if player["rpg"]:
-                final_response[player_id]["rpg"] = player["rpg"]
-        else:
-            leaderboard = []
+        gs_leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
+        leaderboard = gs_leaderboard or player.get("leaderboard", [])
 
         final_response[player_id]["gsLeaderboard"] = leaderboard
+
+        player["itl"] = gs_response.get(player_id, {}).get("itl")
+        if player["itl"]:
+            final_response[player_id]["itl"] = player["itl"]
+
+        player["rpg"] = gs_response.get(player_id, {}).get("rpg")
+        if player["rpg"]:
+            final_response[player_id]["rpg"] = player["rpg"]
 
     return JsonResponse(data=final_response)
 
