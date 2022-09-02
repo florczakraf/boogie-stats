@@ -21,10 +21,10 @@ GROOVESTATS_RESPONSES = {
     "NEW_SESSION": {
         "activeEvents": [
             {
-                "name": "ITL 2022",
-                "shortName": "ITL2022",
-                "url": r"https:\/\/itl2022.groovestats.com",
-            }
+                "name": "Stamina RPG 6",
+                "shortName": "SRPG6",
+                "url": r"https:\/\/srpg6.groovestats.com",
+            },
         ],
         "servicesResult": "OK",
         "servicesAllowed": {
@@ -136,9 +136,14 @@ def player_scores(request):
             leaderboard = player["leaderboard"]
         elif gs_response:
             leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
+
             player["itl"] = gs_response.get(player_id, {}).get("itl")
             if player["itl"]:
                 final_response[player_id]["itl"] = player["itl"]
+
+            player["rpg"] = gs_response.get(player_id, {}).get("rpg")
+            if player["rpg"]:
+                final_response[player_id]["rpg"] = player["rpg"]
         else:
             leaderboard = []
 
@@ -206,9 +211,14 @@ def player_leaderboards(request):
             leaderboard = player["leaderboard"]
         elif gs_response:
             leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
+
             player["itl"] = gs_response.get(player_id, {}).get("itl")
             if player["itl"]:
                 final_response[player_id]["itl"] = player["itl"]
+
+            player["rpg"] = gs_response.get(player_id, {}).get("rpg")
+            if player["rpg"]:
+                final_response[player_id]["rpg"] = player["rpg"]
         else:
             leaderboard = []
 
@@ -273,8 +283,12 @@ def score_submit(request):
             player["leaderboard"] = player_response["gsLeaderboard"]
             player["result"] = player_response["result"]
             player["delta"] = player_response["scoreDelta"]
+
             if "itl" in player_response:
                 player["itl"] = player_response["itl"]
+
+            if "rpg" in player_response:
+                player["rpg"] = player_response["rpg"]
         else:
             song, song_created = Song.objects.get_or_create(hash=chart_hash)
 
@@ -315,7 +329,11 @@ def score_submit(request):
             "scoreDelta": player["delta"],
             "result": player["result"],
         }
+
         if player.get("itl"):
             final_response[f"player{player_index}"]["itl"] = player["itl"]
+
+        if player.get("rpg"):
+            final_response[f"player{player_index}"]["rpg"] = player["rpg"]
 
     return JsonResponse(data=final_response)
