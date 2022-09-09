@@ -30,6 +30,7 @@ def make_leaderboard_entry(rank, score, is_rival=False, is_self=False):
 
 class Song(models.Model):
     hash = models.CharField(max_length=16, primary_key=True, db_index=True)  # V3 GrooveStats hash 16 a-f0-9
+    gs_ranked = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         self.full_clean()
