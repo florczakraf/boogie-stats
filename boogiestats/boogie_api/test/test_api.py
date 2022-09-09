@@ -256,9 +256,12 @@ def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests
         **kwargs,
     )
 
-    assert Song.objects.count() == 0
-    assert Score.objects.count() == 0
-    assert Player.objects.count() == 0
+    assert Song.objects.count() == 1
+    song = Song.objects.first()
+    assert song.hash == "76957dd1f96f764d"
+    assert song.gs_ranked is True
+    assert Score.objects.count() == 1
+    assert Player.objects.count() == 1
     assert response.json() == expected_result
 
 
@@ -293,6 +296,8 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
 
     assert Song.objects.count() == 1
     song = Song.objects.first()
+    assert song.hash == "76957dd1f96f764e"
+    assert song.gs_ranked is False
     assert Score.objects.count() == 1
     assert Player.objects.count() == 1
     player = Player.objects.first()

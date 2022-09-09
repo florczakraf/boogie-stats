@@ -260,6 +260,22 @@ def score_submit(request):
         gs_api_key = player["gsApiKey"]
         is_ranked = gs_response.get(player_id, {}).get("isRanked", False)
 
+        song, song_created = Song.objects.get_or_create(hash=chart_hash)
+        player_instance = Player.get_by_gs_api_key(gs_api_key)
+
+        if not player_instance:
+            machine_tag = uuid.uuid4().hex[:4].upper()
+            player_instance = Player.objects.create(gs_api_key=gs_api_key, machine_tag=machine_tag)
+
+        _, old_score = song.get_highscore(player_instance)
+
+        player_instance.scores.create(
+            song=song,
+            score=body_parsed[player_id]["score"],
+            comment=body_parsed[player_id]["comment"],
+            profile_name=None,
+        )
+
         if is_ranked:
             player_response = gs_response[player_id]
             player["leaderboard"] = player_response["gsLeaderboard"]
@@ -271,16 +287,11 @@ def score_submit(request):
 
             if "rpg" in player_response:
                 player["rpg"] = player_response["rpg"]
+
+            if not song.gs_ranked:
+                song.gs_ranked = True
+                song.save()
         else:
-            song, song_created = Song.objects.get_or_create(hash=chart_hash)
-
-            player_instance = Player.get_by_gs_api_key(gs_api_key)
-
-            if not player_instance:
-                machine_tag = uuid.uuid4().hex[:4].upper()
-                player_instance = Player.objects.create(gs_api_key=gs_api_key, machine_tag=machine_tag)
-
-            _, old_score = song.get_highscore(player_instance)
             if old_score:
                 if old_score.score < body_parsed[player_id]["score"]:
                     player["result"] = "improved"
@@ -291,13 +302,6 @@ def score_submit(request):
             else:
                 player["result"] = "score-added"
                 player["delta"] = body_parsed[player_id]["score"]
-
-            player_instance.scores.create(
-                song=song,
-                score=body_parsed[player_id]["score"],
-                comment=body_parsed[player_id]["comment"],
-                profile_name=None,
-            )
 
             player["leaderboard"] = song.get_leaderboard(num_entries=max_results, player=player_instance)
 

@@ -31,17 +31,10 @@ form label {
   background-color: #2691c5;
 }
 
-/* h2 {
-  margin-top: 10px;
-} */
-
 .diff-box {
-  display: inline-block;
   color: white;
   width: 1.5em;
   height: 1.5em;
-  /* width: 2.5em;
-  height: 2.5em; */
   text-align: center;
   font-weight: bold;
   border: 1px solid black;
@@ -60,4 +53,17 @@ form label {
 
 .convert-timestamp {
   display: none;
+}
+
+.gs-ranked {
+  background-color: #38abb5;
+  color: white;
+  width: 1.5em;
+  height: 1.5em;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid black;
+  display: table-cell;
+  vertical-align: middle;
+  text-decoration: none;
 }

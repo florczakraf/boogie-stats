@@ -3,6 +3,10 @@
           class="diff-box diff-{{ song.chart_info.diff|lower }}">
         {{ song.chart_info.diff_number }}
     </span>
+    {% if song.gs_ranked %}
+        <span title="GrooveStats ranked song. This is only the local leaderboard for this song."
+              class="gs-ranked">GS</span>
+    {% endif %}
     <span class="ms-2 display-table-cell align-middle ps-2">
         {{ song.display_name }}
         {% if song.hash == song.display_name %}
