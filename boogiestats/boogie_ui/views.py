@@ -174,6 +174,15 @@ class SongsListView(generic.ListView):
         )
 
 
+class SongsByPlayersListView(SongsListView):
+    def get_queryset(self):
+        return (
+            Song.objects.all()
+            .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
+            .order_by("-num_players")
+        )
+
+
 class EditPlayerView(LoginRequiredMixin, generic.UpdateView):
     login_url = "/login/"
     template_name = "boogie_ui/player_update.html"

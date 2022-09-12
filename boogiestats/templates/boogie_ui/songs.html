@@ -4,6 +4,8 @@
     Songs
 {% endblock title %}
 {% block content %}
+    <a href="{% url "songs" %}">By #Scores</a> |
+    <a href="{% url "songs_by_players" %}">By #Players</a>
     <h2>Songs</h2>
     {% if songs %}
         {% include "boogie_ui/paginator.html" %}
