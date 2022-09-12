@@ -33,14 +33,6 @@ form label {
 
 .diff-box {
   color: white;
-  width: 1.5em;
-  height: 1.5em;
-  text-align: center;
-  font-weight: bold;
-  border: 1px solid black;
-  display: table-cell;
-  vertical-align: middle;
-  text-decoration: none;
 }
 
 .display-table {
@@ -58,6 +50,9 @@ form label {
 .gs-ranked {
   background-color: #38abb5;
   color: white;
+}
+
+.common-box {
   width: 1.5em;
   height: 1.5em;
   text-align: center;
