@@ -167,7 +167,11 @@ class SongsListView(generic.ListView):
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
-        return Song.objects.all().annotate(num_scores=Count("scores")).order_by("-num_scores")
+        return (
+            Song.objects.all()
+            .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
+            .order_by("-num_scores")
+        )
 
 
 class EditPlayerView(LoginRequiredMixin, generic.UpdateView):
