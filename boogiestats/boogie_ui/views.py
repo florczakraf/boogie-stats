@@ -28,6 +28,20 @@ class IndexView(generic.ListView):
         return context
 
 
+class ScoreListView(generic.ListView):
+    template_name = "boogie_ui/scores.html"
+    context_object_name = "scores"
+    paginate_by = ENTRIES_PER_PAGE
+
+    def get_queryset(self):
+        return Score.objects.order_by("-submission_date")
+
+
+class HighscoreListView(ScoreListView):
+    def get_queryset(self):
+        return Score.objects.order_by("-score", "submission_date")
+
+
 class PlayersListView(generic.ListView):
     template_name = "boogie_ui/players.html"
     context_object_name = "players"

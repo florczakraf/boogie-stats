@@ -1,0 +1,46 @@
+{% extends "boogie_ui/root.html" %}
+{% load mathfilters %}
+{% block title %}
+    Scores
+{% endblock title %}
+{% block content %}
+    <a href="{% url "scores" %}">By date</a> |
+    <a href="{% url "highscores" %}">By score</a>
+    <h2>Scores</h2>
+    {% if scores %}
+        {% include "boogie_ui/paginator.html" %}
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col">Submission Date</th>
+                    <th scope="col">Song</th>
+                    <th scope="col">Score</th>
+                    <th scope="col">Player</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score in scores %}
+                    <tr>
+                        <td>
+                            {% with datetime=score.submission_date %}
+                                {% include "boogie_ui/convert_timestamp.html" %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with song=score.song %}
+                                {% include "boogie_ui/song_link.html" %}
+                            {% endwith %}
+                        </td>
+                        <td>{{ score.score|div:100|stringformat:".2f" }}%</td>
+                        <td>
+                            <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "boogie_ui/paginator.html" %}
+    {% else %}
+        <p>No scores are available.</p>
+    {% endif %}
+{% endblock content %}
