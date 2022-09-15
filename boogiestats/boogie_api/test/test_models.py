@@ -76,6 +76,20 @@ def rival3(player, song):
 
 
 @pytest.fixture
+def rival4(player, song):
+    rival = Player.objects.create(gs_api_key="rival4key", machine_tag="RIV4")
+    rival.scores.create(
+        song=song,
+        score=7300,
+        comment="M550",
+        profile_name="rival4 profile",
+    )
+    player.rivals.add(rival)
+    player.save()
+    return rival
+
+
+@pytest.fixture
 def top_scores(song):
     for i in range(1, 21):
         p = Player.objects.create(gs_api_key=f"top{i}key", machine_tag=f"T{i}")
@@ -154,8 +168,8 @@ def test_get_leaderboard_when_players_have_multiple_scores(song, player):
     assert leaderboard[0]["score"] == 8888
 
 
-def test_get_leaderboard_given_player_returns_leaderboard_with_their_score_and_rivals(
-    song, player, top_scores, rival1, rival2, rival3
+def test_get_leaderboard_given_player_returns_leaderboard_with_their_score_and_up_to_3_rivals(
+    song, player, top_scores, rival1, rival2, rival3, rival4
 ):
     leaderboard = song.get_leaderboard(num_entries=13, player=player)
 
@@ -176,35 +190,34 @@ def test_get_leaderboard_given_player_returns_leaderboard_with_their_score_and_r
     assert leaderboard[10]["isRival"] is True
     assert leaderboard[10]["isSelf"] is False
 
-    assert leaderboard[11]["name"] == "PL"
+    assert leaderboard[11]["name"] == "RIV4"
     assert leaderboard[11]["rank"] == 23
-    assert leaderboard[11]["score"] == 6442
-    assert leaderboard[11]["isRival"] is False
-    assert leaderboard[11]["isSelf"] is True
+    assert leaderboard[11]["score"] == 7300
+    assert leaderboard[11]["isRival"] is True
+    assert leaderboard[11]["isSelf"] is False
 
-    assert leaderboard[12]["name"] == "RIV1"
+    assert leaderboard[12]["name"] == "PL"
     assert leaderboard[12]["rank"] == 24
-    assert leaderboard[12]["score"] == 4553
-    assert leaderboard[12]["isRival"] is True
-    assert leaderboard[12]["isSelf"] is False
+    assert leaderboard[12]["score"] == 6442
+    assert leaderboard[12]["isRival"] is False
+    assert leaderboard[12]["isSelf"] is True
 
 
-def test_player_might_have_up_to_3_rivals(song, player, rival1, rival2, rival3):
-    assert player.rivals.count() == 3
+def test_player_can_have_more_than_3_rivals(song, player, rival1, rival2, rival3, rival4):
+    assert player.rivals.count() == 4
+    assert {x.machine_tag for x in player.rivals.all()} == {"RIV1", "RIV2", "RIV3", "RIV4"}
 
-    rival = Player.objects.create(gs_api_key="rival4key", machine_tag="RIV4")
-    rival.scores.create(
-        song=song,
-        score=7700,
-        comment="M550",
-        profile_name="rival4 profile",
-    )
+
+def test_player_cant_be_their_own_rival(song, player):
+    assert player.rivals.count() == 0
+
     with pytest.raises(ValidationError):
         with transaction.atomic():
-            player.rivals.add(rival)
+            player.rivals.add(player)
+            player.save()
 
     player.refresh_from_db()
-    assert {x.machine_tag for x in player.rivals.all()} == {"RIV1", "RIV2", "RIV3"}
+    assert player.rivals.count() == 0
 
 
 def test_get_leaderboard_when_entries_would_duplicate(song, player, rival1, rival2, rival3):

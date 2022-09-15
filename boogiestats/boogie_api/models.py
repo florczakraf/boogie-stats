@@ -12,7 +12,8 @@ from django.utils.functional import cached_property
 
 from boogiestats.boogie_api.managers import ScoreManager, PlayerManager
 
-MAX_RIVALS = 3
+MAX_LEADERBOARD_RIVALS = 3
+MAX_LEADERBOARD_ENTRIES = 50
 
 
 def make_leaderboard_entry(rank, score, is_rival=False, is_self=False):
@@ -37,7 +38,7 @@ class Song(models.Model):
         return super().save(*args, **kwargs)
 
     def get_leaderboard(self, num_entries, player=None):
-        assert num_entries < 50
+        num_entries = min(MAX_LEADERBOARD_ENTRIES, num_entries)
 
         scores = []
         used_score_pks = []
@@ -48,16 +49,16 @@ class Song(models.Model):
                 scores.append(make_leaderboard_entry(rank, score, is_self=True))
                 used_score_pks.append(score.pk)
 
-            for rival in player.rivals.all():
-                rank, score = self.get_highscore(rival)
-                if rank:
-                    scores.append(make_leaderboard_entry(rank, score, is_rival=True))
-                    used_score_pks.append(score.pk)
+            for rank, score in self.get_rival_highscores(player):
+                scores.append(make_leaderboard_entry(rank, score, is_rival=True))
+                used_score_pks.append(score.pk)
 
         remaining_scores = max(0, num_entries - len(scores))
 
         top_scores = (
-            self.scores.filter(is_top=True).exclude(pk__in=used_score_pks).order_by("-score")[:remaining_scores]
+            self.scores.filter(is_top=True)
+            .exclude(pk__in=used_score_pks)
+            .order_by("-score", "-submission_date")[:remaining_scores]
         )
 
         for score in top_scores:
@@ -73,6 +74,15 @@ class Song(models.Model):
             return None, None
 
         return Score.rank(highscore), highscore
+
+    def get_rival_highscores(self, player) -> [(int, "Score")]:
+        scores = (
+            self.scores.filter(is_top=True, player__in=player.rivals.all())
+            .order_by("-score", "-submission_date")[:MAX_LEADERBOARD_RIVALS]
+            .all()
+        )
+
+        return [(Score.rank(score), score) for score in scores]
 
     @property
     def highscore(self):
@@ -140,8 +150,8 @@ class Player(models.Model):
 
 
 def validate_rivals(sender, **kwargs):
-    if kwargs["instance"].rivals.count() > MAX_RIVALS:
-        raise ValidationError(f"A Player can have at most {MAX_RIVALS} rivals.")
+    if kwargs["instance"].rivals.filter(api_key=kwargs["instance"].api_key).count() == 1:
+        raise ValidationError("You can't be your own rival")
 
 
 m2m_changed.connect(validate_rivals, sender=Player.rivals.through)

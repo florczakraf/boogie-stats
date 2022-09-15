@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.views import generic
 
 from boogiestats.boogie_api.models import Score, Player, Song
+from boogiestats.boogie_ui.forms import EditPlayerForm
 
 ENTRIES_PER_PAGE = 30
 
@@ -186,8 +187,7 @@ class SongsByPlayersListView(SongsListView):
 class EditPlayerView(LoginRequiredMixin, generic.UpdateView):
     login_url = "/login/"
     template_name = "boogie_ui/player_update.html"
-    model = Player
-    fields = ["machine_tag", "rivals", "name"]  # TODO api key?
+    form_class = EditPlayerForm
 
     def get_object(self, **kwargs):
         return self.request.user.player
