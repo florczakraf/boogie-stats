@@ -280,3 +280,23 @@ def test_get_leaderboard_when_there_are_multiple_songs(song, other_song, player,
     assert leaderboard[1]["score"] == 6442
     assert leaderboard[1]["isRival"] is False
     assert leaderboard[1]["isSelf"] is False
+
+
+def test_highscore_updates(player, rival1, song):
+    assert song.scores.order_by("-score", "submission_date").first() == song.highscore
+    assert song.highscore.score == 6442
+    previous_highscore = song.highscore
+
+    new_score = song.scores.create(player=player, score=6442, comment="foo", profile_name="bar")
+    song.refresh_from_db()
+
+    assert song.highscore == previous_highscore
+    assert song.scores.order_by("-score", "submission_date").all()[1] == new_score
+
+    newer_score = song.scores.create(player=player, score=6542, comment="foo", profile_name="bar")
+    song.refresh_from_db()
+
+    assert song.highscore != previous_highscore
+    assert song.highscore == newer_score
+    assert song.highscore.score == 6542
+    assert newer_score.highscore_for.first() == song

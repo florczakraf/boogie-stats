@@ -32,6 +32,9 @@ def make_leaderboard_entry(rank, score, is_rival=False, is_self=False):
 class Song(models.Model):
     hash = models.CharField(max_length=16, primary_key=True, db_index=True)  # V3 GrooveStats hash 16 a-f0-9
     gs_ranked = models.BooleanField(default=False)
+    highscore = models.ForeignKey(
+        "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="highscore_for"
+    )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -83,10 +86,6 @@ class Song(models.Model):
         )
 
         return [(Score.rank(score), score) for score in scores]
-
-    @property
-    def highscore(self):
-        return self.scores.filter(is_top=True).order_by("-score", "-submission_date").first()
 
     @cached_property
     def chart_info(self):

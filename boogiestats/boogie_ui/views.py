@@ -18,7 +18,7 @@ class IndexView(generic.ListView):
     context_object_name = "latest_scores"
 
     def get_queryset(self):
-        return Score.objects.order_by("-submission_date")[:5]
+        return Score.objects.order_by("-submission_date").select_related("song", "player")[:5]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -35,12 +35,12 @@ class ScoreListView(generic.ListView):
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
-        return Score.objects.order_by("-submission_date")
+        return Score.objects.order_by("-submission_date").select_related("song", "player")
 
 
 class HighscoreListView(ScoreListView):
     def get_queryset(self):
-        return Score.objects.order_by("-score", "submission_date")
+        return Score.objects.order_by("-score", "submission_date").select_related("song", "player")
 
 
 class PlayersListView(generic.ListView):
@@ -153,13 +153,22 @@ class SongView(generic.ListView):
 
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
-        return Song.objects.get(hash=song_hash).scores.order_by("-score", "submission_date")
+        return (
+            Song.objects.get(hash=song_hash)
+            .scores.order_by("-score", "submission_date")
+            .select_related("song", "player")
+        )
 
 
 class SongHighscoresView(SongView):
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
-        return Song.objects.get(hash=song_hash).scores.filter(is_top=True).order_by("-score", "submission_date")
+        return (
+            Song.objects.get(hash=song_hash)
+            .scores.filter(is_top=True)
+            .order_by("-score", "submission_date")
+            .select_related("song", "player")
+        )
 
 
 class SongsListView(generic.ListView):
@@ -172,6 +181,7 @@ class SongsListView(generic.ListView):
             Song.objects.all()
             .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
             .order_by("-num_scores")
+            .select_related("highscore", "highscore__player")
         )
 
 
@@ -181,6 +191,7 @@ class SongsByPlayersListView(SongsListView):
             Song.objects.all()
             .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
             .order_by("-num_players")
+            .select_related("highscore", "highscore__player")
         )
 
 

@@ -31,6 +31,10 @@ class ScoreManager(models.Manager):
 
         score_object.save()
 
+        if not song.highscore or score > song.highscore.score:
+            song.highscore = score_object
+            song.save()
+
         return score_object
 
 
