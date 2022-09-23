@@ -22,6 +22,7 @@ setuptools.setup(
             "requests-mock >=1.9.3, <2",
             "flake8 >=4.0.1, <5",
             "djlint >= 1.1.1, <2",
+            "bandit >= 1.7.4, <2",
         ],
     },
 )
