@@ -272,7 +272,7 @@ def score_submit(request):
         player_instance.scores.create(
             song=song,
             score=body_parsed[player_id]["score"],
-            comment=body_parsed[player_id]["comment"],
+            comment=body_parsed[player_id].get("comment", ""),
             profile_name=None,
         )
 

@@ -452,3 +452,72 @@ def test_score_submit_given_groovestats_unranked_song_and_worse_score(
             "result": "score-not-improved",
         }
     }
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_with_empty_comment(
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
+):
+    unranked_song = {
+        f"player{player_index}": {
+            "chartHash": "0123456789FFFFFF",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 5805,
+        }
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "score": 1000,
+                "comment": "",
+                "rate": 100,
+            }
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 1
+    assert Score.objects.count() == 3
+    assert Player.objects.count() == 2
+    assert len(response.json()[f"player{player_index}"]["gsLeaderboard"]) == 2
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_without_a_comment(
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
+):
+    unranked_song = {
+        f"player{player_index}": {
+            "chartHash": "0123456789FFFFFF",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 5805,
+        }
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "score": 1000,
+                "rate": 100,
+            }
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 1
+    assert Score.objects.count() == 3
+    assert Player.objects.count() == 2
+    assert len(response.json()[f"player{player_index}"]["gsLeaderboard"]) == 2

@@ -163,7 +163,7 @@ class Score(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="scores")
     submission_date = models.DateTimeField(default=now)
     score = models.IntegerField()
-    comment = models.CharField(max_length=200)
+    comment = models.CharField(max_length=200, blank=True)
     profile_name = models.CharField(max_length=50, blank=True, null=True)
     is_top = models.BooleanField(default=True)
 
