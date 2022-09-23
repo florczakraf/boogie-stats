@@ -10,8 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.models import Player, Song
 
-logger = logging.getLogger("django.server.dupa")  # TODO
-groovestats_proxy_enabled = False  # TODO take from settings?
+logger = logging.getLogger("django.server.boogiestats")
 GROOVESTATS_ENDPOINT = "https://api.groovestats.com"  # TODO take from settings?
 GROOVESTATS_RESPONSES = {
     "PLAYERS_VALIDATION_ERROR": {
