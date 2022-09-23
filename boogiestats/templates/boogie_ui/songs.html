@@ -4,8 +4,6 @@
     Songs
 {% endblock title %}
 {% block content %}
-    <a href="{% url "songs" %}">By #Scores</a> |
-    <a href="{% url "songs_by_players" %}">By #Players</a>
     <h2>Songs</h2>
     {% if songs %}
         {% include "boogie_ui/paginator.html" %}
@@ -13,8 +11,16 @@
             <thead class="table-secondary">
                 <tr>
                     <th scope="col">Song</th>
-                    <th scope="col">#Scores</th>
-                    <th scope="col">#Players</th>
+                    <th scope="col">
+                        <a href="{% url "songs" %}">#Scores
+                            {% if request.resolver_match.url_name == "songs" %}↓{% endif %}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{% url "songs_by_players" %}">#Players
+                            {% if request.resolver_match.url_name == "songs_by_players" %}↓{% endif %}
+                        </a>
+                    </th>
                     <th scope="col">Highscore</th>
                 </tr>
             </thead>

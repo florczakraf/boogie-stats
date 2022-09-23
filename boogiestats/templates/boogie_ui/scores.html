@@ -4,17 +4,23 @@
     Scores
 {% endblock title %}
 {% block content %}
-    <a href="{% url "scores" %}">By date</a> |
-    <a href="{% url "highscores" %}">By score</a>
     <h2>Scores</h2>
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
-                    <th scope="col">Submission Date</th>
+                    <th scope="col">
+                        <a href="{% url "scores" %}">Submission Date
+                            {% if request.resolver_match.url_name == "scores" %}↓{% endif %}
+                        </a>
+                    </th>
                     <th scope="col">Song</th>
-                    <th scope="col">Score</th>
+                    <th scope="col">
+                        <a href="{% url "highscores" %}">Score
+                            {% if request.resolver_match.url_name == "highscores" %}↓{% endif %}
+                        </a>
+                    </th>
                     <th scope="col">Player</th>
                 </tr>
             </thead>
