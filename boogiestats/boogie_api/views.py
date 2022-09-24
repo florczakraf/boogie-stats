@@ -268,11 +268,17 @@ def score_submit(request):
 
         _, old_score = song.get_highscore(player_instance)
 
+        comment = body_parsed[player_id].get("comment", "")
+        used_cmod = body_parsed[player_id].get("usedCmod", None)
+        judgments = body_parsed[player_id].get("judgmentCounts", None)
+
         player_instance.scores.create(
             song=song,
             score=body_parsed[player_id]["score"],
-            comment=body_parsed[player_id].get("comment", ""),
-            profile_name=None,
+            comment=comment,
+            rate=body_parsed[player_id].get("rate", 100),
+            used_cmod=used_cmod,
+            judgments=judgments,
         )
 
         player_response = gs_response.get(player_id, {})
