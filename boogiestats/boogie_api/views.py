@@ -275,17 +275,19 @@ def score_submit(request):
             profile_name=None,
         )
 
+        player_response = gs_response.get(player_id, {})
+
+        # event structures can be present even when song is not ranked, so we just pass them when present
+        if "itl" in player_response:
+            player["itl"] = player_response["itl"]
+
+        if "rpg" in player_response:
+            player["rpg"] = player_response["rpg"]
+
         if is_ranked:
-            player_response = gs_response[player_id]
             player["leaderboard"] = player_response["gsLeaderboard"]
             player["result"] = player_response["result"]
             player["delta"] = player_response["scoreDelta"]
-
-            if "itl" in player_response:
-                player["itl"] = player_response["itl"]
-
-            if "rpg" in player_response:
-                player["rpg"] = player_response["rpg"]
 
             if not song.gs_ranked:
                 song.gs_ranked = True

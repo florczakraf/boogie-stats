@@ -521,3 +521,42 @@ def test_score_submit_without_a_comment(
     assert Score.objects.count() == 3
     assert Player.objects.count() == 2
     assert len(response.json()[f"player{player_index}"]["gsLeaderboard"]) == 2
+
+
+@pytest.mark.parametrize("event_key", ["rpg", "itl"])
+@pytest.mark.parametrize("player_index", [1, 2])
+@pytest.mark.parametrize("is_ranked", [True, False])
+def test_event_score_submit(
+    client, some_player, other_player, requests_mock, some_player_gs_api_key, player_index, is_ranked, event_key
+):
+    gs_response = {
+        f"player{player_index}": {
+            "chartHash": "afc954d593fd8bbd",
+            event_key: {"everything": "will be passed"},
+            "gsLeaderboard": [],
+            "scoreDelta": 8041,
+            "isRanked": is_ranked,
+            "result": "improved",
+        }
+    }
+
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(gs_response))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=afc954d593fd8bbd&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "score": 8351,
+                "rate": 100,
+            }
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 1
+    assert Score.objects.count() == 1
+    event_results = response.json()[f"player{player_index}"][event_key]
+    assert event_results["everything"] == "will be passed"
