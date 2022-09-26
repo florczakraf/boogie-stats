@@ -106,8 +106,8 @@ def other_player(other_player_gs_api_key):
 @pytest.fixture
 def song(some_player, other_player):
     s = Song.objects.create(hash="0123456789ABCDEF")
-    s.scores.create(player=some_player, score=8495, comment="C420", profile_name="1 2 3 4")
-    s.scores.create(player=other_player, score=8595, comment="C420", profile_name="a b c d")
+    s.scores.create(player=some_player, score=8495, comment="C420", rate=100)
+    s.scores.create(player=other_player, score=8595, comment="C420", rate=100)
 
     return s
 
@@ -560,3 +560,250 @@ def test_event_score_submit(
     assert Score.objects.count() == 1
     event_results = response.json()[f"player{player_index}"][event_key]
     assert event_results["everything"] == "will be passed"
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_with_some_judgments(
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
+):
+    unranked_song = {
+        f"player{player_index}": {
+            "chartHash": "0123456789ABCDEF",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 7560,
+        }
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "comment": "30e, 27g, 1m, No Dec/WO",
+                "judgmentCounts": {
+                    "excellent": 30,
+                    "fantastic": 13,
+                    "fantasticPlus": 21,
+                    "great": 27,
+                    "holdsHeld": 3,
+                    "minesHit": 1,
+                    "miss": 1,
+                    "rollsHeld": 2,
+                    "totalHolds": 6,
+                    "totalMines": 5,
+                    "totalRolls": 3,
+                    "totalSteps": 92,
+                },
+                "rate": 105,
+                "score": 7560,
+                "usedCmod": False,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Score.objects.count() == 3
+    assert len(response.json()[f"player{player_index}"]["gsLeaderboard"]) == 2
+    score = Score.objects.last()
+    assert score.used_cmod is False
+    assert score.has_judgments is True
+    assert score.excellents == 30
+    assert score.fantastics == 13
+    assert score.fantastics_plus == 21
+    assert score.greats == 27
+    assert score.misses == 1
+    assert score.decents == 0
+    assert score.way_offs == 0
+    assert score.holds_held == 3
+    assert score.mines_hit == 1
+    assert score.rolls_held == 2
+    assert score.total_holds == 6
+    assert score.total_mines == 5
+    assert score.total_rolls == 3
+    assert score.total_steps == 92
+    assert score.rate == 105
+    assert score.score == 7560
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_with_all_judgments(
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
+):
+    unranked_song = {
+        f"player{player_index}": {
+            "chartHash": "0123456789ABCDEF",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 5340,
+        }
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "comment": "20e, 19g, 4d, 4wo, 4m",
+                "judgmentCounts": {
+                    "decent": 4,
+                    "excellent": 20,
+                    "fantastic": 7,
+                    "fantasticPlus": 31,
+                    "great": 19,
+                    "holdsHeld": 3,
+                    "minesHit": 0,
+                    "miss": 4,
+                    "rollsHeld": 0,
+                    "totalHolds": 5,
+                    "totalMines": 0,
+                    "totalRolls": 0,
+                    "totalSteps": 89,
+                    "wayOff": 4,
+                },
+                "rate": 100,
+                "score": 5340,
+                "usedCmod": False,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 1
+    assert Score.objects.count() == 3
+    assert Player.objects.count() == 2
+    assert len(response.json()[f"player{player_index}"]["gsLeaderboard"]) == 2
+    score = Score.objects.last()
+    assert score.used_cmod is False
+    assert score.has_judgments is True
+    assert score.excellents == 20
+    assert score.fantastics == 7
+    assert score.fantastics_plus == 31
+    assert score.greats == 19
+    assert score.misses == 4
+    assert score.decents == 4
+    assert score.way_offs == 4
+    assert score.holds_held == 3
+    assert score.mines_hit == 0
+    assert score.rolls_held == 0
+    assert score.total_holds == 5
+    assert score.total_mines == 0
+    assert score.total_rolls == 0
+    assert score.total_steps == 89
+    assert score.rate == 100
+    assert score.score == 5340
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_with_cmod_info(
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
+):
+    unranked_song = {
+        f"player{player_index}": {
+            "chartHash": "0123456789ABCDEF",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 7560,
+        }
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "comment": "30e, 27g, 1m, C555, No Dec/WO",
+                "rate": 100,
+                "score": 7560,
+                "usedCmod": True,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Score.objects.count() == 3
+    assert len(response.json()[f"player{player_index}"]["gsLeaderboard"]) == 2
+    score = Score.objects.last()
+    assert not score.has_judgments
+    assert score.used_cmod is True
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_with_no_cmod_info_but_cmod_comment(
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
+):
+    unranked_song = {
+        f"player{player_index}": {
+            "chartHash": "0123456789ABCDEF",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 7560,
+        }
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "comment": "30e, 27g, 1m, C350, No Dec/WO",
+                "rate": 105,
+                "score": 7560,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Score.objects.count() == 3
+    assert len(response.json()[f"player{player_index}"]["gsLeaderboard"]) == 2
+    score = Score.objects.last()
+    assert not score.has_judgments
+    assert score.used_cmod is True
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_with_no_cmod_info(
+    client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
+):
+    unranked_song = {
+        f"player{player_index}": {
+            "chartHash": "0123456789ABCDEF",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 7560,
+        }
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "comment": "30e, 27g, 1m, No Dec/WO",
+                "rate": 105,
+                "score": 7560,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Score.objects.count() == 3
+    assert len(response.json()[f"player{player_index}"]["gsLeaderboard"]) == 2
+    score = Score.objects.last()
+    assert not score.has_judgments
+    assert score.used_cmod is False

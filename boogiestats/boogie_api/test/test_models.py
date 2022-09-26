@@ -22,13 +22,13 @@ def player(song, other_song):
         song=song,
         score=6442,
         comment="M400, OtherMod",
-        profile_name="player profile",
+        rate=100,
     )
     p.scores.create(
         song=other_song,
         score=6666,
         comment="M400, OtherMod",
-        profile_name="player profile",
+        rate=100,
     )
     return p
 
@@ -40,7 +40,7 @@ def rival1(player, song):
         song=song,
         score=4553,
         comment="C500",
-        profile_name="rival1 profile",
+        rate=100,
     )
     player.rivals.add(rival)
     player.save()
@@ -54,7 +54,7 @@ def rival2(player, song):
         song=song,
         score=7588,
         comment="C200",
-        profile_name="rival2 profile",
+        rate=100,
     )
     player.rivals.add(rival)
     player.save()
@@ -68,7 +68,7 @@ def rival3(player, song):
         song=song,
         score=7700,
         comment="M550",
-        profile_name="rival3 profile",
+        rate=100,
     )
     player.rivals.add(rival)
     player.save()
@@ -82,7 +82,7 @@ def rival4(player, song):
         song=song,
         score=7300,
         comment="M550",
-        profile_name="rival4 profile",
+        rate=105,
     )
     player.rivals.add(rival)
     player.save()
@@ -97,7 +97,7 @@ def top_scores(song):
             song=song,
             score=10_000 - i * 100,
             comment=f"M420, TOP{i}",
-            profile_name=f"top{i} profile",
+            rate=100,
         )
 
 
@@ -137,7 +137,7 @@ def test_player_has_one_top_score_for_a_song(song, player):
         song=song,
         score=2000,
         comment="M400, OtherMod",
-        profile_name="player profile",
+        rate=100,
     )
     assert new_low_score.is_top is False
 
@@ -145,7 +145,7 @@ def test_player_has_one_top_score_for_a_song(song, player):
         song=song,
         score=8000,
         comment="M400, OtherMod",
-        profile_name="player profile",
+        rate=100,
     )
     assert new_top_score.is_top is True
 
@@ -158,7 +158,7 @@ def test_get_leaderboard_when_players_have_multiple_scores(song, player):
         song=song,
         score=8888,
         comment="M320, BETTER ONE",
-        profile_name="player profile",
+        rate=100,
     )
 
     leaderboard = song.get_leaderboard(num_entries=2)
@@ -287,16 +287,73 @@ def test_highscore_updates(player, rival1, song):
     assert song.highscore.score == 6442
     previous_highscore = song.highscore
 
-    new_score = song.scores.create(player=player, score=6442, comment="foo", profile_name="bar")
+    new_score = song.scores.create(player=player, score=6442, comment="foo", rate=100)
     song.refresh_from_db()
 
     assert song.highscore == previous_highscore
     assert song.scores.order_by("-score", "submission_date").all()[1] == new_score
 
-    newer_score = song.scores.create(player=player, score=6542, comment="foo", profile_name="bar")
+    newer_score = song.scores.create(player=player, score=6542, comment="foo", rate=100)
     song.refresh_from_db()
 
     assert song.highscore != previous_highscore
     assert song.highscore == newer_score
     assert song.highscore.score == 6542
     assert newer_score.highscore_for.first() == song
+
+
+def test_first_score_for_a_song_is_top_for_a_player(player):
+    new_song = Song.objects.create(hash="new song")
+    score = player.scores.create(song=new_song, score=5050, comment="55g", rate=100)
+
+    assert score.is_top is True
+
+
+def test_better_score_handles_is_top_for_new_and_previous_top(player, song):
+    previous_score = song.scores.filter(player=player).first()
+
+    assert previous_score.is_top is True
+
+    better_score = player.scores.create(song=song, score=10_000, comment="", rate=100)
+
+    previous_score.refresh_from_db()
+    assert better_score.is_top is True
+    assert previous_score.is_top is False
+
+
+@pytest.mark.parametrize(
+    ("used_cmod", "comment", "expected_used_cmod"),
+    [
+        (None, "", False),
+        (None, "foo, bar, baz", False),
+        (None, "foo, bar, baz", False),
+        (None, "foo, C324, bar", True),
+        (True, "foo, bar", True),
+        (False, "foo, bar", False),
+        (False, "foo, C454, bar", False),  # used_cmod takes precedence
+    ],
+)
+def test_score_create_used_cmod(player, song, used_cmod, comment, expected_used_cmod):
+    score = player.scores.create(song=song, score=5555, comment=comment, rate=100, used_cmod=used_cmod)
+
+    assert score.used_cmod is expected_used_cmod
+
+
+def test_score_create_sets_songs_highscore(player):
+    new_song = Song.objects.create(hash="new song")
+    assert new_song.highscore is None
+
+    score = player.scores.create(song=new_song, score=10_000, comment="comment", rate=100)
+
+    new_song.refresh_from_db()
+    assert new_song.highscore == score
+
+
+def test_score_create_updates_songs_highscore(player, song):
+    previous_highscore = song.highscore
+
+    score = player.scores.create(song=song, score=10_000, comment="comment", rate=100)
+
+    song.refresh_from_db()
+    assert previous_highscore != score
+    assert song.highscore == score

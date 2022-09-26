@@ -5,6 +5,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.utils.timezone import now
@@ -158,14 +159,34 @@ m2m_changed.connect(validate_rivals, sender=Player.rivals.through)
 
 class Score(models.Model):
     objects = ScoreManager()
+    MAX_COMMENT_LENGTH = 200
+    MAX_SCORE = 10_000
+    MAX_RATE = 500
 
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name="scores")
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="scores")
     submission_date = models.DateTimeField(default=now)
-    score = models.IntegerField()
-    comment = models.CharField(max_length=200, blank=True)
-    profile_name = models.CharField(max_length=50, blank=True, null=True)
+    score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)])
+    comment = models.CharField(max_length=MAX_COMMENT_LENGTH, blank=True)
     is_top = models.BooleanField(default=True)
+    used_cmod = models.BooleanField(default=False)
+    rate = models.PositiveIntegerField(default=100, validators=[MaxValueValidator(MAX_RATE)])
+
+    has_judgments = models.BooleanField(default=False)
+    misses = models.PositiveIntegerField(default=0)
+    way_offs = models.PositiveIntegerField(default=0)
+    decents = models.PositiveIntegerField(default=0)
+    greats = models.PositiveIntegerField(default=0)
+    excellents = models.PositiveIntegerField(default=0)
+    fantastics = models.PositiveIntegerField(default=0)
+    fantastics_plus = models.PositiveIntegerField(default=0)
+    total_steps = models.PositiveIntegerField(default=0)
+    total_rolls = models.PositiveIntegerField(default=0)
+    total_holds = models.PositiveIntegerField(default=0)
+    total_mines = models.PositiveIntegerField(default=0)
+    rolls_held = models.PositiveIntegerField(default=0)
+    holds_held = models.PositiveIntegerField(default=0)
+    mines_hit = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         self.full_clean()
