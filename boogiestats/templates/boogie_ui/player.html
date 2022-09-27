@@ -38,7 +38,7 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td>{{ score.score|div:100|stringformat:".2f" }}%</td>
+                        <td>{% include "boogie_ui/score_with_judgments.html" %}</td>
                         <td>{{ score.comment }}</td>
                         <td>
                             {% with datetime=score.submission_date %}
