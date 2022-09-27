@@ -29,7 +29,7 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td>{{ score.score|div:100|stringformat:".2f" }}%</td>
+                        <td>{% include "boogie_ui/score_with_judgments.html" %}</td>
                         <td>
                             <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
                         </td>

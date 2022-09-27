@@ -62,3 +62,35 @@ form label {
   vertical-align: middle;
   text-decoration: none;
 }
+
+.fantastic {
+  background-color: #21cce8;
+}
+
+.excellent {
+  background-color: #e29c18;
+}
+
+.great {
+  background-color: #66c955;
+}
+
+.decent {
+  background-color: #b45cff;
+}
+
+.wayoff {
+  background-color: #c9855e;
+}
+
+.miss {
+  background-color: #ff3030;
+}
+
+.score-box {
+  width: 100px;
+  border: 1px solid black;
+  height: 1.5em;
+  display: grid;
+  margin-left: 1em;
+}
