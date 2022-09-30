@@ -9,10 +9,26 @@
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
-                    <th scope="col">ID</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Machine Tag</th>
-                    <th scope="col">#Scores</th>
+                    <th scope="col">
+                        <a href="{% url "players" %}">ID
+                            {% if request.resolver_match.url_name == "players" %}↓{% endif %}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{% url "players_by_name" %}">Name
+                            {% if request.resolver_match.url_name == "players_by_name" %}↓{% endif %}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{% url "players_by_machine_tag" %}">Machine Tag
+                            {% if request.resolver_match.url_name == "players_by_machine_tag" %}↓{% endif %}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{% url "players_by_scores" %}">#Scores
+                            {% if request.resolver_match.url_name == "players_by_scores" %}↓{% endif %}
+                        </a>
+                    </th>
                 </tr>
             </thead>
             <tbody>

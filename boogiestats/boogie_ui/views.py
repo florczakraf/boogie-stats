@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.db.models import Count
@@ -49,7 +50,22 @@ class PlayersListView(generic.ListView):
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
-        return Player.objects.all().annotate(num_scores=Count("scores")).order_by("machine_tag")
+        return Player.objects.all().annotate(num_scores=Count("scores")).order_by("id")
+
+
+class PlayersByNameListView(PlayersListView):
+    def get_queryset(self):
+        return Player.objects.all().annotate(num_scores=Count("scores")).order_by(Lower("name"))
+
+
+class PlayersByMachineTagListView(PlayersListView):
+    def get_queryset(self):
+        return Player.objects.all().annotate(num_scores=Count("scores")).order_by(Lower("machine_tag"))
+
+
+class PlayersByScoresListView(PlayersListView):
+    def get_queryset(self):
+        return Player.objects.all().annotate(num_scores=Count("scores")).order_by("-num_scores")
 
 
 class PlayerView(generic.ListView):

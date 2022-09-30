@@ -5,6 +5,9 @@ from . import views
 urlpatterns = [
     path("", views.IndexView.as_view(), name="index"),
     path("players/", views.PlayersListView.as_view(), name="players"),
+    path("players_by_name/", views.PlayersByNameListView.as_view(), name="players_by_name"),
+    path("players_by_machine_tag/", views.PlayersByMachineTagListView.as_view(), name="players_by_machine_tag"),
+    path("players_by_scores/", views.PlayersByScoresListView.as_view(), name="players_by_scores"),
     path("players/<int:player_id>/", views.PlayerView.as_view(), name="player"),
     path("players/<int:player_id>/highscores", views.PlayerHighscoresView.as_view(), name="player_highscores"),
     path("players/<int:player_id>/stats", views.PlayerStatsView.as_view(), name="player_stats"),
