@@ -260,11 +260,16 @@ def score_submit(request):
         is_ranked = gs_response.get(player_id, {}).get("isRanked", False)
 
         song, song_created = Song.objects.get_or_create(hash=chart_hash)
+        player["song"] = song
+        player["is_ranked"] = is_ranked
+
         player_instance = Player.get_by_gs_api_key(gs_api_key)
 
         if not player_instance:
             machine_tag = uuid.uuid4().hex[:4].upper()
             player_instance = Player.objects.create(gs_api_key=gs_api_key, machine_tag=machine_tag)
+
+        player["player_instance"] = player_instance
 
         _, old_score = song.get_highscore(player_instance)
 
@@ -310,7 +315,11 @@ def score_submit(request):
                 player["result"] = "score-added"
                 player["delta"] = body_parsed[player_id]["score"]
 
-            player["leaderboard"] = song.get_leaderboard(num_entries=max_results, player=player_instance)
+    for player in players.values():
+        if not player["is_ranked"]:
+            player["leaderboard"] = player["song"].get_leaderboard(
+                num_entries=max_results, player=player["player_instance"]
+            )
 
     final_response = {}
 

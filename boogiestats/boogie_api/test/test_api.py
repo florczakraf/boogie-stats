@@ -807,3 +807,174 @@ def test_score_submit_with_no_cmod_info(
     score = Score.objects.last()
     assert not score.has_judgments
     assert score.used_cmod is False
+
+
+def test_score_submit_with_two_players_playing_the_same_unranked_song(client, gs_api_key, requests_mock):
+    unranked_songs = {
+        "player1": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 5500,
+        },
+        "player2": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 6500,
+        },
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_songs))
+    kwargs = {
+        "HTTP_X_Api_Key_Player_1": "abcdef0123456789" * 4,
+        "HTTP_X_Api_Key_Player_2": "abcdef0123456789"[::-1] * 4,
+    }
+    response = client.post(
+        "/score-submit.php?chartHashP1=aaaaadd1f96f764e&chartHashP2=aaaaadd1f96f764e&maxLeaderboardResults=3",
+        data={
+            "player1": {
+                "score": 5500,
+                "comment": "foo",
+                "rate": 100,
+            },
+            "player2": {
+                "score": 6500,
+                "comment": "bar",
+                "rate": 100,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 1
+    song = Song.objects.first()
+    assert song.hash == "aaaaadd1f96f764e"
+    assert song.gs_ranked is False
+    assert Score.objects.count() == 2
+    assert Player.objects.count() == 2
+    scores = Score.objects.all().order_by("-score")
+
+    assert response.json() == {
+        "player1": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": True,
+            "gsLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": scores[0].player.machine_tag,
+                    "score": 6500,
+                    "date": scores[0].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": scores[0].player.machine_tag,
+                },
+                {
+                    "rank": 2,
+                    "name": scores[1].player.machine_tag,
+                    "score": 5500,
+                    "date": scores[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": scores[1].player.machine_tag,
+                },
+            ],
+            "scoreDelta": 5500,
+            "result": "score-added",
+        },
+        "player2": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": True,
+            "gsLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": scores[0].player.machine_tag,
+                    "score": 6500,
+                    "date": scores[0].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": scores[0].player.machine_tag,
+                },
+                {
+                    "rank": 2,
+                    "name": scores[1].player.machine_tag,
+                    "score": 5500,
+                    "date": scores[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": scores[1].player.machine_tag,
+                },
+            ],
+            "scoreDelta": 6500,
+            "result": "score-added",
+        },
+    }
+
+
+def test_score_submit_with_two_players_playing_the_same_ranked_song(client, gs_api_key, requests_mock):
+    unranked_songs = {
+        "player1": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": True,
+            "gsLeaderboard": ["foo"],
+            "scoreDelta": 5500,
+            "result": "score-added",
+        },
+        "player2": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": True,
+            "gsLeaderboard": ["bar"],
+            "scoreDelta": 6500,
+            "result": "score-added",
+        },
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_songs))
+    kwargs = {
+        "HTTP_X_Api_Key_Player_1": "abcdef0123456789" * 4,
+        "HTTP_X_Api_Key_Player_2": "abcdef0123456789"[::-1] * 4,
+    }
+    response = client.post(
+        "/score-submit.php?chartHashP1=aaaaadd1f96f764e&chartHashP2=aaaaadd1f96f764e&maxLeaderboardResults=3",
+        data={
+            "player1": {
+                "score": 5500,
+                "comment": "foo",
+                "rate": 100,
+            },
+            "player2": {
+                "score": 6500,
+                "comment": "bar",
+                "rate": 100,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 1
+    song = Song.objects.first()
+    assert song.hash == "aaaaadd1f96f764e"
+    assert song.gs_ranked is True
+    assert Score.objects.count() == 2
+    assert Player.objects.count() == 2
+
+    assert response.json() == {
+        "player1": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": True,
+            "gsLeaderboard": ["foo"],
+            "scoreDelta": 5500,
+            "result": "score-added",
+        },
+        "player2": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": True,
+            "gsLeaderboard": ["bar"],
+            "scoreDelta": 6500,
+            "result": "score-added",
+        },
+    }
