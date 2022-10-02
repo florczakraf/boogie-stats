@@ -5,7 +5,7 @@ const dateOptions = {
     year: "numeric",
     month: "long",
     day: "numeric",
-    hourCycle: "h24",
+    hourCycle: "h23",
 };
 
 [...document.getElementsByClassName("convert-timestamp")].forEach(element => {
