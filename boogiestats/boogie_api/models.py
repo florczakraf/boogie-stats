@@ -131,6 +131,9 @@ class Player(models.Model):
     rivals = models.ManyToManyField(
         "self", symmetrical=False, blank=True, help_text="Hold ctrl to select/unselect multiple"
     )
+    latest_score = models.ForeignKey(
+        "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="latest_score_for"
+    )
 
     def save(self, *args, **kwargs):
         self.full_clean()

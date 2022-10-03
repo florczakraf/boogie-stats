@@ -57,6 +57,7 @@ class ScoreManager(models.Manager):
         score_object.save()
 
         self._handle_highscore_update(score_object, song)
+        self._handle_latest_score_update(score_object, player)
 
         return score_object
 
@@ -94,6 +95,10 @@ class ScoreManager(models.Manager):
         if not song.highscore or score_object.score > song.highscore.score:
             song.highscore = score_object
             song.save()
+
+    def _handle_latest_score_update(self, score_object, player):
+        player.latest_score = score_object
+        player.save()
 
 
 class PlayerManager(models.Manager):

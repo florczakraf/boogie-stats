@@ -40,6 +40,45 @@
     {% else %}
         <p>No scores are available.</p>
     {% endif %}
+    <h2>Recent Player Activity</h2>
+    {% if recent_activity and recent_activity.0.latest_score %}
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col">Submission Date</th>
+                    <th scope="col">Song</th>
+                    <th scope="col">Score</th>
+                    <th scope="col">Player</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in recent_activity %}
+                    <tr>
+                        <td>
+                            {% with datetime=player.latest_score.submission_date %}
+                                {% include "boogie_ui/convert_timestamp.html" %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with song=player.latest_score.song %}
+                                {% include "boogie_ui/song_link.html" %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with score=player.latest_score %}
+                                {% include "boogie_ui/score_with_judgments.html" %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No recent activity available.</p>
+    {% endif %}
     <h2>Instance Stats</h2>
     <ul>
         <li>

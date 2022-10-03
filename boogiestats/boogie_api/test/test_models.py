@@ -357,3 +357,23 @@ def test_score_create_updates_songs_highscore(player, song):
     song.refresh_from_db()
     assert previous_highscore != score
     assert song.highscore == score
+
+
+def test_score_create_sets_players_latest_score(song):
+    new_player = Player.objects.create(gs_api_key="new_player", machine_tag="PLAY")
+    assert new_player.latest_score is None
+
+    score = new_player.scores.create(song=song, score=5900, comment="comment", rate=100)
+
+    new_player.refresh_from_db()
+    assert new_player.latest_score == score
+
+
+def test_score_create_updates_players_latest_score(player, song):
+    previous_latest_score = player.latest_score
+
+    score = player.scores.create(song=song, score=5900, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert previous_latest_score != player.latest_score
+    assert player.latest_score == score

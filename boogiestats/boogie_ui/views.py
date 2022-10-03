@@ -27,6 +27,10 @@ class IndexView(generic.ListView):
         context["n_songs"] = Song.objects.count()
         context["n_scores"] = Score.objects.count()
         context["n_players"] = Player.objects.count()
+        context["recent_activity"] = Player.objects.order_by("-latest_score__submission_date").select_related(
+            "latest_score", "latest_score__song"
+        )[:5]
+
         return context
 
 
