@@ -199,9 +199,13 @@ class SongsListView(generic.ListView):
     def get_queryset(self):
         return (
             Song.objects.all()
+            .prefetch_related("scores__player")
             .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
             .order_by("-num_scores")
-            .select_related("highscore", "highscore__player")
+            .prefetch_related(
+                "highscore",
+                "highscore__player",
+            )
         )
 
 
@@ -209,9 +213,10 @@ class SongsByPlayersListView(SongsListView):
     def get_queryset(self):
         return (
             Song.objects.all()
+            .prefetch_related("scores__player")
             .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
             .order_by("-num_players")
-            .select_related("highscore", "highscore__player")
+            .prefetch_related("highscore", "highscore__player")
         )
 
 

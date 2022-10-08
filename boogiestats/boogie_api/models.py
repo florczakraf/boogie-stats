@@ -168,10 +168,10 @@ class Score(models.Model):
 
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name="scores")
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="scores")
-    submission_date = models.DateTimeField(default=now)
-    score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)])
+    submission_date = models.DateTimeField(default=now, db_index=True)
+    score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)], db_index=True)
     comment = models.CharField(max_length=MAX_COMMENT_LENGTH, blank=True)
-    is_top = models.BooleanField(default=True)
+    is_top = models.BooleanField(default=True, db_index=True)
     used_cmod = models.BooleanField(default=False)
     rate = models.PositiveIntegerField(default=100, validators=[MaxValueValidator(MAX_RATE)])
 
