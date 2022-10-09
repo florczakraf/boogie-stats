@@ -81,7 +81,9 @@ class PlayerView(generic.ListView):
         context = super().get_context_data(**kwargs)
 
         player_id = self.kwargs["player_id"]
-        context["player"] = Player.objects.get(id=player_id)
+        player = Player.objects.get(id=player_id)
+        context["player"] = player
+        context["rivals"] = player.rivals.all()
 
         return context
 

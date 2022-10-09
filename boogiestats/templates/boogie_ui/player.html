@@ -5,17 +5,37 @@
 {% endblock title %}
 {% block content %}
     <h1>{{ player.name }} ({{ player.machine_tag }})</h1>
-    {% if player.rivals.count %}
-        <h3>Rivals</h3>
+    {% if rivals %}
+        <h3>Rivals ({{ rivals|length }})</h3>
         <ul>
-            {% for rival in player.rivals.all %}
+            {% for rival in rivals|slice:":3" %}
                 <li>
                     <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
                     <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
                 </li>
             {% endfor %}
+            {% if rivals|length > 3 %}
+                <div class="collapse multi-collapse" id="moreRivals">
+                    {% for rival in rivals|slice:"3:" %}
+                        <li>
+                            <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
+                            <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
+                        </li>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </ul>
+        {% if rivals|length > 3 %}
+            <a class="btn btn-primary collapse multi-collapse show"
+               id="moreRivalsButton"
+               data-bs-toggle="collapse"
+               data-bs-target=".multi-collapse"
+               role="button"
+               aria-expanded="false"
+               aria-controls="moreRivals moreRivalsButton">Show {{ rivals|length|sub:3 }} More Rivals</a>
+        {% endif %}
     {% endif %}
+    <hr/>
     <a href="{% url "player" player_id=player.id %}"
        class="btn {% if request.resolver_match.url_name == "player" %}btn-success{% else %}btn-secondary{% endif %}">
         Recent Scores
