@@ -87,13 +87,13 @@ class PlayerView(generic.ListView):
 
     def get_queryset(self):
         player_id = self.kwargs["player_id"]
-        return Player.objects.get(id=player_id).scores.order_by("-submission_date")
+        return Player.objects.get(id=player_id).scores.order_by("-submission_date").prefetch_related("song")
 
 
 class PlayerHighscoresView(PlayerView):
     def get_queryset(self):
         player_id = self.kwargs["player_id"]
-        return Player.objects.get(id=player_id).scores.filter(is_top=True).order_by("-score")
+        return Player.objects.get(id=player_id).scores.filter(is_top=True).order_by("-score").prefetch_related("song")
 
 
 class PlayerStatsView(generic.base.TemplateView):
