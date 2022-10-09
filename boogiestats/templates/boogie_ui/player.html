@@ -4,7 +4,7 @@
     {{ player.name }} ({{ player.machine_tag }})
 {% endblock title %}
 {% block content %}
-    <h2>{{ player.name }} ({{ player.machine_tag }})</h2>
+    <h1>{{ player.name }} ({{ player.machine_tag }})</h1>
     {% if player.rivals.count %}
         <h3>Rivals</h3>
         <ul>
@@ -16,18 +16,36 @@
             {% endfor %}
         </ul>
     {% endif %}
-    <a href="{% url "player" player_id=player.id %}">Recent Scores</a> |
-    <a href="{% url "player_highscores" player_id=player.id %}">Highscores</a>
-    <h3>Scores</h3>
+    <a href="{% url "player" player_id=player.id %}"
+       class="btn {% if request.resolver_match.url_name == "player" %}btn-success{% else %}btn-secondary{% endif %}">
+        Recent Scores
+    </a>
+    <a href="{% url "player_highscores" player_id=player.id %}"
+       class="btn {% if request.resolver_match.url_name == "player_highscores" %}btn-success{% else %}btn-secondary{% endif %}">
+        Highscores
+    </a>
+    <h3>
+        {% if request.resolver_match.url_name == "player" %}
+            Recent Scores
+        {% else %}
+            Highscores
+        {% endif %}
+    </h3>
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
                     <th scope="col">Song</th>
-                    <th scope="col">Score</th>
+                    <th scope="col">
+                        Score
+                        {% if request.resolver_match.url_name == "player_highscores" %}↓{% endif %}
+                    </th>
                     <th scope="col">Comment</th>
-                    <th scope="col">Submission Date</th>
+                    <th scope="col">
+                        Submission Date
+                        {% if request.resolver_match.url_name == "player" %}↓{% endif %}
+                    </th>
                 </tr>
             </thead>
             <tbody>
