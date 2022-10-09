@@ -168,6 +168,7 @@ class SongView(generic.ListView):
 
         song_hash = self.kwargs["song_hash"]
         context["song"] = Song.objects.get(hash=song_hash)
+        context["num_highscores"] = Score.objects.filter(song_id=song_hash, is_top=True).count()
 
         return context
 
