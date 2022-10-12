@@ -23,8 +23,8 @@
                     <div class="row-2 text-center">
                         <h2>{{ player.name }}</h2>
                     </div>
-                    <div class="row">Total Scores: {{ num_scores }}</div>
-                    <div class="row">Total Charts Played: {{ num_charts_played }}</div>
+                    <div class="row">Scores: {{ num_scores }}</div>
+                    <div class="row">Charts Played: {{ num_charts_played }}</div>
                 </div>
                 <div class="col-2">
                     <div class="container">
@@ -38,11 +38,11 @@
                         </div>
                         <div class="row">
                             <div class="col text-end">★★</div>
-                            <div class="col">{{ two_or_more_stars | sub:three_or_more_stars | sub:four_stars }}</div>
+                            <div class="col">{{ two_or_more_stars | sub:three_or_more_stars }}</div>
                         </div>
                         <div class="row">
                             <div class="col text-end">★</div>
-                            <div class="col">{{ one_or_more_stars | sub:two_or_more_stars | sub:three_or_more_stars | sub:four_stars }}</div>
+                            <div class="col">{{ one_or_more_stars | sub:two_or_more_stars }}</div>
                         </div>
                     </div>
                 </div>
