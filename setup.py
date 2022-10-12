@@ -7,7 +7,8 @@ setuptools.setup(
     author="Rafał Florczak",
     author_email="florczak.raf+boogiestats@gmail.com",
     license="MIT",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(where=".", include=["boogiestats*"]),
+    include_package_data=True,
     install_requires=[
         "requests >=2.26.0, <3",
         "Django >=4, <5",
