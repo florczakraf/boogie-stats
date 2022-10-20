@@ -1,9 +1,9 @@
 {% load mathfilters %}
-<div class="display-table">
-    <div class="display-table-cell align-middle">{{ score.score|div:100|stringformat:".2f" }}%</div>
+<div class="text-center d-flex flex-column justify-content-evenly">
+    <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
     {% if score.has_judgments %}
         {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
-            <div class="display-table-cell score-box align-middle"
+            <div class="score-box"
                  style="grid-template-columns: {{ both_fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr;">
                 <div class="fantastic"
                      title="{{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)"></div>

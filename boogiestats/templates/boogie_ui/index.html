@@ -10,16 +10,16 @@
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
-                    <th scope="col">Submission Date</th>
-                    <th scope="col">Song</th>
-                    <th scope="col">Score</th>
-                    <th scope="col">Player</th>
+                    <th scope="col" class="w-1 text-nowrap">Submission Date</th>
+                    <th scope="col" class="w-100 text-nowrap">Song</th>
+                    <th scope="col" class="w-1 text-nowrap">Score</th>
+                    <th scope="col" class="w-1 text-nowrap">Player</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="align-middle">
                 {% for score in latest_scores %}
                     <tr>
-                        <td>
+                        <td class="text-nowrap">
                             {% with datetime=score.submission_date %}
                                 {% include "boogie_ui/convert_timestamp.html" %}
                             {% endwith %}
@@ -29,8 +29,8 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td>{% include "boogie_ui/score_with_judgments.html" %}</td>
-                        <td>
+                        <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
+                        <td class="text-nowrap">
                             <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
                         </td>
                     </tr>
@@ -45,16 +45,16 @@
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
-                    <th scope="col">Submission Date</th>
-                    <th scope="col">Song</th>
-                    <th scope="col">Score</th>
-                    <th scope="col">Player</th>
+                    <th scope="col" class="w-1 text-nowrap">Submission Date</th>
+                    <th scope="col" class="w-100 text-nowrap">Song</th>
+                    <th scope="col" class="w-1 text-nowrap">Score</th>
+                    <th scope="col" class="w-1 text-nowrap">Player</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="align-middle">
                 {% for player in recent_activity %}
                     <tr>
-                        <td>
+                        <td class="text-nowrap">
                             {% with datetime=player.latest_score.submission_date %}
                                 {% include "boogie_ui/convert_timestamp.html" %}
                             {% endwith %}
@@ -64,12 +64,12 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td>
+                        <td class="text-nowrap">
                             {% with score=player.latest_score %}
                                 {% include "boogie_ui/score_with_judgments.html" %}
                             {% endwith %}
                         </td>
-                        <td>
+                        <td class="text-nowrap">
                             <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
                         </td>
                     </tr>

@@ -56,19 +56,19 @@
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
-                    <th scope="col">Song</th>
-                    <th scope="col">
+                    <th scope="col" class="w-100 text-nowrap">Song</th>
+                    <th scope="col" class="w-1 text-nowrap">Comment</th>
+                    <th scope="col" class="w-1 text-nowrap">
                         Score
                         {% if request.resolver_match.url_name == "player_highscores" %}↓{% endif %}
                     </th>
-                    <th scope="col">Comment</th>
-                    <th scope="col">
+                    <th scope="col" class="w-1 text-nowrap">
                         Submission Date
                         {% if request.resolver_match.url_name == "player" %}↓{% endif %}
                     </th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="align-middle">
                 {% for score in scores %}
                     <tr>
                         <td>
@@ -76,9 +76,9 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td>{% include "boogie_ui/score_with_judgments.html" %}</td>
-                        <td>{{ score.comment }}</td>
-                        <td>
+                        <td class="text-nowrap">{{ score.comment }}</td>
+                        <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
+                        <td class="text-nowrap">
                             {% with datetime=score.submission_date %}
                                 {% include "boogie_ui/convert_timestamp.html" %}
                             {% endwith %}

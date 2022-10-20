@@ -1,16 +1,22 @@
-<span class="display-table">
-    {% if song.hash == song.display_name %}
-        <span class="common-box"
-              title="Consider contributing missing songs to the database!">?</span>
-    {% else %}
-        <span title="{{ song.chart_info.diff }}"
-              class="common-box diff-box diff-{{ song.chart_info.diff|lower }}">
-            {{ song.chart_info.diff_number }}
-        </span>
-    {% endif %}
-    {% if song.gs_ranked %}
-        <span title="GrooveStats ranked song. This is only the local leaderboard for this song."
-              class="common-box gs-ranked">GS</span>
-    {% endif %}
+<div class="d-flex flex-row align-items-center">
+    <div class="d-flex flex-row">
+        {% if song.hash == song.display_name %}
+            <div class="common-box"
+                 title="Consider contributing missing songs to the database!">
+                <div>?</div>
+            </div>
+        {% else %}
+            <div title="{{ song.chart_info.diff }}"
+                 class="common-box diff-box diff-{{ song.chart_info.diff|lower }}">
+                <div>{{ song.chart_info.diff_number }}</div>
+            </div>
+        {% endif %}
+        {% if song.gs_ranked %}
+            <div title="GrooveStats ranked song. This is only the local leaderboard for this song."
+                 class="common-box gs-ranked">
+                GS
+            </div>
+        {% endif %}
+    </div>
     <span class="ms-2 display-table-cell align-middle ps-2">{{ song.display_name }}</span>
-</span>
+</div>

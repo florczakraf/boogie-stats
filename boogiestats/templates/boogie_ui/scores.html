@@ -9,24 +9,24 @@
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
-                    <th scope="col">
+                    <th scope="col" class="w-1 text-nowrap">
                         <a href="{% url "scores" %}">Submission Date
                             {% if request.resolver_match.url_name == "scores" %}↓{% endif %}
                         </a>
                     </th>
-                    <th scope="col">Song</th>
-                    <th scope="col">
+                    <th scope="col" class="w-100 text-nowrap">Song</th>
+                    <th scope="col" class="w-1 text-nowrap">
                         <a href="{% url "highscores" %}">Score
                             {% if request.resolver_match.url_name == "highscores" %}↓{% endif %}
                         </a>
                     </th>
-                    <th scope="col">Player</th>
+                    <th scope="col" class="w-1 text-nowrap">Player</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="align-middle">
                 {% for score in scores %}
                     <tr>
-                        <td>
+                        <td class="text-nowrap">
                             {% with datetime=score.submission_date %}
                                 {% include "boogie_ui/convert_timestamp.html" %}
                             {% endwith %}
@@ -36,8 +36,8 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td>{% include "boogie_ui/score_with_judgments.html" %}</td>
-                        <td>
+                        <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
+                        <td class="text-nowrap">
                             <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
                         </td>
                     </tr>

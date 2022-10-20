@@ -10,27 +10,27 @@
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
-                    <th scope="col">Song</th>
-                    <th scope="col">
+                    <th scope="col" class="w-100 text-nowrap">Song</th>
+                    <th scope="col" class="w-1 text-nowrap">
                         <a href="{% url "songs" %}">#Scores
                             {% if request.resolver_match.url_name == "songs" %}↓{% endif %}
                         </a>
                     </th>
-                    <th scope="col">
+                    <th scope="col" class="w-1 text-nowrap">
                         <a href="{% url "songs_by_players" %}">#Players
                             {% if request.resolver_match.url_name == "songs_by_players" %}↓{% endif %}
                         </a>
                     </th>
-                    <th scope="col">Highscore</th>
+                    <th scope="col" class="w-1 text-nowrap">Highscore</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="align-middle">
                 {% for song in songs %}
                     <tr>
                         <td>{% include "boogie_ui/song_link.html" %}</td>
-                        <td>{{ song.num_scores }}</td>
-                        <td>{{ song.num_players }}</td>
-                        <td>
+                        <td class="text-nowrap">{{ song.num_scores }}</td>
+                        <td class="text-nowrap">{{ song.num_players }}</td>
+                        <td class="text-nowrap">
                             {% if song.highscore %}
                                 {{ song.highscore.score|div:100|stringformat:".2f" }}% by
                                 <a href="{% url "player" player_id=song.highscore.player.id %}">{{ song.highscore.player.name }}</a>

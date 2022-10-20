@@ -50,6 +50,7 @@ form label {
 .gs-ranked {
   background-color: #38abb5;
   color: white;
+  border-left-width: 0 !important;
 }
 
 .common-box {
@@ -58,9 +59,10 @@ form label {
   text-align: center;
   font-weight: bold;
   border: 1px solid black;
-  display: table-cell;
-  vertical-align: middle;
+  display: flex;
   text-decoration: none;
+  justify-content: center;
+  align-items: center;
 }
 
 .fantastic {
@@ -90,7 +92,6 @@ form label {
 .score-box {
   width: 100px;
   border: 1px solid black;
-  height: 1.5em;
+  height: 0.5em;
   display: grid;
-  margin-left: 1em;
 }
