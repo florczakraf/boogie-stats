@@ -5,6 +5,7 @@ from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.db.models import Count
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.views import generic
 
@@ -81,7 +82,7 @@ class PlayerView(generic.ListView):
         context = super().get_context_data(**kwargs)
 
         player_id = self.kwargs["player_id"]
-        player = Player.objects.get(id=player_id)
+        player = Player.get_or_404(id=player_id)
         context["player"] = player
         context["rivals"] = player.rivals.all()
 
@@ -89,13 +90,17 @@ class PlayerView(generic.ListView):
 
     def get_queryset(self):
         player_id = self.kwargs["player_id"]
-        return Player.objects.get(id=player_id).scores.order_by("-submission_date").prefetch_related("song")
+        player = Player.get_or_404(id=player_id)
+
+        return player.scores.order_by("-submission_date").prefetch_related("song")
 
 
 class PlayerHighscoresView(PlayerView):
     def get_queryset(self):
         player_id = self.kwargs["player_id"]
-        return Player.objects.get(id=player_id).scores.filter(is_top=True).order_by("-score").prefetch_related("song")
+        player = Player.get_or_404(id=player_id)
+
+        return player.scores.filter(is_top=True).order_by("-score").prefetch_related("song")
 
 
 class PlayerStatsView(generic.base.TemplateView):
@@ -105,8 +110,9 @@ class PlayerStatsView(generic.base.TemplateView):
         context = super().get_context_data(**kwargs)
 
         player_id = self.kwargs["player_id"]
-        context["player"] = Player.objects.get(id=player_id)
-        scores = Player.objects.get(id=player_id).scores
+        player = Player.get_or_404(id=player_id)
+        context["player"] = player
+        scores = player.scores
 
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_top=True).count()
@@ -152,9 +158,9 @@ class VersusView(generic.ListView):
         return context
 
     def get_players(self):
-        p1_id = self.kwargs["p1"]
-        p2_id = self.kwargs["p2"]
-        return Player.objects.get(id=p1_id), Player.objects.get(id=p2_id)
+        p1 = Player.get_or_404(id=self.kwargs["p1"])
+        p2 = Player.get_or_404(id=self.kwargs["p2"])
+        return p1, p2
 
     def get_queryset(self):
         return None
@@ -169,7 +175,7 @@ class SongView(generic.ListView):
         context = super().get_context_data(**kwargs)
 
         song_hash = self.kwargs["song_hash"]
-        context["song"] = Song.objects.get(hash=song_hash)
+        context["song"] = Song.get_or_404(hash=song_hash)
         context["num_highscores"] = Score.objects.filter(song_id=song_hash, is_top=True).count()
 
         return context
@@ -177,7 +183,7 @@ class SongView(generic.ListView):
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
         return (
-            Song.objects.get(hash=song_hash)
+            Song.get_or_404(hash=song_hash)
             .scores.order_by("-score", "submission_date")
             .select_related("song", "player")
         )
@@ -187,7 +193,7 @@ class SongHighscoresView(SongView):
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
         return (
-            Song.objects.get(hash=song_hash)
+            Song.get_or_404(hash=song_hash)
             .scores.filter(is_top=True)
             .order_by("-score", "submission_date")
             .select_related("song", "player")
@@ -254,3 +260,12 @@ def logout_user(request):
     logout(request)
     messages.success(request, "Logged out successfully.", extra_tags="alert-success")
     return redirect(reverse("index"))
+
+
+class Response404(TemplateResponse):
+    status_code = 404
+
+
+class Handler404(generic.base.TemplateView):
+    response_class = Response404
+    template_name = "boogie_ui/404.html"

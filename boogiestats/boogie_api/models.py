@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.db.models.signals import m2m_changed
+from django.http import Http404
 from django.utils.timezone import now
 from django.utils.functional import cached_property
 
@@ -120,6 +121,13 @@ class Song(models.Model):
 
         return final_name
 
+    @staticmethod
+    def get_or_404(*args, **kwargs):
+        try:
+            return Song.objects.get(*args, **kwargs)
+        except Song.DoesNotExist:
+            raise Http404("Requested song does not exist.")
+
 
 class Player(models.Model):
     objects = PlayerManager()
@@ -150,6 +158,13 @@ class Player(models.Model):
 
     def __str__(self):
         return f"{self.id} - {self.name} ({self.machine_tag})"
+
+    @staticmethod
+    def get_or_404(*args, **kwargs):
+        try:
+            return Player.objects.get(*args, **kwargs)
+        except Player.DoesNotExist:
+            raise Http404("Requested player does not exist.")
 
 
 def validate_rivals(sender, **kwargs):
