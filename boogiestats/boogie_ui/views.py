@@ -11,6 +11,7 @@ from django.views import generic
 
 from boogiestats.boogie_api.models import Score, Player, Song
 from boogiestats.boogie_ui.forms import EditPlayerForm
+from boogiestats.boogiestats.exceptions import Managed404Error
 
 ENTRIES_PER_PAGE = 30
 
@@ -269,3 +270,13 @@ class Response404(TemplateResponse):
 class Handler404(generic.base.TemplateView):
     response_class = Response404
     template_name = "boogie_ui/404.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        fallback_exception = "Page not found."
+
+        context["exception"] = context.get("exception")
+        if not isinstance(context["exception"], Managed404Error):
+            context["exception"] = fallback_exception
+
+        return context

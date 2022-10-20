@@ -8,11 +8,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.db.models.signals import m2m_changed
-from django.http import Http404
 from django.utils.timezone import now
 from django.utils.functional import cached_property
 
 from boogiestats.boogie_api.managers import ScoreManager, PlayerManager
+from boogiestats.boogiestats.exceptions import Managed404Error
 
 MAX_LEADERBOARD_RIVALS = 3
 MAX_LEADERBOARD_ENTRIES = 50
@@ -126,7 +126,7 @@ class Song(models.Model):
         try:
             return Song.objects.get(*args, **kwargs)
         except Song.DoesNotExist:
-            raise Http404("Requested song does not exist.")
+            raise Managed404Error("Requested song does not exist.")
 
 
 class Player(models.Model):
@@ -164,7 +164,7 @@ class Player(models.Model):
         try:
             return Player.objects.get(*args, **kwargs)
         except Player.DoesNotExist:
-            raise Http404("Requested player does not exist.")
+            raise Managed404Error("Requested player does not exist.")
 
 
 def validate_rivals(sender, **kwargs):
