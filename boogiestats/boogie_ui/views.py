@@ -130,7 +130,7 @@ class VersusView(generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         p1, p2 = self.get_players()
-        p1_scores_qs = p1.scores.filter(is_top=True).order_by("-score").all()
+        p1_scores_qs = p1.scores.filter(is_top=True).order_by("-score").all().select_related("song")
         p2_scores_qs = p2.scores.filter(is_top=True, song__hash__in=[score.song_id for score in p1_scores_qs])
         p2_scores_dict = {score.song_id: score for score in p2_scores_qs}
         scores = sorted(
