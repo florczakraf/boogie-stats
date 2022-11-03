@@ -1,6 +1,7 @@
 import json
 from hashlib import sha256
 from pathlib import Path
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -128,6 +129,11 @@ class Song(models.Model):
         except Song.DoesNotExist:
             raise Managed404Error("Requested song does not exist.")
 
+    def set_ranked(self, is_ranked):
+        if is_ranked and not self.gs_ranked:
+            self.gs_ranked = True
+            self.save()
+
 
 class Player(models.Model):
     objects = PlayerManager()
@@ -148,7 +154,7 @@ class Player(models.Model):
         return super().save(*args, **kwargs)
 
     @staticmethod
-    def get_by_gs_api_key(gs_api_key):
+    def get_by_gs_api_key(gs_api_key) -> Optional["Player"]:
         api_key = Player.gs_api_key_to_bs_api_key(gs_api_key)
         return Player.objects.filter(api_key=api_key).first()
 

@@ -3,13 +3,14 @@ import json
 import pytest
 import requests_mock as requests_mock_lib
 
+from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.models import Song, Player, Score
 from boogiestats.boogie_api.views import GROOVESTATS_ENDPOINT, GROOVESTATS_RESPONSES
 
 
 @pytest.fixture(autouse=True)
 def requests_mock():
-    with requests_mock_lib.Mocker() as mock:
+    with requests_mock_lib.mock(case_sensitive=True) as mock:
         yield mock
 
 
@@ -17,6 +18,7 @@ def test_player_scores_without_api_keys(client):
     response = client.get("/player-scores.php", data={"chartHashP1": "01234567890ABCDEF"})
 
     assert response.json() == GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"]
+    assert response.status_code == 400
 
 
 @pytest.fixture
@@ -28,9 +30,10 @@ def gs_api_key():
 def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
     client, gs_api_key, requests_mock, player_index
 ):
+    hash = "0123456789ABCDEF"
     unranked_song = {
         f"player{player_index}": {
-            "chartHash": "0123456789ABCDEF",
+            "chartHash": hash,
             "isRanked": False,
             "gsLeaderboard": [],
         }
@@ -41,13 +44,15 @@ def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
     }
     response = client.get(
         "/player-scores.php",
-        data={f"chartHashP{player_index}": "0123456789ABCDEF"},
+        data={f"chartHashP{player_index}": hash},
         **kwargs,
     )
 
+    assert len(requests_mock.request_history) == 1
+    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
     assert response.json() == {
         f"player{player_index}": {
-            "chartHash": "0123456789ABCDEF",
+            "chartHash": hash,
             "isRanked": True,
             "gsLeaderboard": [],
         }
@@ -56,9 +61,10 @@ def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
 
 @pytest.mark.parametrize("player_index", [1, 2])
 def test_player_scores_given_groovestats_ranked_song(client, gs_api_key, requests_mock, player_index):
+    hash = "76957dd1f96f764d"
     ranked_song = {
         f"player{player_index}": {
-            "chartHash": "76957dd1f96f764d",
+            "chartHash": hash,
             "isRanked": True,
             "gsLeaderboard": [
                 {
@@ -76,10 +82,14 @@ def test_player_scores_given_groovestats_ranked_song(client, gs_api_key, request
     }
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(ranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
     }
-    response = client.get("/player-scores.php", data={f"chartHashP{player_index}": "76957dd1f96f764d"}, **kwargs)
+    response = client.get("/player-scores.php", data={f"chartHashP{player_index}": hash}, **kwargs)
 
+    assert len(requests_mock.request_history) == 1
+    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
+    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
+    assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
     assert response.json() == ranked_song
 
 
@@ -113,21 +123,13 @@ def song(some_player, other_player):
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_player_leaderboards_requires_max_leaderboard_results_param(client, gs_api_key, player_index):
-    kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
-    }
-    response = client.get("/player-leaderboards.php", data={f"chartHashP{player_index}": "0123456789ABCDEF"}, **kwargs)
-    assert response.json() == GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"]
-
-
-@pytest.mark.parametrize("player_index", [1, 2])
 def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
     client, gs_api_key, requests_mock, player_index
 ):
+    hash = "0123456789ABCDEF"
     unranked_song = {
         f"player{player_index}": {
-            "chartHash": "0123456789ABCDEF",
+            "chartHash": hash,
             "isRanked": False,
             "gsLeaderboard": [],
         }
@@ -141,17 +143,22 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
     }
     response = client.get(
         "/player-leaderboards.php",
-        data={f"chartHashP{player_index}": "0123456789ABCDEF", "maxLeaderboardResults": 3},
+        data={f"chartHashP{player_index}": hash, "maxLeaderboardResults": 3},
         **kwargs,
     )
 
     assert response.json() == {
         f"player{player_index}": {
-            "chartHash": "0123456789ABCDEF",
+            "chartHash": hash,
             "isRanked": True,
             "gsLeaderboard": [],
         }
     }
+    assert len(requests_mock.request_history) == 1
+    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
+    assert requests_mock.last_request.qs["maxLeaderboardResults"] == ["3"]
+    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
+    assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -199,9 +206,10 @@ def test_player_leaderboards_given_groovestats_ranked_song(client, gs_api_key, r
 
 @pytest.mark.parametrize("player_index", [1, 2])
 def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests_mock, player_index):
+    hash = "76957dd1f96f764d"
     expected_result = {
         f"player{player_index}": {
-            "chartHash": "76957dd1f96f764d",
+            "chartHash": hash,
             "isRanked": True,
             "gsLeaderboard": [
                 {
@@ -244,7 +252,7 @@ def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests
         f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
     }
     response = client.post(
-        f"/score-submit.php?chartHashP{player_index}=76957dd1f96f764d&maxLeaderboardResults=3",
+        f"/score-submit.php?chartHashP{player_index}={hash}&maxLeaderboardResults=3",
         data={
             f"player{player_index}": {
                 "score": 5805,
@@ -258,11 +266,16 @@ def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests
 
     assert Song.objects.count() == 1
     song = Song.objects.first()
-    assert song.hash == "76957dd1f96f764d"
+    assert song.hash == hash
     assert song.gs_ranked is True
     assert Score.objects.count() == 1
     assert Player.objects.count() == 1
     assert response.json() == expected_result
+    assert len(requests_mock.request_history) == 1
+    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
+    assert requests_mock.last_request.qs["maxLeaderboardResults"] == ["3"]
+    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
+    assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -558,6 +571,70 @@ def test_event_score_submit(
 
     assert Song.objects.count() == 1
     assert Score.objects.count() == 1
+    event_results = response.json()[f"player{player_index}"][event_key]
+    assert event_results["everything"] == "will be passed"
+
+
+@pytest.mark.parametrize("event_key", ["rpg", "itl"])
+@pytest.mark.parametrize("player_index", [1, 2])
+@pytest.mark.parametrize("is_ranked", [True, False])
+def test_event_player_scores(
+    client, some_player, other_player, requests_mock, some_player_gs_api_key, player_index, is_ranked, event_key
+):
+    gs_response = {
+        f"player{player_index}": {
+            "chartHash": "afc954d593fd8bbd",
+            event_key: {"everything": "will be passed"},
+            "gsLeaderboard": [],
+            "scoreDelta": 8041,
+            "isRanked": is_ranked,
+            "result": "improved",
+        }
+    }
+
+    requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(gs_response))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.get(
+        f"/player-scores.php?chartHashP{player_index}=afc954d593fd8bbd&maxLeaderboardResults=13",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 0
+    assert Score.objects.count() == 0
+    event_results = response.json()[f"player{player_index}"][event_key]
+    assert event_results["everything"] == "will be passed"
+
+
+@pytest.mark.parametrize("event_key", ["rpg", "itl"])
+@pytest.mark.parametrize("player_index", [1, 2])
+@pytest.mark.parametrize("is_ranked", [True, False])
+def test_event_player_leaderboards(
+    client, some_player, other_player, requests_mock, some_player_gs_api_key, player_index, is_ranked, event_key
+):
+    gs_response = {
+        f"player{player_index}": {
+            "chartHash": "afc954d593fd8bbd",
+            event_key: {"everything": "will be passed"},
+            "gsLeaderboard": [],
+            "scoreDelta": 8041,
+            "isRanked": is_ranked,
+            "result": "improved",
+        }
+    }
+
+    requests_mock.get(GROOVESTATS_ENDPOINT + "/player-leaderboards.php", text=json.dumps(gs_response))
+    kwargs = {
+        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.get(
+        f"/player-leaderboards.php?chartHashP{player_index}=afc954d593fd8bbd&maxLeaderboardResults=13",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 0
+    assert Score.objects.count() == 0
     event_results = response.json()[f"player{player_index}"][event_key]
     assert event_results["everything"] == "will be passed"
 
