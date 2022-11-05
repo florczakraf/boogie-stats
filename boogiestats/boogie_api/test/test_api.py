@@ -1,11 +1,12 @@
 import json
+from unittest.mock import Mock
 
 import pytest
 import requests_mock as requests_mock_lib
 
 from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.models import Song, Player, Score
-from boogiestats.boogie_api.views import GROOVESTATS_ENDPOINT, GROOVESTATS_RESPONSES
+from boogiestats.boogie_api.views import GROOVESTATS_ENDPOINT, GROOVESTATS_RESPONSES, create_headers
 
 
 @pytest.fixture(autouse=True)
@@ -50,6 +51,7 @@ def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
 
     assert len(requests_mock.request_history) == 1
     assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
+    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
     assert response.json() == {
         f"player{player_index}": {
             "chartHash": hash,
@@ -91,6 +93,25 @@ def test_player_scores_given_groovestats_ranked_song(client, gs_api_key, request
     assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
     assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
     assert response.json() == ranked_song
+
+
+def test_create_headers_filters_headers():
+    request = Mock(headers={"Host": "boogie.stats", "x-api-key-player-1": "foo", "x-api-key-player-2": "bar"})
+    assert create_headers(request) == {
+        "User-Agent": "Anonymous via BoogieStats/0.0.1",
+        "x-api-key-player-1": "foo",
+        "x-api-key-player-2": "bar",
+    }
+
+
+def test_create_headers_wraps_user_agent():
+    request = Mock(headers={"User-Agent": "ITGmania/0.5.1"})
+    assert create_headers(request) == {"User-Agent": f"ITGmania/0.5.1 via BoogieStats/{boogiestats_version}"}
+
+
+def test_create_headers_adds_user_agent_when_missing():
+    request = Mock(headers={})
+    assert create_headers(request) == {"User-Agent": f"Anonymous via BoogieStats/{boogiestats_version}"}
 
 
 @pytest.fixture

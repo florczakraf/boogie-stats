@@ -77,8 +77,15 @@ def parse_players(request):
 
 
 def create_headers(request):
+    """
+    Creates headers to be used when passing requests to GS.
+
+    Some headers have to be filtered out (e.g. `Host`), otherwise GS front rejects the request.
+    It's enough to just keep API keys. We also add BoogieStats to User-Agent in case GS ever decides to make usage stats.
+    """
+
     return {
-        **request.headers,
+        **{k: v for k, v in request.headers.items() if k.lower().startswith("x-api-key")},
         "User-Agent": f"{request.headers.get('User-Agent', 'Anonymous')} via BoogieStats/{boogiestats_version}",
     }
 
