@@ -41,7 +41,7 @@ def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
     }
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
     }
     response = client.get(
         "/player-scores.php",
@@ -160,7 +160,7 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
         text=json.dumps(unranked_song),
     )
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
     }
     response = client.get(
         "/player-leaderboards.php",
@@ -214,7 +214,7 @@ def test_player_leaderboards_given_groovestats_ranked_song(client, gs_api_key, r
     }
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-leaderboards.php", text=json.dumps(ranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
     }
     response = client.get(
         "/player-leaderboards.php",
@@ -270,7 +270,7 @@ def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(expected_result))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}={hash}&maxLeaderboardResults=3",
@@ -313,7 +313,7 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=76957dd1f96f764e&maxLeaderboardResults=3",
@@ -372,7 +372,7 @@ def test_score_submit_given_groovestats_unranked_song_and_better_score(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -437,7 +437,7 @@ def test_score_submit_given_groovestats_unranked_song_and_worse_score(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -502,7 +502,7 @@ def test_score_submit_with_empty_comment(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -537,7 +537,7 @@ def test_score_submit_without_a_comment(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -576,7 +576,7 @@ def test_event_score_submit(
 
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(gs_response))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=afc954d593fd8bbd&maxLeaderboardResults=3",
@@ -615,7 +615,7 @@ def test_event_player_scores(
 
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(gs_response))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.get(
         f"/player-scores.php?chartHashP{player_index}=afc954d593fd8bbd&maxLeaderboardResults=13",
@@ -647,7 +647,7 @@ def test_event_player_leaderboards(
 
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-leaderboards.php", text=json.dumps(gs_response))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.get(
         f"/player-leaderboards.php?chartHashP{player_index}=afc954d593fd8bbd&maxLeaderboardResults=13",
@@ -674,7 +674,7 @@ def test_score_submit_with_some_judgments(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -741,7 +741,7 @@ def test_score_submit_with_all_judgments(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -812,7 +812,7 @@ def test_score_submit_with_cmod_info(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -849,7 +849,7 @@ def test_score_submit_with_no_cmod_info_but_cmod_comment(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -885,7 +885,7 @@ def test_score_submit_with_no_cmod_info(
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
     kwargs = {
-        f"HTTP_X_Api_Key_Player_{player_index}": some_player_gs_api_key,
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
     }
     response = client.post(
         f"/score-submit.php?chartHashP{player_index}=0123456789ABCDEF&maxLeaderboardResults=3",
@@ -924,8 +924,8 @@ def test_score_submit_with_two_players_playing_the_same_unranked_song(client, gs
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_songs))
     kwargs = {
-        "HTTP_X_Api_Key_Player_1": "abcdef0123456789" * 4,
-        "HTTP_X_Api_Key_Player_2": "abcdef0123456789"[::-1] * 4,
+        "HTTP_x_api_key_player_1": "abcdef0123456789" * 4,
+        "HTTP_x_api_key_player_2": "abcdef0123456789"[::-1] * 4,
     }
     response = client.post(
         "/score-submit.php?chartHashP1=aaaaadd1f96f764e&chartHashP2=aaaaadd1f96f764e&maxLeaderboardResults=3",
@@ -1032,8 +1032,8 @@ def test_score_submit_with_two_players_playing_the_same_ranked_song(client, gs_a
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_songs))
     kwargs = {
-        "HTTP_X_Api_Key_Player_1": "abcdef0123456789" * 4,
-        "HTTP_X_Api_Key_Player_2": "abcdef0123456789"[::-1] * 4,
+        "HTTP_x_api_key_player_1": "abcdef0123456789" * 4,
+        "HTTP_x_api_key_player_2": "abcdef0123456789"[::-1] * 4,
     }
     response = client.post(
         "/score-submit.php?chartHashP1=aaaaadd1f96f764e&chartHashP2=aaaaadd1f96f764e&maxLeaderboardResults=3",
