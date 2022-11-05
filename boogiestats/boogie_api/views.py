@@ -167,7 +167,7 @@ def player_scores(request):
 
         gs_player = gs_response.get(player_id, {})
         gs_leaderboard = gs_player.get("gsLeaderboard", [])
-        leaderboard = gs_leaderboard or get_local_leaderboard(player, num_entries=1)  # TODO 1? not from req?
+        leaderboard = gs_leaderboard or get_local_leaderboard(player, num_entries=1)  # limit is not present in request
 
         final_response[player_id]["gsLeaderboard"] = leaderboard
 
