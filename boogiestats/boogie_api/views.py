@@ -4,7 +4,7 @@ import uuid
 from collections import defaultdict
 
 import requests
-from django.http import JsonResponse, HttpResponseServerError
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from boogiestats import __version__ as boogiestats_version
@@ -42,6 +42,7 @@ GROOVESTATS_RESPONSES = {
     },
 }
 GROOVESTATS_TIMEOUT = 12
+SUPPORTED_EVENTS = ("rpg", "itl")
 
 
 def new_session(request):  # TODO add proxying to groovestats / caching?
@@ -76,42 +77,80 @@ def parse_players(request):
 
 
 def create_headers(request):
+    """
+    Creates headers to be used when passing requests to GS.
+
+    Some headers have to be filtered out (e.g. `Host`), otherwise GS front rejects the request.
+    It's enough to just keep API keys. We also add BoogieStats to User-Agent in case GS ever decides to make usage stats.
+    """
+
     return {
+        **{k: v for k, v in request.headers.items() if k.lower().startswith("x-api-key")},
         "User-Agent": f"{request.headers.get('User-Agent', 'Anonymous')} via BoogieStats/{boogiestats_version}",
     }
 
 
+def fill_event_leaderboards(final_response, gs_player, player_id):
+    for event in SUPPORTED_EVENTS:
+        if event_leaderboard := gs_player.get(event):
+            final_response[player_id][event] = event_leaderboard
+
+
+def handle_score_results(player, gs_player, old_score, new_score_value):
+    is_ranked = gs_player.get("isRanked", False)
+    if is_ranked:
+        player["result"] = gs_player["result"]
+        player["delta"] = gs_player["scoreDelta"]
+    else:
+        if old_score:
+            if old_score.score < new_score_value:
+                player["result"] = "improved"
+            else:
+                player["result"] = "score-not-improved"
+
+            player["delta"] = new_score_value - old_score.score
+        else:
+            player["result"] = "score-added"
+            player["delta"] = new_score_value
+
+
+def get_local_leaderboard(player, num_entries):
+    gs_api_key = player["gsApiKey"]
+    chart_hash = player["chartHash"]
+    player_instance = Player.get_by_gs_api_key(gs_api_key)
+    song = Song.objects.filter(hash=chart_hash).first()
+
+    if song:
+        return song.get_leaderboard(num_entries=num_entries, player=player_instance)
+    return []
+
+
+def get_or_create_player(gs_api_key):
+    player_instance = Player.get_by_gs_api_key(gs_api_key)
+    if not player_instance:
+        machine_tag = uuid.uuid4().hex[:4].upper()
+        player_instance = Player.objects.create(gs_api_key=gs_api_key, machine_tag=machine_tag)
+    return player_instance
+
+
 def player_scores(request):
-    params = {}
     headers = create_headers(request)
 
     try:
         players = parse_players(request)
     except ValueError:
-        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"])
-
-    for player_index, player in players.items():
-        gs_api_key = player["gsApiKey"]
-        chart_hash = player["chartHash"]
-        player_instance = Player.get_by_gs_api_key(gs_api_key)
-        song = Song.objects.filter(hash=chart_hash).first()
-
-        if song:
-            player["leaderboard"] = song.get_leaderboard(num_entries=1, player=player_instance)
-
-        params[f"chartHashP{player_index}"] = chart_hash
-        headers[f"x-api-key-player-{player_index}"] = gs_api_key
+        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
     try:
         gs_response = requests.get(
             GROOVESTATS_ENDPOINT + "/player-scores.php",
-            params=params,
+            params=request.GET,
             headers=headers,
             timeout=GROOVESTATS_TIMEOUT,
         ).json()
     except requests.Timeout as e:
         logger.error(f"Request to GrooveStats timed-out: {e}")
-        return HttpResponseServerError()
+        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
 
     logger.info(gs_response)
 
@@ -126,59 +165,37 @@ def player_scores(request):
             "isRanked": True,
         }
 
-        gs_leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
-        leaderboard = gs_leaderboard or player.get("leaderboard", [])
+        gs_player = gs_response.get(player_id, {})
+        gs_leaderboard = gs_player.get("gsLeaderboard", [])
+        leaderboard = gs_leaderboard or get_local_leaderboard(player, num_entries=1)  # limit is not present in request
 
         final_response[player_id]["gsLeaderboard"] = leaderboard
 
-        player["itl"] = gs_response.get(player_id, {}).get("itl")
-        if player["itl"]:
-            final_response[player_id]["itl"] = player["itl"]
-
-        player["rpg"] = gs_response.get(player_id, {}).get("rpg")
-        if player["rpg"]:
-            final_response[player_id]["rpg"] = player["rpg"]
+        fill_event_leaderboards(final_response, gs_player, player_id)
 
     return JsonResponse(data=final_response)
 
 
 def player_leaderboards(request):
-    params = {}
     headers = create_headers(request)
 
     try:
         players = parse_players(request)
     except ValueError:
-        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"])
+        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
-    max_results = int(request.GET.get("maxLeaderboardResults", 0))
-
-    if not max_results:
-        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"])
-    params["maxLeaderboardResults"] = max_results
-
-    for player_index, player in players.items():
-        gs_api_key = player["gsApiKey"]
-        chart_hash = player["chartHash"]
-        player_instance = Player.get_by_gs_api_key(gs_api_key)
-        song = Song.objects.filter(hash=chart_hash).first()
-
-        if song:
-            player["leaderboard"] = song.get_leaderboard(num_entries=max_results, player=player_instance)
-
-        params[f"chartHashP{player_index}"] = chart_hash
-        headers[f"x-api-key-player-{player_index}"] = gs_api_key
+    max_results = int(request.GET.get("maxLeaderboardResults", 1))
 
     try:
         gs_response = requests.get(
             GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
-            params=params,
+            params=request.GET,
             headers=headers,
             timeout=GROOVESTATS_TIMEOUT,
         ).json()
     except requests.Timeout as e:
         logger.error(f"Request to GrooveStats timed-out: {e}")
-        return HttpResponseServerError()
+        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
     logger.info(gs_response)
 
     final_response = {}
@@ -192,150 +209,92 @@ def player_leaderboards(request):
             "isRanked": True,
         }
 
-        gs_leaderboard = gs_response.get(f"player{player_index}", {}).get("gsLeaderboard", [])
-        leaderboard = gs_leaderboard or player.get("leaderboard", [])
+        gs_player = gs_response.get(player_id, {})
+        gs_leaderboard = gs_player.get("gsLeaderboard", [])
+        leaderboard = gs_leaderboard or get_local_leaderboard(player, max_results)
 
         final_response[player_id]["gsLeaderboard"] = leaderboard
 
-        player["itl"] = gs_response.get(player_id, {}).get("itl")
-        if player["itl"]:
-            final_response[player_id]["itl"] = player["itl"]
-
-        player["rpg"] = gs_response.get(player_id, {}).get("rpg")
-        if player["rpg"]:
-            final_response[player_id]["rpg"] = player["rpg"]
+        fill_event_leaderboards(final_response, gs_player, player_id)
 
     return JsonResponse(data=final_response)
 
 
 @csrf_exempt
 def score_submit(request):
-    params = {}
     headers = create_headers(request)
 
     try:
         players = parse_players(request)
-    except ValueError:
-        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"])
+        body_parsed = json.loads(request.body)
+    except (ValueError, json.JSONDecodeError):
+        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
-    max_results = int(request.GET.get("maxLeaderboardResults", 0))
-
-    if not max_results:
-        return JsonResponse(data=GROOVESTATS_RESPONSES["MISSING_LEADERBOARDS_LIMIT"])
-    params["maxLeaderboardResults"] = max_results
+    max_results = int(request.GET.get("maxLeaderboardResults", 1))
 
     try:
-        body_parsed = json.loads(request.body)
-    except json.JSONDecodeError:
-        # TODO early exit?
-        body_parsed = {}
+        gs_response = requests.post(
+            GROOVESTATS_ENDPOINT + "/score-submit.php",
+            params=request.GET,
+            headers=headers,
+            json=body_parsed,
+            timeout=GROOVESTATS_TIMEOUT,
+        ).json()
+    except requests.Timeout as e:
+        logger.error(f"Request to GrooveStats timed-out: {e}")
+        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
+    logger.info(gs_response)
 
-    for player_index, player in players.items():
-        gs_api_key = player["gsApiKey"]
-        chart_hash = player["chartHash"]
-
-        params[f"chartHashP{player_index}"] = chart_hash
-        headers[f"x-api-key-player-{player_index}"] = gs_api_key
-
-    if params and headers and body_parsed:
-        try:
-            gs_response = requests.post(
-                GROOVESTATS_ENDPOINT + "/score-submit.php",
-                params=params,
-                headers=headers,
-                json=body_parsed,
-                timeout=GROOVESTATS_TIMEOUT,
-            ).json()
-        except requests.Timeout as e:
-            logger.error(f"Request to GrooveStats timed-out: {e}")
-            return HttpResponseServerError()
-        logger.info(gs_response)
-    else:
-        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"])
-
-    for player_index, player in players.items():
-        player_id = f"player{player_index}"
-        chart_hash = player["chartHash"]
-        gs_api_key = player["gsApiKey"]
-        is_ranked = gs_response.get(player_id, {}).get("isRanked", False)
-
-        song, song_created = Song.objects.get_or_create(hash=chart_hash)
-        player["song"] = song
-        player["is_ranked"] = is_ranked
-
-        player_instance = Player.get_by_gs_api_key(gs_api_key)
-
-        if not player_instance:
-            machine_tag = uuid.uuid4().hex[:4].upper()
-            player_instance = Player.objects.create(gs_api_key=gs_api_key, machine_tag=machine_tag)
-
-        player["player_instance"] = player_instance
-
-        _, old_score = song.get_highscore(player_instance)
-
-        comment = body_parsed[player_id].get("comment", "")
-        used_cmod = body_parsed[player_id].get("usedCmod", None)
-        judgments = body_parsed[player_id].get("judgmentCounts", None)
-
-        player_instance.scores.create(
-            song=song,
-            score=body_parsed[player_id]["score"],
-            comment=comment,
-            rate=body_parsed[player_id].get("rate", 100),
-            used_cmod=used_cmod,
-            judgments=judgments,
-        )
-
-        player_response = gs_response.get(player_id, {})
-
-        # event structures can be present even when song is not ranked, so we just pass them when present
-        if "itl" in player_response:
-            player["itl"] = player_response["itl"]
-
-        if "rpg" in player_response:
-            player["rpg"] = player_response["rpg"]
-
-        if is_ranked:
-            player["leaderboard"] = player_response["gsLeaderboard"]
-            player["result"] = player_response["result"]
-            player["delta"] = player_response["scoreDelta"]
-
-            if not song.gs_ranked:
-                song.gs_ranked = True
-                song.save()
-        else:
-            if old_score:
-                if old_score.score < body_parsed[player_id]["score"]:
-                    player["result"] = "improved"
-                else:
-                    player["result"] = "score-not-improved"
-
-                player["delta"] = body_parsed[player_id]["score"] - old_score.score
-            else:
-                player["result"] = "score-added"
-                player["delta"] = body_parsed[player_id]["score"]
-
-    for player in players.values():
-        if not player["is_ranked"]:
-            player["leaderboard"] = player["song"].get_leaderboard(
-                num_entries=max_results, player=player["player_instance"]
-            )
+    handle_scores(body_parsed, gs_response, players)
 
     final_response = {}
 
     for player_index, player in players.items():
-        final_response[f"player{player_index}"] = {
+        player_id = f"player{player_index}"
+        gs_player = gs_response.get(player_id, {})
+        gs_leaderboard = gs_player.get("gsLeaderboard", [])
+        leaderboard = gs_leaderboard or get_local_leaderboard(player, max_results)
+
+        final_response[player_id] = {
             "chartHash": player["chartHash"],
             "isRanked": True,
-            "gsLeaderboard": player["leaderboard"],
+            "gsLeaderboard": leaderboard,
             "scoreDelta": player["delta"],
             "result": player["result"],
         }
-
-        if player.get("itl"):
-            final_response[f"player{player_index}"]["itl"] = player["itl"]
-
-        if player.get("rpg"):
-            final_response[f"player{player_index}"]["rpg"] = player["rpg"]
+        fill_event_leaderboards(final_response, gs_player, player_id)
 
     return JsonResponse(data=final_response)
+
+
+def handle_scores(body_parsed, gs_response, players):
+    for player_index, player in players.items():
+        player_id = f"player{player_index}"
+        chart_hash = player["chartHash"]
+        gs_api_key = player["gsApiKey"]
+        gs_player = gs_response.get(player_id, {})
+        is_ranked = gs_player.get("isRanked", False)
+
+        song, _ = Song.objects.get_or_create(hash=chart_hash)
+        song.set_ranked(is_ranked)
+
+        player_instance = get_or_create_player(gs_api_key)
+
+        _, old_score = song.get_highscore(player_instance)
+
+        score_submission = body_parsed[player_id]
+        comment = score_submission.get("comment", "")
+        used_cmod = score_submission.get("usedCmod", None)
+        judgments = score_submission.get("judgmentCounts", None)
+
+        player_instance.scores.create(
+            song=song,
+            score=score_submission["score"],
+            comment=comment,
+            rate=score_submission.get("rate", 100),
+            used_cmod=used_cmod,
+            judgments=judgments,
+        )
+
+        new_score_value = score_submission["score"]
+        handle_score_results(player, gs_player, old_score, new_score_value)

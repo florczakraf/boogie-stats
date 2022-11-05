@@ -55,8 +55,6 @@ jobs:
       - name: Run flake8
         run: |
           flake8
-        # flake fails at the moment because of the over-the-roof cyclomatic complexity in views
-        continue-on-error: true
 
   djlint:
     runs-on: ubuntu-latest
