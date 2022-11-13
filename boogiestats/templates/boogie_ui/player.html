@@ -36,6 +36,37 @@
         {% endif %}
     {% endif %}
     <hr/>
+    <div class="overflow-auto">
+        <div class="calendar-grid">
+            <div class="calendar-months text-center fw-bold">
+                {% for month in months %}<div>{{ month }}</div>{% endfor %}
+            </div>
+            <div class="calendar-days text-center fw-bold">
+                {% for day in days %}<div>{{ day }}</div>{% endfor %}
+            </div>
+            <div class="calendar-graph">
+                {% for _ in skip_days_range %}
+                    <div>
+                        <!-- spacer -->
+                    </div>
+                {% endfor %}
+                {% for day in calendar_days %}
+                    <div class="calendar-graph-box {{ day.class }}"
+                         title="{{ day.day }}: {{ day.plays }}"></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="mt-1">
+        Less
+        <div class="calendar-legend">
+            {% for plays, class in calendar_legend %}
+                <div class="calendar-graph-box {{ class }}" title="{{ plays }}"></div>
+            {% endfor %}
+        </div>
+        More
+    </div>
+    <hr/>
     <a href="{% url "player" player_id=player.id %}"
        class="btn {% if request.resolver_match.url_name == "player" %}btn-success{% else %}btn-secondary{% endif %}">
         Recent Scores
