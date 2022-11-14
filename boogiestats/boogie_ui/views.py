@@ -1,3 +1,6 @@
+import datetime
+import itertools
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -74,6 +77,16 @@ class PlayersByScoresListView(PlayersListView):
         return Player.objects.all().annotate(num_scores=Count("scores")).order_by("-num_scores")
 
 
+def plays_to_class(plays):
+    mappings = (1, 10, 15, 20)
+    class_suffix = 0
+    for mapping in mappings:
+        if plays >= mapping:
+            class_suffix = mapping
+
+    return f"min-plays-{class_suffix}"
+
+
 class PlayerView(generic.ListView):
     template_name = "boogie_ui/player.html"
     context_object_name = "scores"
@@ -86,6 +99,48 @@ class PlayerView(generic.ListView):
         player = Player.get_or_404(id=player_id)
         context["player"] = player
         context["rivals"] = player.rivals.all()
+
+        today = datetime.date.today()
+        a_year_ago = today.replace(year=today.year - 1)
+
+        context["skip_days_range"] = range(a_year_ago.timetuple().tm_wday)
+
+        context["start_date"] = a_year_ago
+        played_days = (
+            player.scores.values("submission_day")
+            .filter(submission_day__gte=a_year_ago)
+            .annotate(plays=Count("submission_day"))
+            .all()
+        )
+
+        calendar_days = list(
+            {"class": "min-plays-0", "plays": 0, "day": a_year_ago + datetime.timedelta(days=i)}
+            for i in range((today - a_year_ago).days + 1)
+        )
+        for day in played_days:
+            day_index = (day["submission_day"] - a_year_ago).days
+            plays = day["plays"]
+            calendar_days[day_index]["plays"] = plays
+            calendar_days[day_index]["class"] = plays_to_class(plays)
+
+        context["calendar_days"] = calendar_days
+
+        # sometimes it looks better to repeat the month at both ends
+        num_months = 13 if a_year_ago.day > 4 else 12
+        months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+        months_iterator = itertools.cycle(months)
+        for _ in range(today.month - 1):
+            next(months_iterator)
+        context["months"] = list(next(months_iterator) for _ in range(num_months))
+
+        context["days"] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+        context["calendar_legend"] = (
+            ("0", "min-plays-0"),
+            ("1+", "min-plays-1"),
+            ("10+", "min-plays-10"),
+            ("15+", "min-plays-15"),
+            ("20+", "min-plays-20"),
+        )
 
         return context
 

@@ -95,3 +95,72 @@ form label {
   height: 0.5em;
   display: grid;
 }
+
+.calendar-graph {
+  display: grid;
+  grid-area: graph;
+  grid-gap: 5px;
+  grid-template-rows: repeat(7, 15px);
+  grid-auto-flow: column;
+  grid-auto-columns: 15px;
+}
+
+.calendar-days {
+  grid-area: days;
+  display: grid;
+  grid-template-rows: repeat(7, 15px);
+  grid-gap: 5px;
+  line-height: 1em;
+}
+
+.calendar-days div:nth-child(even) {
+  visibility: hidden;
+}
+
+.calendar-months {
+  grid-area: months;
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.calendar-legend {
+  display: inline-grid;
+  grid-gap: 5px;
+  grid-template-rows: repeat(1, 15px);
+  grid-auto-flow: column;
+  grid-auto-columns: 15px;
+}
+
+.calendar-grid {
+  display: inline-grid;
+  grid-template-areas: "empty months"
+                       "days graph";
+  grid-template-columns: auto 1fr;
+  grid-gap: 10px;
+  margin-bottom: 5px;
+}
+
+.calendar-graph-box {
+  border: 1px solid black;
+}
+
+.min-plays-0 {
+  background-color: #f0f0f0;
+}
+
+.min-plays-1 {
+  background-color: #d4dcfa;
+}
+
+.min-plays-10 {
+  background-color: #748eff;
+}
+
+.min-plays-15 {
+  background-color: #3547de;
+}
+
+.min-plays-20 {
+  background-color: #11118a;
+}
