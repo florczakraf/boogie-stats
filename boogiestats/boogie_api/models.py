@@ -52,11 +52,11 @@ class Song(models.Model):
         if player:
             rank, score = self.get_highscore(player)
             if rank:
-                scores.append(make_leaderboard_entry(rank, score, is_self=True))
+                scores.append((score, make_leaderboard_entry(rank, score, is_self=True)))
                 used_score_pks.append(score.pk)
 
             for rank, score in self.get_rival_highscores(player):
-                scores.append(make_leaderboard_entry(rank, score, is_rival=True))
+                scores.append((score, make_leaderboard_entry(rank, score, is_rival=True)))
                 used_score_pks.append(score.pk)
 
         remaining_scores = max(0, num_entries - len(scores))
@@ -64,14 +64,15 @@ class Song(models.Model):
         top_scores = (
             self.scores.filter(is_top=True)
             .exclude(pk__in=used_score_pks)
-            .order_by("-score", "-submission_date")[:remaining_scores]
+            .order_by("-score", "submission_date", "id")[:remaining_scores]
         )
 
         for score in top_scores:
             rank = Score.rank(score)
-            scores.append(make_leaderboard_entry(rank, score))
+            scores.append((score, make_leaderboard_entry(rank, score)))
 
-        return sorted(scores, key=lambda x: x["score"], reverse=True)
+        sorted_scores = sorted(scores, key=lambda x: (-x[0].score, x[0].submission_date, x[0].id))
+        return [x[1] for x in sorted_scores]
 
     def get_highscore(self, player) -> (int, "Score"):
         try:
@@ -84,7 +85,7 @@ class Song(models.Model):
     def get_rival_highscores(self, player) -> [(int, "Score")]:
         scores = (
             self.scores.filter(is_top=True, player__in=player.rivals.all())
-            .order_by("-score", "-submission_date")[:MAX_LEADERBOARD_RIVALS]
+            .order_by("-score", "submission_date", "id")[:MAX_LEADERBOARD_RIVALS]
             .all()
         )
 
@@ -219,4 +220,11 @@ class Score(models.Model):
 
     @classmethod
     def rank(cls, score):
-        return cls.objects.filter(song=score.song, is_top=True, score__gt=score.score).count() + 1
+        return (
+            list(
+                cls.objects.filter(song=score.song, is_top=True, score__gte=score.score)
+                .order_by("-score", "submission_date", "id")
+                .values_list("id", flat=True)
+            ).index(score.id)
+            + 1
+        )

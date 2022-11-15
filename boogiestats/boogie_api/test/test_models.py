@@ -101,6 +101,18 @@ def top_scores(song):
         )
 
 
+@pytest.fixture
+def tied_scores(song):
+    for i in range(1, 11):
+        p = Player.objects.create(gs_api_key=f"top{i}key", machine_tag=f"T{i}")
+        p.scores.create(
+            song=song,
+            score=10_000,
+            comment=f"M420, TOP{i}",
+            rate=100,
+        )
+
+
 def test_get_leaderboard_without_player_returns_top_players(song, player, rival1, rival2, rival3, top_scores):
     leaderboard = song.get_leaderboard(num_entries=2)
 
@@ -121,6 +133,24 @@ def test_get_leaderboard_without_player_returns_top_players(song, player, rival1
     assert leaderboard[1]["isRival"] is False
     assert leaderboard[1]["isFail"] is False
     assert leaderboard[1]["machineTag"] == "T2"
+
+
+def test_get_leaderboard_with_tied_players_should_respect_dates(song, player, rival1, rival2, rival3, tied_scores):
+    leaderboard = song.get_leaderboard(num_entries=13)
+
+    assert len(leaderboard) == 13
+
+    for i in range(1, 11):
+        assert leaderboard[i - 1]["rank"] == i
+        assert leaderboard[i - 1]["name"] == f"T{i}"
+        assert leaderboard[i - 1]["score"] == 10_000
+        assert leaderboard[i - 1]["isSelf"] is False
+        assert leaderboard[i - 1]["isRival"] is False
+        assert leaderboard[i - 1]["isFail"] is False
+        assert leaderboard[i - 1]["machineTag"] == f"T{i}"
+
+    assert leaderboard[10]["rank"] == 11
+    assert leaderboard[11]["rank"] == 12
 
 
 def test_get_leaderboard_returns_up_to_num_entries(song, player, top_scores):

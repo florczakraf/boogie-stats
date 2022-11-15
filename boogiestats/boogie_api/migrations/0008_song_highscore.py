@@ -7,7 +7,7 @@ import django.db.models.deletion
 def fill_highscores(apps, schema_editor):
     Song = apps.get_model("boogie_api", "Song")
     for song in Song.objects.all():
-        highscore = song.scores.filter(is_top=True).order_by("-score", "-submission_date").first()
+        highscore = song.scores.filter(is_top=True).order_by("-score", "submission_date").first()
         song.highscore = highscore
         song.save()
 
