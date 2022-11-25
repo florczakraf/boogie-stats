@@ -5,7 +5,23 @@
 {% endblock title %}
 {% block content %}
     <h1>{{ player.name }} ({{ player.machine_tag }})</h1>
-    Joined on: {{ player.join_date.date }}
+    <div class="d-flex">
+        <div class="col">
+            <ul>
+                <li>Joined on: {{ player.join_date.date }}</li>
+                <li>Scores: {{ num_scores }}</li>
+                <li>Charts played: {{ num_charts_played }}</li>
+            </ul>
+        </div>
+        <div class="col">
+            <ul class="list-unstyled">
+                <li>★★★★: {{ four_stars }}</li>
+                <li>★★★: {{ three_stars }}</li>
+                <li>★★: {{ two_stars }}</li>
+                <li>★: {{ one_star }}</li>
+            </ul>
+        </div>
+    </div>
     {% if rivals %}
         <h3>Rivals ({{ rivals|length }})</h3>
         <ul>
