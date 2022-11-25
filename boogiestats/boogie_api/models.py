@@ -149,6 +149,7 @@ class Player(models.Model):
     latest_score = models.ForeignKey(
         "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="latest_score_for"
     )
+    join_date = models.DateTimeField(default=now, db_index=True)
 
     def save(self, *args, **kwargs):
         self.full_clean()

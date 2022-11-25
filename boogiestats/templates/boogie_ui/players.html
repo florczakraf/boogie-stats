@@ -20,6 +20,11 @@
                         </a>
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
+                        <a href="{% url "players" %}">Joined on
+                            {% if request.resolver_match.url_name == "players" %}↓{% endif %}
+                        </a>
+                    </th>
+                    <th scope="col" class="w-1 text-nowrap">
                         <a href="{% url "players_by_machine_tag" %}">Machine Tag
                             {% if request.resolver_match.url_name == "players_by_machine_tag" %}↓{% endif %}
                         </a>
@@ -39,6 +44,9 @@
                         </td>
                         <td class="text-nowrap">
                             <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
+                        </td>
+                        <td class="text-nowrap">
+                            <a href="{% url "player" player_id=player.id %}">{{ player.join_date.date }}</a>
                         </td>
                         <td class="text-nowrap">
                             <a href="{% url "player" player_id=player.id %}">{{ player.machine_tag }}</a>
