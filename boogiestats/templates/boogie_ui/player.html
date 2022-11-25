@@ -5,6 +5,7 @@
 {% endblock title %}
 {% block content %}
     <h1>{{ player.name }} ({{ player.machine_tag }})</h1>
+    Joined on: {{ player.join_date.date }}
     {% if rivals %}
         <h3>Rivals ({{ rivals|length }})</h3>
         <ul>
