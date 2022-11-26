@@ -99,6 +99,13 @@ class PlayerView(generic.ListView):
         player = Player.get_or_404(id=player_id)
         context["player"] = player
         context["rivals"] = player.rivals.all()
+        scores = player.scores
+        context["num_scores"] = scores.count()
+        context["num_charts_played"] = scores.filter(is_top=True).count()
+        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
 
         today = datetime.date.today()
         a_year_ago = today.replace(year=today.year - 1)
@@ -172,9 +179,9 @@ class PlayerStatsView(generic.base.TemplateView):
 
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_top=True).count()
-        context["one_or_more_stars"] = scores.filter(is_top=True, score__gte=9600).count()
-        context["two_or_more_stars"] = scores.filter(is_top=True, score__gte=9800).count()
-        context["three_or_more_stars"] = scores.filter(is_top=True, score__gte=9900).count()
+        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
         context["four_stars"] = scores.filter(is_top=True, score=10000).count()
 
         return context
