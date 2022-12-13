@@ -66,6 +66,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "boogiestats.boogie_ui.context_processors.logo",
             ],
         },
     },
@@ -137,3 +138,6 @@ AUTHENTICATION_BACKENDS = ["boogiestats.boogie_api.auth_backend.GSApiKeyBackend"
 # When provided, UI will try to utilize it to display information about charts.
 # When it's set to None, the charts will only be identified by their hashes.
 BS_CHART_DB_PATH: Optional[os.PathLike] = None
+
+BS_LOGO_PATH = None  # static path to a logo
+BS_LOGO_CREDITS = None  # credits for a logo, will be shown in the footer

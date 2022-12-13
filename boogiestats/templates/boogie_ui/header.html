@@ -1,6 +1,16 @@
+{% load static %}
 <nav class="navbar navbar-expand-md navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="{% url "index" %}">BoogieStats</a>
+        <a class="navbar-brand p-0" href="{% url "index" %}">
+            {% if BS_LOGO_PATH %}
+                <img class="d-inline-block"
+                     src="{% static BS_LOGO_PATH %}"
+                     width="40"
+                     height="40"
+                     alt="BoogieStats logo"/>
+            {% endif %}
+            BoogieStats
+        </a>
         <button class="navbar-toggler"
                 type="button"
                 data-bs-toggle="collapse"
