@@ -240,6 +240,10 @@ class SongView(generic.ListView):
         song_hash = self.kwargs["song_hash"]
         context["song"] = Song.get_or_404(hash=song_hash)
         context["num_highscores"] = Score.objects.filter(song_id=song_hash, is_top=True).count()
+        if hasattr(self.request.user, "player"):
+            context["my_scores"] = Score.objects.filter(
+                song_id=song_hash, player_id=self.request.user.player.id
+            ).count()
 
         return context
 
@@ -261,6 +265,14 @@ class SongHighscoresView(SongView):
             .order_by("-score", "submission_date")
             .select_related("song", "player")
         )
+
+
+class SongByPlayerView(SongView):
+    def get_queryset(self):
+        player = Player.get_or_404(id=self.kwargs["player_id"])
+        print(f"player{self.kwargs['player_id']}")
+        song = Song.get_or_404(hash=self.kwargs["song_hash"])
+        return song.scores.filter(player=player).order_by("-score", "submission_date").select_related("song", "player")
 
 
 class SongsListView(generic.ListView):

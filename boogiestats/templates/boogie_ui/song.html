@@ -14,6 +14,12 @@
        class="btn {% if request.resolver_match.url_name == "song_highscores" %}btn-success{% else %}btn-secondary{% endif %}">
         Highscores ({{ num_highscores }})
     </a>
+    {% if user.is_authenticated %}
+        <a href="{% url "song_by_player" song_hash=song.hash player_id=user.player.id %}"
+           class="btn {% if request.resolver_match.url_name == "song_by_player" %}btn-success{% else %}btn-secondary{% endif %}">
+            My scores ({{ my_scores }})
+        </a>
+    {% endif %}
     <h3>
         {% if request.resolver_match.url_name == "song" %}
             All Scores
