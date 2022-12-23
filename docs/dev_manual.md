@@ -30,7 +30,7 @@ from boogiestats.boogiestats.settings import *  # noqa
 DEBUG = True
 
 # if you want to see song info in the UI, uncomment and properly set BS_CHART_DB_PATH
-# BS_CHART_DB_PATH = "/path/to/stepmania-chart-db/db"  # see https://github.com/florczakraf/stepmania-chart-db
+# BS_CHART_DB_PATH = Path("/path/to/stepmania-chart-db/db")  # see https://github.com/florczakraf/stepmania-chart-db
 
 # you might need to uncomment and modify ALLOWED_HOSTS if you don't run your development server on localhost
 # ALLOWED_HOSTS = ["localhost", "127.0.0.1", "any.extra.host.you.need"]
@@ -43,20 +43,40 @@ You are now ready to create the database:
 ```
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin migrate
 ```
+Alternatively, you can `export` the `DJANGO_SETTINGS_MODULE` variable so that it's available for the
+new processes created in your current shell session.
+That way you won't have to put it before every command.
+All examples below will assume that the settings environment variable has already been exported.
+Here's how the above command would look like with `DJANGO_SETTINGS_MODULE` exported:
+```
+$ export DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev  # do this only once per shell
+$ django-admin migrate  # this command will have access to the DJANGO_SETTINGS_MODULE now
+```
 It will be created in `boogiestats/db.sqlite3` unless you modify `DATABASES` in your settings.
 Migration should also be used when you already have a database but the application's code has changed.
 You can safely run it on every repository update because the database tracks the migrations that have already been applied.
 
+At this point we can populate the database with some dummy data.
+There's a script available that will add some objects of every type.
+It will use song database if you have configured it properly in settings.
+The script will only work on a fresh database.
+If you already have something there, you can remove the old db and create a new one with the `migrate` command.
+```
+$ rm boogiestats/db.sqlite3  # optionally remove the old db
+$ django-admin migrate  # create fresh db
+$ dev/populate-db.py
+```
+
 ## Running the Application
 You are now ready to run django's dev server. It has a built-in option to reload on changes, which works great with
-packages that are installed in editable mode. Please notice that the dev server is not supposed to be used in a production
-environment. In order to start dev server, run:
+packages that are installed in an editable mode. Please notice that the dev server is not supposed to be used in a production
+environment. In order to start the dev server, run:
 ```
 # start a server that listens on http://localhost:8000
-$ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin runserver 8000
+$ django-admin runserver 8000
 
 # start a server that listens on all interfaces on port 8000; useful for access over the network, for example from a phone
-$ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin runserver 0.0.0.0:8000  
+$ django-admin runserver 0.0.0.0:8000
 ```
 
 ## Tests
@@ -84,7 +104,15 @@ not be backwards compatible. As a result of that, we have to live with the legac
 
 In order to generate a migration after a change in model, run:
 ```
-$ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin makemigrations
+$ django-admin makemigrations
+```
+
+If you need to modify the migration, for example to add backward compatibility, now is the time for it.
+You can check `boogiestats/boogie_api/migrations/0011_player_latest_score.py` for an example of such migration.
+When you're happy with your migration, you have to apply it using the `migrate` command (the same
+one that we used to create the database before!).
+```
+$ django-admin migrate
 ```
 
 ## Useful Commands Summary
@@ -98,6 +126,7 @@ $ djlint --profile django --check --lint .
 $ bandit --configfile bandit.yml -r boogiestats/
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin runserver 8000
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin migrate
+$ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev dev/populate-db.py
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin makemigrations
 $ DJANGO_SETTINGS_MODULE=prod.settings django-admin collectstatic
 $ DJANGO_SETTINGS_MODULE=prod.settings gunicorn --bind localhost:55523 boogiestats.boogiestats.wsgi --log-level DEBUG --access-logfile access.log --error-logfile error.log --threads 2
