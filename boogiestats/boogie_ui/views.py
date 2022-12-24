@@ -244,8 +244,8 @@ class SongView(generic.ListView):
         if hasattr(self.request.user, "player"):
             context["my_scores"] = song.scores.filter(player=self.request.user.player).count()
 
-        if "player_id" in self.kwargs:
-            context["player"] = Player.get_or_404(id=self.kwargs["player_id"])
+        if player_id := self.kwargs.get("player_id"):
+            context["player"] = Player.get_or_404(id=player_id)
 
         return context
 
