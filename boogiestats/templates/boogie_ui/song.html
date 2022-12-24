@@ -23,8 +23,16 @@
     <h3>
         {% if request.resolver_match.url_name == "song" %}
             All Scores
-        {% else %}
+        {% elif request.resolver_match.url_name == "song_highscores" %}
             Highscores
+        {% elif request.resolver_match.url_name == "song_by_player" %}
+            {% if user.player.id == player.id %}
+                My scores
+            {% else %}
+                {{player.name}} scores
+            {% endif %}
+        {% else %}
+            Scores
         {% endif %}
     </h3>
     {% if song.scores %}
