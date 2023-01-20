@@ -150,17 +150,41 @@ form label {
 }
 
 .min-plays-1 {
-  background-color: #d4dcfa;
+  background-color: #b6f8ff;
 }
 
 .min-plays-10 {
-  background-color: #748eff;
+  background-color: #4fe0f7;
 }
 
 .min-plays-15 {
-  background-color: #3547de;
+  background-color: #06b6d4;
 }
 
 .min-plays-20 {
-  background-color: #11118a;
+  background-color: #0284c7;
+}
+
+.min-plays-25 {
+  background-color: #2354da;
+}
+
+.min-plays-30 {
+  background-color: #4338ca;
+}
+
+.min-plays-35 {
+  background-color: #642be9;
+}
+
+.min-plays-40 {
+  background-color: #6d1db3;
+}
+
+.min-plays-50 {
+  background-color: #4e008d;
+}
+
+.min-plays-60 {
+  background-color: #3b043d;
 }
