@@ -147,6 +147,12 @@ class PlayerView(generic.ListView):
             ("10+", "min-plays-10"),
             ("15+", "min-plays-15"),
             ("20+", "min-plays-20"),
+            ("25+", "min-plays-25"),
+            ("30+", "min-plays-30"),
+            ("35+", "min-plays-35"),
+            ("40+", "min-plays-40"),
+            ("50+", "min-plays-50"),
+            ("60+", "min-plays-60"),
         )
 
         return context
