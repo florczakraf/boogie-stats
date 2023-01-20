@@ -17,6 +17,7 @@ from boogiestats.boogie_ui.forms import EditPlayerForm
 from boogiestats.boogiestats.exceptions import Managed404Error
 
 ENTRIES_PER_PAGE = 30
+CALENDAR_VALUES = (1, 10, 15, 20, 25, 30, 35, 40, 50, 60)
 
 
 class IndexView(generic.ListView):
@@ -78,9 +79,8 @@ class PlayersByScoresListView(PlayersListView):
 
 
 def plays_to_class(plays):
-    mappings = (1, 10, 15, 20)
     class_suffix = 0
-    for mapping in mappings:
+    for mapping in CALENDAR_VALUES:
         if plays >= mapping:
             class_suffix = mapping
 
@@ -141,18 +141,8 @@ class PlayerView(generic.ListView):
         context["months"] = list(next(months_iterator) for _ in range(num_months))
 
         context["days"] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-        context["calendar_legend"] = (
-            ("0", "min-plays-0"),
-            ("1+", "min-plays-1"),
-            ("10+", "min-plays-10"),
-            ("15+", "min-plays-15"),
-            ("20+", "min-plays-20"),
-            ("25+", "min-plays-25"),
-            ("30+", "min-plays-30"),
-            ("35+", "min-plays-35"),
-            ("40+", "min-plays-40"),
-            ("50+", "min-plays-50"),
-            ("60+", "min-plays-60"),
+        context["calendar_legend"] = tuple(
+            [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
         )
 
         return context
