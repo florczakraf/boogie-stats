@@ -1,8 +1,16 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
 {% block title %}
-    {{ song.display_name }}
+    [{{ song.chart_info.diff_number }}] {{ song.display_name }}
 {% endblock title %}
+{% block head_extras %}
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="{{ request.build_absolute_uri }}"/>
+    <meta property="og:title"
+          content="[{{ song.chart_info.diff_number }}] {{ song.display_name }}"/>
+    <meta property="og:description"
+          content="Pack: {{ song.chart_info.pack_name }} | Playcount: {{ song.scores.count }} | Highscores: {{ num_highscores }}"/>
+{% endblock head_extras %}
 {% block content %}
     <h2 class="mt-2">{% include "boogie_ui/song_display_name.html" %}</h2>
     <p>Pack: {{ song.chart_info.pack_name }}</p>
