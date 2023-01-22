@@ -18,6 +18,8 @@
         {% if BS_LOGO_PATH %}
             <link rel="icon" type="image/svg+xml" href="{% static BS_LOGO_PATH %}" />
         {% endif %}
+        {% block head_extras %}
+        {% endblock head_extras %}
     </head>
     <body>
         {% include "boogie_ui/header.html" %}
