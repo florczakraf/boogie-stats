@@ -6,19 +6,101 @@
     {{ p2.name }} ({{ p2.machine_tag }})
 {% endblock title %}
 {% block content %}
-    <h2>
-        <a href="{% url "player" player_id=p1.id %}">{{ p1.name }} ({{ p1.machine_tag }})</a>
-        vs
-        <a href="{% url "player" player_id=p2.id %}">{{ p2.name }} ({{ p2.machine_tag }})</a>
-    </h2>
+    <div class="container">
+        <div class="row">
+            <div class="col text-end">
+                <div>
+                    <h2>
+                        <a href="{% url "player" player_id=p1.id %}">{{ p1.name }} ({{ p1.machine_tag }})</a>
+                    </h2>
+                </div>
+                <div>{{ p1.join_date.date }}</div>
+                <div>{{ p1_num_scores }}</div>
+                <div>{{ p1_num_charts_played }}</div>
+                <div>
+                    <hr/>
+                </div>
+                <div>{{ p1_four_stars }}</div>
+                <div>{{ p1_three_stars }}</div>
+                <div>{{ p1_two_stars }}</div>
+                <div>{{ p1_one_star }}</div>
+                <div>
+                    <hr/>
+                </div>
+                <div>{{ common_charts }}</div>
+                <div>{{ p1_wins }}</div>
+                <div>{{ ties }}</div>
+            </div>
+            <div class="col-2 text-center text-nowrap">
+                <div>
+                    <h2>vs</h2>
+                </div>
+                <div>Joined On</div>
+                <div>Scores</div>
+                <div>Charts Played</div>
+                <div>
+                    <hr/>
+                </div>
+                <div>★★★★</div>
+                <div>★★★</div>
+                <div>★★</div>
+                <div>★</div>
+                <div>
+                    <hr/>
+                </div>
+                <div>Common Charts</div>
+                <div>Wins</div>
+                <div>Ties</div>
+            </div>
+            <div class="col text-start">
+                <div>
+                    <h2>
+                        <a href="{% url "player" player_id=p2.id %}">{{ p2.name }} ({{ p2.machine_tag }})</a>
+                    </h2>
+                </div>
+                <div>{{ p2.join_date.date }}</div>
+                <div>{{ p2_num_scores }}</div>
+                <div>{{ p2_num_charts_played }}</div>
+                <div>
+                    <hr/>
+                </div>
+                <div>
+                    {{ p2_four_stars }}
+                </div>
+                <div>
+                    {{ p2_three_stars }}
+                </div>
+                <div>
+                    {{ p2_two_stars }}
+                </div>
+                <div>
+                    {{ p2_one_star }}
+                </div>
+                <div>
+                    <hr/>
+                </div>
+                <div>
+                    {{ common_charts }}
+                </div>
+                <div>
+                    {{ p2_wins }}
+                </div>
+                <div>
+                    {{ ties }}
+                </div>
+            </div>
+        </div>
+    </div>
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">
             <thead class="table-secondary">
                 <tr>
-                    <th scope="col" class="w-100 text-nowrap">Song</th>
+                    <th scope="col" class="w-100 text-nowrap">
+                        Song
+                    </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "player" player_id=p1.id %}">{{ p1.name }} ({{ p1.machine_tag }})</a> score
+                        <a href="{% url "player" player_id=p1.id %}">{{ p1.name }} ({{ p1.machine_tag }})</a> score ↓
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
                         <a href="{% url "player" player_id=p2.id %}">{{ p2.name }} ({{ p2.machine_tag }})</a> score
@@ -33,10 +115,10 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td class="text-nowrap {% if p1_score.score >= p2_score.score %}table-success{% else %}table-danger{% endif %}">
+                        <td class="text-nowrap {% if p1_score.score > p2_score.score %}table-success{% elif p1_score.score == p2_score.score %}table-warning{% else %}table-danger{% endif %}">
                             {{ p1_score.score|div:100|stringformat:".2f" }}%
                         </td>
-                        <td class="text-nowrap {% if p1_score.score < p2_score.score %}table-success{% else %}table-danger{% endif %}">
+                        <td class="text-nowrap {% if p1_score.score < p2_score.score %}table-success{% elif p1_score.score == p2_score.score %}table-warning{% else %}table-danger{% endif %}">
                             {{ p2_score.score|div:100|stringformat:".2f" }}%
                         </td>
                     </tr>
@@ -45,6 +127,8 @@
         </table>
         {% include "boogie_ui/paginator.html" %}
     {% else %}
-        <p>No common songs.</p>
+        <p>
+            No common songs.
+        </p>
     {% endif %}
 {% endblock content %}
