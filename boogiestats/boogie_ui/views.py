@@ -203,6 +203,25 @@ class VersusView(generic.ListView):
         )
         paginator, page, score_page, is_paginated = self.paginate_queryset(scores, ENTRIES_PER_PAGE)
 
+        context["p1_num_scores"] = p1.scores.count()
+        context["p1_num_charts_played"] = p1.scores.filter(is_top=True).count()
+        context["p1_wins"] = sum((1 for x in scores if x[0].score > x[1].score))
+        context["p1_one_star"] = p1.scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
+        context["p1_two_stars"] = p1.scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
+        context["p1_three_stars"] = p1.scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
+        context["p1_four_stars"] = p1.scores.filter(is_top=True, score=10000).count()
+
+        context["p2_num_scores"] = p2.scores.count()
+        context["p2_num_charts_played"] = p2.scores.filter(is_top=True).count()
+        context["p2_wins"] = sum((1 for x in scores if x[0].score < x[1].score))
+        context["p2_one_star"] = p2.scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
+        context["p2_two_stars"] = p2.scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
+        context["p2_three_stars"] = p2.scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
+        context["p2_four_stars"] = p2.scores.filter(is_top=True, score=10000).count()
+
+        context["ties"] = len(scores) - context["p1_wins"] - context["p2_wins"]
+        context["common_charts"] = len(scores)
+
         context.update(
             {
                 "paginator": paginator,
