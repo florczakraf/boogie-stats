@@ -1,18 +1,33 @@
 {% load mathfilters %}
-<div class="text-center d-flex flex-column justify-content-evenly">
-    <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
-    {% if score.has_judgments %}
-        {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
-            {# djlint:off #}
-            <div class="score-box" style="grid-template-columns: {{ both_fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr;">
-                <div class="fantastic" title="{{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)"></div>
-                <div class="excellent" title="{{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)"></div>
-                <div class="great" title="{{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%)"></div>
-                <div class="decent" title="{{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%)"></div>
-                <div class="wayoff" title="{{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%)"></div>
-                <div class="miss" title="{{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%)"></div>
+{% if score.has_judgments %}
+    {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
+        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
+            <br/>
+            Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)
+            <br/>
+            Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%)
+            <br/>
+            Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%)
+            <br/>
+            Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%)
+            <br/>
+            Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%)
+            <br/>
+            ">
+            <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
+            <div class="score-box"
+                 style="grid-template-columns: {{ both_fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
+                <div class="fantastic"></div>
+                <div class="excellent"></div>
+                <div class="great"></div>
+                <div class="decent"></div>
+                <div class="wayoff"></div>
+                <div class="miss"></div>
             </div>
-            {# djlint:on #}
-        {% endwith %}
-    {% endif %}
-</div>
+        </div>
+    {% endwith %}
+{% else %}
+    <div class="text-center d-flex flex-column justify-content-evenly">
+        <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
+    </div>
+{% endif %}
