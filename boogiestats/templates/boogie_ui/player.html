@@ -87,7 +87,9 @@
         Less
         <div class="calendar-legend">
             {% for plays, class in calendar_legend %}
-                <div class="calendar-graph-box {{ class }}" title="{{ plays }}"></div>
+                <div class="calendar-graph-box {{ class }}"
+                     data-bs-toggle="tooltip"
+                     title="{{ plays }}"></div>
             {% endfor %}
         </div>
         More
