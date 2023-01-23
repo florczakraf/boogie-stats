@@ -188,3 +188,7 @@ form label {
 .min-plays-60 {
   background-color: #3b043d;
 }
+
+.tooltip-inner {
+  text-align: left;
+}
