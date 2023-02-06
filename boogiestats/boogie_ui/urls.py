@@ -22,4 +22,5 @@ urlpatterns = [
     path("edit/", views.EditPlayerView.as_view(), name="edit"),
     path("login/", views.login_user, name="login"),
     path("logout/", views.logout_user, name="logout"),
+    path("manual/", views.user_manual, name="manual"),
 ]
