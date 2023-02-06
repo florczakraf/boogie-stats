@@ -6,7 +6,7 @@ setuptools.setup(
     description="A pass-through proxy for groovestats.com that records non-ranked song scores.",
     author="Rafał Florczak",
     author_email="florczak.raf+boogiestats@gmail.com",
-    license="MIT",
+    license="AGPLv3",
     packages=setuptools.find_packages(where=".", include=["boogiestats*"]),
     include_package_data=True,
     install_requires=[
