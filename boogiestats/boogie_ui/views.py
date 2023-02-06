@@ -375,7 +375,11 @@ class Handler404(generic.base.TemplateView):
 def user_manual(request):
     port = request.get_port()
     boogiestats_allow_host = request.get_host().removesuffix(f":{port}")  # exclude any ports if present
-    boogiestats_url_prefix = request.build_absolute_uri().removesuffix(request.get_full_path()) + "/"  # just the base
+
+    # TODO: this uses a WA for reverse proxies that just replaces http with https
+    boogiestats_url_prefix = (
+        request.build_absolute_uri().replace("http:", "https:").removesuffix(request.get_full_path()) + "/"
+    )
 
     return render(
         request,
