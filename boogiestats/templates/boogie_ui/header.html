@@ -35,6 +35,9 @@
                     <a class="nav-link" href="{% url "scores" %}">Scores</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url "manual" %}">User Manual</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url "edit" %}">Edit Profile</a>
                 </li>
                 {% if user.is_authenticated %}

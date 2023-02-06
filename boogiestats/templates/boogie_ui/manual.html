@@ -1,0 +1,121 @@
+{% extends "boogie_ui/root.html" %}
+{% block title %}
+    User Manual
+{% endblock title %}
+{% block content %}
+    <h2>User Manual</h2>
+    In order to use this BoogieStats instance as your score aggregator you will have to follow the steps below.
+    If you already have GrooveStats integration up and running in <b>ITGmania</b> (BoogieStats don't support GrooveStats Launcher method anymore), you can skip to <a href="#join-and-enable-boogiestats">Join and Enable BoogieStats section</a>.
+    <h3 id="join-and-enable-groovestats">Join and Enable GrooveStats</h3>
+    <ol>
+        <li>
+            Download and install ITGmania from the <a href="https://www.itgmania.com/" target="_blank">official website</a>.
+            Optionally, migrate your profile form SM5 (if you have one) using <a href="https://github.com/itgmania/itgmania/blob/release/Docs/Userdocs/sm5_migration.md"
+    target="_blank">the following guide</a>.
+        </li>
+        <li>Start the game, create a profile (if you haven't migrated a profile) and set it to a desired player slot.</li>
+        <li>
+            <code>Sign Up</code> and generate an <code>API Key</code> on <a href="https://groovestats.com/" target="_blank">GrooveStats</a>.
+        </li>
+        <li>
+            Set <code>Enable GrooveStats</code> to <code>Yes</code> in the <code>GrooveStats Options</code> inside the <code>Game Options</code> submenu of <code>Options</code>.
+        </li>
+        <li>
+            Configure GrooveStats in your profile by creating a <code>GrooveStats.ini</code> file inside your profile directory.
+            You will find your <code>Save</code> directory inside <code>%appdata%</code> if you picked a normal installer version of ITGmania,
+            or directly inside the game's directory in case of a "portable" installation.
+            For example: <code>Save/LocalProfiles/00000000/GrooveStats.ini</code> (where <code>00000000</code> is an ID of your profile, you can check the <code>Editable.ini</code> to make sure that you picked the correct profile if you have more than one) should have the following contents:
+            <pre>
+<code>
+[GrooveStats]
+ApiKey=your API key from groovestats.com
+IsPadPlayer=1
+</code></pre>
+        </li>
+    </ol>
+    <h3 id="join-and-enable-boogiestats">Join and Enable BoogieStats</h3>
+    <ol>
+        <li>
+            Modify <code>Simply Love</code> theme to redirect request from <code>api.groovestats.com</code> to your BoogieStats URL.
+            Find and modify <code>ITGMANIA_PATH/Themes/Simply Love/Scripts/SL-Helpers-GrooveStats.lua</code> -- change line 44 from:
+            <pre><code>
+local url_prefix = "https://api.groovestats.com/"
+</code></pre>
+            to:
+            <pre><code>
+local url_prefix = "{{ boogiestats_url_prefix }}"
+</code></pre>
+        </li>
+        <li>
+            Allow ITGmania to make network requests to your BoogieStats URL.
+            Locate your <code>Save</code> directory the same way as in the previous step.
+            Find and modify <code>Save/Preferences.ini</code> -- change line 95 from:
+            <pre><code>
+HttpAllowHosts=*.groovestats.com
+</code></pre>
+            to:
+            <pre><code>
+HttpAllowHosts=*.groovestats.com,{{ boogiestats_allow_host }}
+</code></pre>
+            It's important to still allow the usual GrooveStats requests in order to allow downloads of unlockable songs in the
+            future contests held by GrooveStats.
+        </li>
+        <li>
+            Play and <b>pass</b> any song to automatically create an account on BoogieStats. Make sure that the bottom of the result screen says <code>Submitted!</code>.
+        </li>
+        <li>
+            Edit your profile on BoogieStats.
+            Use your GrooveStats API key to log in (you can try to paste the whole key, it will be automatically cut to the limit
+            inside the form) <a href="{% url "edit" %}" target="_blank">here</a>. You can set as many Rivals as you want, only the top 3 will be used when more of them completed
+            a song that you request a leaderboard for in game.
+        </li>
+        <li>Enjoy!</li>
+    </ol>
+    <h3 id="qna">Q&A</h3>
+    <ul>
+        <li>
+            <b>Q:</b> Will the scores be saved to GrooveStats when I use BoogieStats?
+            <br/>
+            <b>A:</b> Yes! BoogieStats acts as a proxy for GrooveStats.
+            It records all received scores and also passes them to GrooveStats.
+            When you retrieve scores in the game, the ones from GrooveStats will take precedence so the behavior for GS-ranked songs should remain the same.
+        </li>
+        <li>
+            <b>Q:</b> Is it safe?
+            <br/>
+            <b>A:</b> It's probably as safe as using a USB Profile on a public PC in an arcade or during a convention. I don't store your GrooveStats API key in a clear form, and the whole key is used only during forwarding scores to GrooveStats. You can inspect the code <a href="https://github.com/florczakraf/boogie-stats" target="_blank">on GitHub</a> or host the app for yourself if you don't plan to use the comparison & leaderboards features.
+        </li>
+        <li>
+            <b>Q:</b> What if I play a ranked song? What scores will I see?
+            <br/>
+            <b>A:</b> You will receive an official leaderboard from GrooveStats in your game.
+            However, in the UI of BoogieStats, only the local scores will be displayed for a given song, with an information that it's a GS-ranked song and the leaderboard might be incomplete.
+        </li>
+        <li>
+            <b>Q:</b> What if I play a song that's not in your database?
+            <br/>
+            <b>A:</b> BoogieStats will automatically accept and track its scores. It will look like any other ranked song in your game. In the UI, the song will display a song hash instead of a title until it's information is added to the <a href="https://github.com/florczakraf/stepmania-chart-db"
+    target="_blank">public database</a>. Please send me a list of packs that are missing when you encounter this issue. Once the song metadata is added to the database, the UI will show it for the scores sent in the past as well.
+        </li>
+        <li>
+            <b>Q:</b> Will you support <code>Stats.xml</code> or <a href="https://simply.training" target="_blank">simply.training</a> jsons?
+            <br/>
+            <b>A:</b>  Not in the current form. They don't use the unique song identifiers, therefore BoogieStats is not going to try and match songs by their paths, which has already been proven by GrooveStats to be a tedious, troublesome and ambiguous.
+        </li>
+        <li>
+            <b>Q:</b> Do events held by GrooveStats and the related leaderboards work with BoogieStats?
+            <br/>
+            <b>A:</b> ITL and SRPG as well as their custom leaderboards are supported. As for the other events, it's probably a matter of a little time if they introduce a custom API. Additionally, the event songs that are "unranked" in GrooveStats will still be recorded in BoogieStats.
+        </li>
+        <li>
+            <b>Q:</b> What if a song becomes "ranked" on GrooveStats after it's been recorded in BoogieStats?
+            <br/>
+            <b>A:</b> That hasn't been a case so far but if it's going to happen, I will probably introduce a way to export old highscores to GrooveStats. I won't be able to do it automatically because I don't store your API key, so it will require you to provide a full key in the UI. I could also generate a list of QR codes / links for you to export them manually.
+        </li>
+        <li>
+            <b>Q:</b> Will it work in a public arcade with a USB Profile?
+            <br/>
+            <b>A:</b> It could if <code>Simply Love</code> and <code>Preferences.ini</code> were modified on the machine as described in <a href="#join-and-enable-boogiestats">Join and Enable BoogieStats section</a>. However, I don't recommend it for public machines because their users might not be aware that their GrooveStats API key would be exposed to a 3rd-party proxy.
+        </li>
+    </ul>
+{% endblock content %}

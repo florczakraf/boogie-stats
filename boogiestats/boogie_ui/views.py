@@ -370,3 +370,15 @@ class Handler404(generic.base.TemplateView):
             context["exception"] = fallback_exception
 
         return context
+
+
+def user_manual(request):
+    port = request.get_port()
+    boogiestats_allow_host = request.get_host().removesuffix(f":{port}")  # exclude any ports if present
+    boogiestats_url_prefix = request.build_absolute_uri().removesuffix(request.get_full_path()) + "/"  # just the base
+
+    return render(
+        request,
+        template_name="boogie_ui/manual.html",
+        context={"boogiestats_allow_host": boogiestats_allow_host, "boogiestats_url_prefix": boogiestats_url_prefix},
+    )
