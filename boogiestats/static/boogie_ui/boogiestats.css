@@ -96,6 +96,14 @@ form label {
   display: grid;
 }
 
+.big-score-box {
+  width: 85%;
+  border: 1px solid black;
+  height: 2em;
+  display: grid;
+  margin: 0 auto;
+}
+
 .calendar-graph {
   display: grid;
   grid-area: graph;
