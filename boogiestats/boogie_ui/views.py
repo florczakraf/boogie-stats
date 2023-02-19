@@ -217,6 +217,9 @@ class PlayerStatsView(generic.base.TemplateView):
 class VersusView(generic.ListView):
     template_name = "boogie_ui/versus.html"
 
+    def sort_key(self, x):
+        return x[0].score
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         p1, p2 = self.get_players()
@@ -229,7 +232,7 @@ class VersusView(generic.ListView):
                 for p1_score in p1_scores_qs
                 if p1_score.song_id in p2_scores_dict
             ],
-            key=lambda x: x[0].score,
+            key=self.sort_key,
             reverse=True,
         )
         paginator, page, score_page, is_paginated = self.paginate_queryset(scores, ENTRIES_PER_PAGE)
@@ -273,6 +276,11 @@ class VersusView(generic.ListView):
 
     def get_queryset(self):
         return None
+
+
+class VersusByDifferenceView(VersusView):
+    def sort_key(self, x):
+        return x[0].score - x[1].score
 
 
 class SongView(generic.ListView):
