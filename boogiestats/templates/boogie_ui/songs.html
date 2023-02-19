@@ -32,7 +32,7 @@
                         <td class="text-nowrap">{{ song.num_players }}</td>
                         <td class="text-nowrap">
                             {% if song.highscore %}
-                                {{ song.highscore.score|div:100|stringformat:".2f" }}% by
+                                <a href="{% url "score" pk=song.highscore.id %}">{{ song.highscore.score|div:100|stringformat:".2f" }}%</a> by
                                 <a href="{% url "player" player_id=song.highscore.player.id %}">{{ song.highscore.player.name }}</a>
                             {% else %}
                                 -

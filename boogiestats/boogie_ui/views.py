@@ -312,6 +312,11 @@ class SongView(generic.ListView):
         )
 
 
+class ScoreView(generic.DetailView):
+    template_name = "boogie_ui/score.html"
+    model = Score
+
+
 class SongHighscoresView(SongView):
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]

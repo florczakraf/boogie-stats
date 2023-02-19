@@ -100,7 +100,7 @@
                         Song
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "versus_by_difference" p1=p1.id p2=p2.id %}"> Difference
+                        <a href="{% url "versus_by_difference" p1=p1.id p2=p2.id %}"> Difference (pp)
                             {% if request.resolver_match.url_name == "versus_by_difference" %}↓{% endif %}
                         </a>
                     </th>
@@ -123,13 +123,13 @@
                             {% endwith %}
                         </td>
                         <td class="text-nowrap">
-                            {{ p1_score.score|sub:p2_score.score|div:100|stringformat:".2f" }}pp
+                            {{ p1_score.score|sub:p2_score.score|div:100|stringformat:".2f" }}
                         </td>
                         <td class="text-nowrap {% if p1_score.score > p2_score.score %}table-success{% elif p1_score.score == p2_score.score %}table-warning{% else %}table-danger{% endif %}">
-                            {{ p1_score.score|div:100|stringformat:".2f" }}%
+                            <a href="{% url "score" pk=p1_score.id %}">{{ p1_score.score|div:100|stringformat:".2f" }}%</a>
                         </td>
                         <td class="text-nowrap {% if p1_score.score < p2_score.score %}table-success{% elif p1_score.score == p2_score.score %}table-warning{% else %}table-danger{% endif %}">
-                            {{ p2_score.score|div:100|stringformat:".2f" }}%
+                            <a href="{% url "score" pk=p2_score.id %}">{{ p2_score.score|div:100|stringformat:".2f" }}%</a>
                         </td>
                     </tr>
                 {% endfor %}

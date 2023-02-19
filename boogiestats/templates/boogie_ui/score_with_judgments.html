@@ -14,7 +14,9 @@
             Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%)
             <br/>
             ">
-            <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
+            <a href="{% url "score" pk=score.id %}">
+                <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
+            </a>
             <div class="score-box"
                  style="grid-template-columns: {{ both_fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
                 <div class="fantastic"></div>
@@ -27,7 +29,9 @@
         </div>
     {% endwith %}
 {% else %}
-    <div class="text-center d-flex flex-column justify-content-evenly">
-        <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
-    </div>
+    <a href="{% url "score" pk=score.id %}">
+        <div class="text-center d-flex flex-column justify-content-evenly">
+            <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
+        </div>
+    </a>
 {% endif %}
