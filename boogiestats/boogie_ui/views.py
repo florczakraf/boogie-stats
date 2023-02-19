@@ -162,6 +162,37 @@ class PlayerHighscoresView(PlayerView):
         return player.scores.filter(is_top=True).order_by("-score").prefetch_related("song")
 
 
+class PlayerMostPlayedView(PlayerView):
+    def get_queryset(self):
+        return None
+
+    def get_context_data(self, **kwargs):
+        self.paginate_by = None  # automatic pagination fails, we do it manually in this case because of aggregation
+        context = super().get_context_data(**kwargs)
+
+        player = context["player"]
+        songs_by_plays = player.scores.values("song").annotate(num_scores=Count("song")).order_by("-num_scores")
+        paginator, page, songs_by_plays_page, is_paginated = self.paginate_queryset(songs_by_plays, ENTRIES_PER_PAGE)
+
+        songs = [song["song"] for song in songs_by_plays_page]
+        songs_plays = {song["song"]: song["num_scores"] for song in songs_by_plays_page}
+        scores = player.scores.filter(is_top=True, song__hash__in=songs).prefetch_related("song")
+
+        scores = sorted(scores, key=lambda x: songs.index(x.song.hash))
+        for score in scores:
+            setattr(score, "num_scores", songs_plays[score.song.hash])
+
+        context.update(
+            {
+                "paginator": paginator,
+                "page_obj": page,
+                "is_paginated": is_paginated,
+                "scores": scores,
+            }
+        )
+        return context
+
+
 class PlayerStatsView(generic.base.TemplateView):
     template_name = "boogie_ui/player_stats.html"
 

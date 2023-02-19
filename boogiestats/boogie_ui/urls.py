@@ -9,6 +9,7 @@ urlpatterns = [
     path("players_by_machine_tag/", views.PlayersByMachineTagListView.as_view(), name="players_by_machine_tag"),
     path("players_by_scores/", views.PlayersByScoresListView.as_view(), name="players_by_scores"),
     path("players/<int:player_id>/", views.PlayerView.as_view(), name="player"),
+    path("players/<int:player_id>/most_played", views.PlayerMostPlayedView.as_view(), name="player_most_played"),
     path("players/<int:player_id>/highscores", views.PlayerHighscoresView.as_view(), name="player_highscores"),
     path("players/<int:player_id>/stats", views.PlayerStatsView.as_view(), name="player_stats"),
     path("players/<int:p1>/vs/<int:p2>/", views.VersusView.as_view(), name="versus"),
