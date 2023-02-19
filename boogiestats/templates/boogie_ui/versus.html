@@ -100,13 +100,17 @@
                         Song
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        Difference
+                        <a href="{% url "versus_by_difference" p1=p1.id p2=p2.id %}"> Difference
+                            {% if request.resolver_match.url_name == "versus_by_difference" %}↓{% endif %}
+                        </a>
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "player" player_id=p1.id %}">{{ p1.name }} ({{ p1.machine_tag }})</a> score ↓
+                        <a href="{% url "versus" p1=p1.id p2=p2.id %}">{{ p1.name }} ({{ p1.machine_tag }}) score
+                            {% if request.resolver_match.url_name == "versus" %}↓{% endif %}
+                        </a>
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "player" player_id=p2.id %}">{{ p2.name }} ({{ p2.machine_tag }})</a> score
+                        <a href="{% url "versus" p1=p2.id p2=p1.id %}">{{ p2.name }} ({{ p2.machine_tag }}) score</a>
                     </th>
                 </tr>
             </thead>
