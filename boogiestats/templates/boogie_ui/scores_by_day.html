@@ -1,0 +1,63 @@
+{% extends "boogie_ui/root.html" %}
+{% load mathfilters %}
+{% block title %}
+    {{ player.name }} ({{ player.machine_tag }}) on {{ day }}
+{% endblock title %}
+{% block head_extras %}
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="{{ request.build_absolute_uri }}"/>
+    <meta property="og:title"
+          content="{{ player.name }} ({{ player.machine_tag }}) on {{ day }}"/>
+    <meta property="og:description"
+          content="Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}"/>
+{% endblock head_extras %}
+{% block content %}
+    <h1>
+        <a href="{% url "player" player_id=player.id %}">{{ player.name }} ({{ player.machine_tag }})</a> on {{ day }}
+    </h1>
+    <div class="d-flex">
+        <div class="col">
+            <ul>
+                <li>Scores: {{ num_scores }}</li>
+                <li>Charts played: {{ num_charts_played }}</li>
+            </ul>
+        </div>
+        {% include "boogie_ui/stars.html" %}
+    </div>
+    <hr/>
+    <h3>{{ day }} Scores</h3>
+    {% if scores %}
+        {% include "boogie_ui/paginator.html" %}
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col" class="w-100 text-nowrap">Song</th>
+                    <th scope="col" class="w-1 text-nowrap">Comment</th>
+                    <th scope="col" class="w-1 text-nowrap">Score</th>
+                    <th scope="col" class="w-1 text-nowrap">Submission Date ↓</th>
+                </tr>
+            </thead>
+            <tbody class="align-middle">
+                {% for score in scores %}
+                    <tr>
+                        <td>
+                            {% with song=score.song %}
+                                {% include "boogie_ui/song_link.html" %}
+                            {% endwith %}
+                        </td>
+                        <td class="text-nowrap">{{ score.comment }}</td>
+                        <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
+                        <td class="text-nowrap">
+                            {% with datetime=score.submission_date %}
+                                {% include "boogie_ui/convert_timestamp.html" %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "boogie_ui/paginator.html" %}
+    {% else %}
+        <p>No scores.</p>
+    {% endif %}
+{% endblock content %}

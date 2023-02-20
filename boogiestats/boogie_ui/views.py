@@ -87,6 +87,38 @@ def plays_to_class(plays):
     return f"min-plays-{class_suffix}"
 
 
+class PlayerScoresByDayView(generic.ListView):
+    template_name = "boogie_ui/scores_by_day.html"
+    context_object_name = "scores"
+    paginate_by = ENTRIES_PER_PAGE
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        player_id = self.kwargs["player_id"]
+        player = Player.get_or_404(id=player_id)
+        day = datetime.date.fromisoformat(self.kwargs["day"])
+        scores = player.scores.filter(submission_day=day)
+        context["day"] = day
+        context["player"] = player
+        context["num_scores"] = scores.count()
+        context["num_charts_played"] = scores.values("song").distinct().count()
+        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+
+        return context
+
+    def get_queryset(self):
+        player_id = self.kwargs["player_id"]
+        player = Player.get_or_404(id=player_id)
+        day = datetime.date.fromisoformat(self.kwargs["day"])
+        scores = player.scores.filter(submission_day=day)
+
+        return scores.order_by("-submission_date").prefetch_related("song")
+
+
 class PlayerView(generic.ListView):
     template_name = "boogie_ui/player.html"
     context_object_name = "scores"
