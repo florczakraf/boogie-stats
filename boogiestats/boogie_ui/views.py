@@ -1,6 +1,7 @@
 import datetime
 import itertools
 
+import sentry_sdk
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -11,8 +12,11 @@ from django.db.models import Count
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.views import generic
+from redis import ResponseError
+from redis.commands.search.query import Query
 
 from boogiestats.boogie_api.models import Score, Player, Song
+from boogiestats.boogie_api.utils import get_redis
 from boogiestats.boogie_ui.forms import EditPlayerForm
 from boogiestats.boogiestats.exceptions import Managed404Error
 
@@ -462,3 +466,87 @@ def user_manual(request):
         template_name="boogie_ui/manual.html",
         context={"boogiestats_allow_host": boogiestats_allow_host, "boogiestats_url_prefix": boogiestats_url_prefix},
     )
+
+
+class SearchView(generic.ListView):
+    template_name = "boogie_ui/search.html"
+
+    def _process_query(self, user_query):
+        query_elements = user_query.split()
+
+        for i, e in enumerate(query_elements):
+            if e.startswith("-"):
+                continue
+
+            if e.startswith("@"):
+                continue
+
+            if e.startswith('"') or e.startswith("'"):
+                continue
+
+            query_elements[i] = f"%{e}%"
+
+        return " ".join(query_elements)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        r = get_redis()
+        if not r:
+            return context
+
+        index = r.ft("idx:song")
+        user_query = self.request.GET.get("q", "")
+        processed_query = self._process_query(user_query)
+
+        q = (
+            Query(processed_query)
+            .paging((int(self.request.GET.get("page", 1)) - 1) * ENTRIES_PER_PAGE, ENTRIES_PER_PAGE)
+            .sort_by("num_plays", asc=False)
+        )
+        n_results = 0
+        results = []
+        try:
+            redis_search_results = index.search(q)
+            n_results = redis_search_results.total
+            results = redis_search_results.docs
+        except ResponseError as e:
+            sentry_sdk.capture_exception(e)
+            if "no such index" in str(e):
+                message = "BoogieStats instance seems to be misconfigured. Consider letting your admin know about this."
+            else:
+                message = "Query syntax error. Consider removing/escaping special characters."
+            messages.error(
+                self.request,
+                message,
+                extra_tags="alert-danger",
+            )
+
+        hashes = []
+        for result in results:
+            song_hash = result.id.removeprefix("song:")
+            hashes.append(song_hash)
+
+        songs = (
+            Song.objects.filter(hash__in=hashes)
+            .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
+            .prefetch_related("highscore", "highscore__player")
+            .order_by("-num_scores", "-highscore__score")
+        )
+
+        paginator, page, _, is_paginated = self.paginate_queryset(range(n_results), ENTRIES_PER_PAGE)
+
+        context.update(
+            {
+                "paginator": paginator,
+                "page_obj": page,
+                "is_paginated": is_paginated,
+                "songs": songs,
+                "user_query": user_query,
+            }
+        )
+
+        return context
+
+    def get_queryset(self):
+        return None

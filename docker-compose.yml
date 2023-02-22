@@ -1,0 +1,31 @@
+version: '3.6'
+
+services:
+  boogiestats:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - type: bind
+        source: ./prod/boogiestats-data
+        target: /data
+#      - type: bind
+#        source: /path/to/stepmania-chart-db/db
+#        target: /chart-db
+#        read_only: true
+    environment:
+      GUNICORN_THREADS: 6
+    ports:
+      - "127.0.0.1:55523:55523"
+    depends_on:
+      - redis
+    deploy:
+      restart_policy:
+        condition: any
+
+  redis:
+    image: redis/redis-stack-server:6.2.6-v4
+    volumes:
+      - type: bind
+        source: ./prod/redis-data
+        target: /data

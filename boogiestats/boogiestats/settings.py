@@ -67,6 +67,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "boogiestats.boogie_ui.context_processors.logo",
+                "boogiestats.boogie_ui.context_processors.search",
             ],
         },
     },
@@ -139,5 +140,9 @@ AUTHENTICATION_BACKENDS = ["boogiestats.boogie_api.auth_backend.GSApiKeyBackend"
 # When it's set to None, the charts will only be identified by their hashes.
 BS_CHART_DB_PATH: Optional[os.PathLike] = None
 
-BS_LOGO_PATH = None  # static path to a logo
-BS_LOGO_CREDITS = None  # credits for a logo, will be shown in the footer
+BS_LOGO_PATH: Optional[os.PathLike] = None  # static path to a logo
+BS_LOGO_CREDITS: Optional[str] = None  # credits for a logo, will be shown in the footer
+
+# When configured, and chart database is also provided, the search functionality will be enabled
+BS_REDIS_HOST: Optional[str] = None
+BS_REDIS_PORT: Optional[int] = None

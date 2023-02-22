@@ -14,6 +14,8 @@ setuptools.setup(
         "Django >=4, <5",
         "gunicorn >=20.1.0, <21",
         "django-mathfilters >=1.0.0, <2",
+        "redis >= 4.5.1, <5",
+        "sentry-sdk >= 1.12, <2",
     ],
     extras_require={
         "dev": [

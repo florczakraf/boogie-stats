@@ -1,0 +1,41 @@
+{% extends "boogie_ui/root.html" %}
+{% load mathfilters %}
+{% block title %}
+    Search Results
+{% endblock title %}
+{% block content %}
+    <h2>Search Results</h2>
+    {% if songs %}
+        {% include "boogie_ui/paginator.html" %}
+        <table class="table table-striped">
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col" class="w-100 text-nowrap">Song</th>
+                    <th scope="col" class="w-1 text-nowrap">#Scores ↓</th>
+                    <th scope="col" class="w-1 text-nowrap">#Players</th>
+                    <th scope="col" class="w-1 text-nowrap">Highscore</th>
+                </tr>
+            </thead>
+            <tbody class="align-middle">
+                {% for song in songs %}
+                    <tr>
+                        <td>{% include "boogie_ui/song_link.html" %}</td>
+                        <td class="text-nowrap">{{ song.num_scores }}</td>
+                        <td class="text-nowrap">{{ song.num_players }}</td>
+                        <td class="text-nowrap">
+                            {% if song.highscore %}
+                                <a href="{% url "score" pk=song.highscore.id %}">{{ song.highscore.score|div:100|stringformat:".2f" }}%</a> by
+                                <a href="{% url "player" player_id=song.highscore.player.id %}">{{ song.highscore.player.name }}</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "boogie_ui/paginator.html" %}
+    {% else %}
+        <p>No results.</p>
+    {% endif %}
+{% endblock content %}

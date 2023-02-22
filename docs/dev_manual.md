@@ -91,7 +91,7 @@ BoogieStats enforce multiple standards when it comes to code style and quality. 
 with 0 status, it's OK. If you need more info, consult the respective tool's docs.
 ```
 $ black .  # reformats python code
-$ flake8  # lints the python code, currently disabled because of issue #28
+$ flake8  # lints the python code
 $ djlint --profile django --reformat .  # reformats django templates
 $ djlint --profile django --check --lint .  # lints django templates (sometimes you have to do manual fixes because the one above can't fix everything)
 $ bandit --configfile bandit.yml -r boogiestats/  # lints the python code for security issues

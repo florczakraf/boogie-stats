@@ -1,1 +1,1 @@
-global-include *.html *.css *.js *.map
+global-include *.html *.css *.js *.map *.svg *.png

@@ -3,3 +3,5 @@
 /static/
 __pycache__
 /*.egg-info
+/prod/redis-data/*
+/prod/boogiestats-data/*
