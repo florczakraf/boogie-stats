@@ -11,8 +11,10 @@ from django.db import models
 from django.db.models.signals import m2m_changed
 from django.utils.timezone import now
 from django.utils.functional import cached_property
+from redis import Redis
 
 from boogiestats.boogie_api.managers import ScoreManager, PlayerManager
+from boogiestats.boogie_api.utils import get_redis
 from boogiestats.boogiestats.exceptions import Managed404Error
 
 MAX_LEADERBOARD_RIVALS = 3
@@ -134,6 +136,37 @@ class Song(models.Model):
         if is_ranked and not self.gs_ranked:
             self.gs_ranked = True
             self.save()
+
+    def update_search_cache(self, redis_connection: Optional[Redis] = None) -> bool:
+        """Updates song search cache when both redis and song metadata ara available."""
+
+        r = redis_connection or get_redis()
+        if not r:
+            return False
+
+        chart_info = self.chart_info
+
+        if chart_info is not None:
+            chart_info["num_plays"] = self.scores.count()
+
+            fields = (
+                "title",
+                "titletranslit",
+                "subtitle",
+                "subtitletranslit",
+                "artist",
+                "artisttranslit",
+                "diff",
+                "diff_number",
+                "steps_type",
+                "pack_name",
+                "num_plays",
+            )
+
+            r.hset(f"song:{self.hash}", mapping={k: v for k, v in chart_info.items() if k in fields})
+            return True
+
+        return False
 
 
 class Player(models.Model):

@@ -46,6 +46,16 @@
                     </li>
                 {% endif %}
             </ul>
+            {% if BS_SEARCH_ENABLED %}
+                <form class="form-inline" action="{% url "search" %}" method="get">
+                    <input name="q"
+                           class="form-control mr-sm-2"
+                           type="search"
+                           placeholder="Search"
+                           aria-label="Search"
+                           {% if user_query %}value="{{ user_query }}"{% endif %}/>
+                </form>
+            {% endif %}
         </div>
     </div>
 </nav>

@@ -58,6 +58,7 @@ class ScoreManager(models.Manager):
 
         self._handle_highscore_update(score_object, song)
         self._handle_latest_score_update(score_object, player)
+        song.update_search_cache()  # TODO: this *really* needs to be done async
 
         return score_object
 
