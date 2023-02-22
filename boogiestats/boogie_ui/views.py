@@ -512,9 +512,13 @@ class SearchView(generic.ListView):
             results = redis_search_results.docs
         except ResponseError as e:
             sentry_sdk.capture_exception(e)
+            if "no such index" in str(e):
+                message = "BoogieStats instance seems to be misconfigured. Consider letting your admin know about this."
+            else:
+                message = "Query syntax error. Consider removing/escaping special characters."
             messages.error(
                 self.request,
-                "Query syntax error. Consider removing/escaping special characters.",
+                message,
                 extra_tags="alert-danger",
             )
 
