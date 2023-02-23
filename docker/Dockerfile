@@ -5,4 +5,4 @@ WORKDIR /
 COPY . /app
 RUN pip install /app
 
-ENTRYPOINT /app/docker/entrypoint.sh
+ENTRYPOINT ["/app/docker/entrypoint.sh"]

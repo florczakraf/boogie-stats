@@ -2,13 +2,13 @@
     <div class="pagination">
         <span class="step-links">
             {% if page_obj.has_previous %}
-                <a href="?page=1">« first</a>
-                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                <a href="?page=1{% include "boogie_ui/q_parameter.html" %}">« first</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% include "boogie_ui/q_parameter.html" %}">previous</a>
             {% endif %}
             <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">next</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}">last »</a>
+                <a href="?page={{ page_obj.next_page_number }}{% include "boogie_ui/q_parameter.html" %}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% include "boogie_ui/q_parameter.html" %}">last »</a>
             {% endif %}
         </span>
     </div>
