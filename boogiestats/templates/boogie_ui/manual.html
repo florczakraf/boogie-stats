@@ -6,7 +6,9 @@
     <h2>User Manual</h2>
     In order to use this BoogieStats instance as your score aggregator you will have to follow the steps below.
     If you already have GrooveStats integration up and running in <b>ITGmania</b> (BoogieStats don't support GrooveStats Launcher method anymore), you can skip to <a href="#join-and-enable-boogiestats">Join and Enable BoogieStats section</a>.
-    <h3 id="join-and-enable-groovestats">Join and Enable GrooveStats</h3>
+    <h3 id="join-and-enable-groovestats">
+        Join and Enable GrooveStats <a class="text-muted small" href="#join-and-enable-groovestats">#</a>
+    </h3>
     <ol>
         <li>
             Download and install ITGmania from the <a href="https://www.itgmania.com/" target="_blank">official website</a>.
@@ -33,7 +35,9 @@ IsPadPlayer=1
 </code></pre>
         </li>
     </ol>
-    <h3 id="join-and-enable-boogiestats">Join and Enable BoogieStats</h3>
+    <h3 id="join-and-enable-boogiestats">
+        Join and Enable BoogieStats <a class="text-muted small" href="#join-and-enable-boogiestats">#</a>
+    </h3>
     <ol>
         <li>
             Modify <code>Simply Love</code> theme to redirect request from <code>api.groovestats.com</code> to your BoogieStats URL.
@@ -71,7 +75,62 @@ HttpAllowHosts=*.groovestats.com,{{ boogiestats_allow_host }}
         </li>
         <li>Enjoy!</li>
     </ol>
-    <h3 id="qna">Q&A</h3>
+    {% if BS_SEARCH_ENABLED %}
+        <h3 id="search">
+            Search Guide <a class="text-muted small" href="#search">#</a>
+        </h3>
+        <p>
+            This BoogieStats instance has a search feature that allows you to search songs that have already been played.
+            Please note that this is still an experimental feature and might not work in all the cases. Additionally, the
+            used search engine (<a href="https://redis.io/docs/stack/search/" target="_blank">RediSearch</a>) imposes
+            several limitations on the queries but on the other hand brings some features for power-users.
+        </p>
+        <p>
+            Below you can find a list of example queries with explanations which can help you figure out how the search
+            works. You can use multiple special terms in a single query.
+        </p>
+        <ul>
+            <li>
+                Basic search tries to fuzzy-match each word you enter. For example <code>barbie gurl</code> will match
+                <code>barbie girl</code> song. <a href="{% url "search" %}?q=barbie+gurl" target="_blank">[example]</a>
+            </li>
+            <li>
+                Sometimes there are too many results which have something in common that you'd like to skip. When that's
+                the case you can simply add <code>-term</code> to the query.
+                <a href="{% url "search" %}?q=basshunter -dota" target="_blank">[example]</a>
+            </li>
+            <li>
+                Fuzzy search isn't always desired, so it's possible to quote a <b>single</b> term to disable its fuzzy matching.
+                Quoting multiple query terms at once is currently not supported. In the following example unquoted
+                <code>jump</code> would also match a lot of <code>pump</code> occurrences.
+                <a href="{% url "search" %}?q='jump'" target="_blank">[example]</a>
+            </li>
+            <li>
+                Using glob search might be useful when you're unsure about the phrase you search for. For example a simple
+                <code>warning</code> query would fail to find <code>WARNINGxWARNINGxWARNING</code> song. Adding a star on
+                either end of the word will try to match more characters on that end. However, an extra single quote mark
+                is needed at the beginning of the term. <a href="{% url "search" %}?q='warning*" target="_blank">[example]</a>
+            </li>
+            <li>
+                You might want to search for songs within a pack that match a given query. Please note that the current
+                chart metadata database stores only one pack name per chart, and it might not be what you expect. Similar
+                notation could be used for artist, title and subtitle but there are also fields with <code>translit</code>
+                suffix because that's how the charts store the info. <a href="{% url "search" %}?q=@pack_name:itl" target="_blank">[example]</a>
+            </li>
+            <li>
+                There's an option to search by chart type. To search all double songs an extra backslash escape is needed
+                for <code>-</code> character. <a href="{% url "search" %}?q=@steps_type:{dance\-double}"
+    target="_blank">[example]</a>
+            </li>
+            <li>
+                Matching charts within given difficulty range is also possible. The numbers are inclusive ends of the range.
+                <a href="{% url "search" %}?q=anubis+@diff_number:[7,7]" target="_blank">[example]</a>
+            </li>
+        </ul>
+    {% endif %}
+    <h3 id="qna">
+        Q&A <a class="text-muted small" href="#qna">#</a>
+    </h3>
     <ul>
         <li>
             <b>Q:</b> Will the scores be saved to GrooveStats when I use BoogieStats?
