@@ -22,6 +22,7 @@ from boogiestats.boogiestats.exceptions import Managed404Error
 
 ENTRIES_PER_PAGE = 30
 CALENDAR_VALUES = (1, 10, 15, 20, 25, 30, 35, 40, 50, 60)
+EXTRA_CALENDAR_VALUES = (100,)
 
 
 class IndexView(generic.ListView):
@@ -84,7 +85,7 @@ class PlayersByScoresListView(PlayersListView):
 
 def plays_to_class(plays):
     class_suffix = 0
-    for mapping in CALENDAR_VALUES:
+    for mapping in CALENDAR_VALUES + EXTRA_CALENDAR_VALUES:
         if plays >= mapping:
             class_suffix = mapping
 
