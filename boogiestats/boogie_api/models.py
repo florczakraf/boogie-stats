@@ -1,4 +1,5 @@
 import json
+import math
 from hashlib import sha256
 from pathlib import Path
 from typing import Optional
@@ -262,3 +263,28 @@ class Score(models.Model):
             ).index(score.id)
             + 1
         )
+
+    def ex(self):
+        if not self.has_judgments:
+            return None
+
+        weights = {
+            "fa+": 3.5,
+            "fantastics": 3,
+            "excellents": 2,
+            "greats": 1,
+            "held": 1,
+            "mine": -1,
+        }
+        total_possible = self.total_steps * weights["fa+"] + (self.total_holds + self.total_rolls) * weights["held"]
+        points = (
+            self.fantastics_plus * weights["fa+"]
+            + self.fantastics * weights["fantastics"]
+            + self.excellents * weights["excellents"]
+            + self.greats * weights["greats"]
+            + self.rolls_held * weights["held"]
+            + self.holds_held * weights["held"]
+            + self.mines_hit * weights["mine"]
+        )
+
+        return max(0, math.floor(points / total_possible * 10000) / 100)

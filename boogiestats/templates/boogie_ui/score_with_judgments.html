@@ -1,7 +1,9 @@
 {% load mathfilters %}
 {% if score.has_judgments %}
     {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
-        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
+        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="EX Score: {{ score.ex }}%
+            <br/>
+            Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
             <br/>
             Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)
             <br/>
