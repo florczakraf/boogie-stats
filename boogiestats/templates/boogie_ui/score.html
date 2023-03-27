@@ -19,6 +19,7 @@
     {% endwith %}
     <h3 class="text-center">{{ score.score|div:100|stringformat:".2f" }}%</h3>
     {% if score.has_judgments %}
+        <h3 class="text-center">EX Score: {{ score.ex }}%</h3>
         {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
             <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
                 <br/>
