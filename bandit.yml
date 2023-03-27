@@ -1,2 +1,1 @@
-assert_used:
-  skips: ['*/*_test.py', '*/test_*.py']
+exclude_dirs: ["boogiestats/boogie_api/test"]
