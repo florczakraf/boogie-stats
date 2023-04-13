@@ -13,7 +13,6 @@ def fixup_cmod(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("boogie_api", "0009_alter_score_comment_alter_song_highscore"),
     ]

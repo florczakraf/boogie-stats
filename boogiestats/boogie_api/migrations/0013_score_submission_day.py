@@ -12,7 +12,6 @@ def fill_submission_day(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("boogie_api", "0012_alter_score_is_top_alter_score_score_and_more"),
     ]

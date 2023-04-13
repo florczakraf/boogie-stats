@@ -13,7 +13,6 @@ def fill_join_date(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("boogie_api", "0013_score_submission_day"),
     ]

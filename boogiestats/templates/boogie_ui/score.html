@@ -4,12 +4,12 @@
     {{ score.score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}
 {% endblock title %}
 {% block head_extras %}
-    <meta property="og:type" content="website"/>
-    <meta property="og:url" content="{{ request.build_absolute_uri }}"/>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     <meta property="og:title"
-          content="{{ score.score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}"/>
+          content="{{ score.score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}" />
     <meta property="og:description"
-          content="By: {{ score.player.name }} ({{ score.player.machine_tag }}) | Date: {{ score.submission_date }}"/>
+          content="By: {{ score.player.name }} ({{ score.player.machine_tag }}) | Date: {{ score.submission_date }}" />
 {% endblock head_extras %}
 {% block content %}
     {% with song=score.song %}
@@ -22,17 +22,17 @@
         <h3 class="text-center">EX Score: {{ score.ex }}%</h3>
         {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
             <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
-                <br/>
+                <br />
                 Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)
-                <br/>
+                <br />
                 Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%)
-                <br/>
+                <br />
                 Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%)
-                <br/>
+                <br />
                 Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%)
-                <br/>
+                <br />
                 Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%)
-                <br/>
+                <br />
                 ">
                 <div class="big-score-box"
                      style="grid-template-columns: {{ both_fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">

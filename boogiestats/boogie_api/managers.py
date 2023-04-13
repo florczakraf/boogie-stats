@@ -38,7 +38,6 @@ class ScoreManager(models.Manager):
         used_cmod: Optional[bool] = None,
         judgments: Optional = None,
     ):
-
         used_cmod = self._handle_used_cmod(used_cmod, comment)
         new_is_top = self._handle_is_top(song, player, score)
 

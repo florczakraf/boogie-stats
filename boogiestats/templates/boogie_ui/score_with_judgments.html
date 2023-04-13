@@ -2,19 +2,19 @@
 {% if score.has_judgments %}
     {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
         <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="EX Score: {{ score.ex }}%
-            <br/>
+            <br />
             Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
-            <br/>
+            <br />
             Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)
-            <br/>
+            <br />
             Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%)
-            <br/>
+            <br />
             Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%)
-            <br/>
+            <br />
             Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%)
-            <br/>
+            <br />
             Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%)
-            <br/>
+            <br />
             ">
             <a href="{% url "score" pk=score.id %}">
                 <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
