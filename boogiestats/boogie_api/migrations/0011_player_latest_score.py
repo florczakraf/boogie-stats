@@ -12,7 +12,6 @@ def fixup_latest_scores(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("boogie_api", "0010_remove_score_profile_name_score_decents_and_more"),
     ]

@@ -4,12 +4,12 @@
     {{ player.name }} ({{ player.machine_tag }})
 {% endblock title %}
 {% block head_extras %}
-    <meta property="og:type" content="website"/>
-    <meta property="og:url" content="{{ request.build_absolute_uri }}"/>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     <meta property="og:title"
-          content="{{ player.name }} ({{ player.machine_tag }})"/>
+          content="{{ player.name }} ({{ player.machine_tag }})" />
     <meta property="og:description"
-          content="Joined on: {{ player.join_date.date }} | Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}"/>
+          content="Joined on: {{ player.join_date.date }} | Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}" />
 {% endblock head_extras %}
 {% block content %}
     <h1>{{ player.name }} ({{ player.machine_tag }})</h1>
@@ -53,7 +53,7 @@
                aria-controls="moreRivals moreRivalsButton">Show {{ rivals|length|sub:3 }} More Rivals</a>
         {% endif %}
     {% endif %}
-    <hr/>
+    <hr />
     <div class="overflow-auto">
         <div class="calendar-grid">
             <div class="calendar-months text-center fw-bold">
@@ -92,7 +92,7 @@
         </div>
         More
     </div>
-    <hr/>
+    <hr />
     <a href="{% url "player" player_id=player.id %}"
        class="btn {% if request.resolver_match.url_name == "player" %}btn-success{% else %}btn-secondary{% endif %}">
         Recent Scores

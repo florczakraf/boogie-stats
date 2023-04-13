@@ -13,7 +13,6 @@ def fill_highscores(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("boogie_api", "0007_song_gs_ranked"),
     ]

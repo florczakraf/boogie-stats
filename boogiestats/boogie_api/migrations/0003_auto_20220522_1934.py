@@ -15,7 +15,6 @@ def create_users_for_players(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("boogie_api", "0002_player_user"),
     ]
