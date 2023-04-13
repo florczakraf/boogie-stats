@@ -20,6 +20,13 @@
             <ul>
                 <li>Scores: {{ num_scores }}</li>
                 <li>Charts played: {{ num_charts_played }}</li>
+                <li>Total steps hit: {{ steps_hit }}</li>
+                <li>Fantastics: {{ fantastics|add:fantastics_plus }} ({{ fantastics_plus }} + {{ fantastics }})</li>
+                <li>Excellents: {{ excellents }}</li>
+                <li>Greats: {{ greats }}</li>
+                <li>Decents: {{ decents }}</li>
+                <li>Way-offs: {{ way_offs }}</li>
+                <li>Misses: {{ misses }}</li>
             </ul>
         </div>
         {% include "boogie_ui/stars.html" %}
