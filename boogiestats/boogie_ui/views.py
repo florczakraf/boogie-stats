@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.views import generic
@@ -112,6 +112,17 @@ class PlayerScoresByDayView(generic.ListView):
         context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
         context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
         context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+        sums = scores.aggregate(
+            fantastics_plus=Sum("fantastics_plus"),
+            fantastics=Sum("fantastics"),
+            excellents=Sum("excellents"),
+            greats=Sum("greats"),
+            decents=Sum("decents"),
+            way_offs=Sum("way_offs"),
+            misses=Sum("misses"),
+        )
+        context["steps_hit"] = sum(sums.values()) - sums["misses"]
+        context.update(sums)
 
         return context
 
