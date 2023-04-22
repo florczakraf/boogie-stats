@@ -8,48 +8,47 @@
         <meta name="Description"
               content="A pass-through proxy for groovestats.com that records non-ranked song scores." />
         <meta http-equiv="refresh" content="60" />
-        <link rel="stylesheet"
-            href="{% static "boogie_ui/vendor/bootstrap-5.2.0-beta1-dist/css/bootstrap.min.css" %}"/>
-            <link rel="stylesheet" href="{% static "boogie_ui/boogiestats.css" %}"/>
-            <title>
-                {{ player.name }} ({{ player.machine_tag }})
-                — BoogieStats
-            </title>
-        </head>
-        <body>
-            <div class="container">
-                <div class="row">
-                    <div class="col-2">
-                        <div class="row-2 text-center">
-                            <h2>{{ player.name }}</h2>
-                        </div>
-                        <div class="row">Scores: {{ num_scores }}</div>
-                        <div class="row">Charts Played: {{ num_charts_played }}</div>
+        <link rel="stylesheet" href="{% static "boogie_ui/vendor/bootstrap-5.2.0-beta1-dist/css/bootstrap.min.css" %}" />
+        <link rel="stylesheet" href="{% static "boogie_ui/boogiestats.css" %}" />
+        <title>
+            {{ player.name }} ({{ player.machine_tag }})
+            — BoogieStats
+        </title>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-2">
+                    <div class="row-2 text-center">
+                        <h2>{{ player.name }}</h2>
                     </div>
-                    <div class="col-2">
-                        <div class="container">
-                            <div class="row">
-                                <div class="col text-end">★★★★</div>
-                                <div class="col">{{ four_stars }}</div>
-                            </div>
-                            <div class="row">
-                                <div class="col text-end">★★★</div>
-                                <div class="col">{{ three_stars }}</div>
-                            </div>
-                            <div class="row">
-                                <div class="col text-end">★★</div>
-                                <div class="col">{{ two_stars }}</div>
-                            </div>
-                            <div class="row">
-                                <div class="col text-end">★</div>
-                                <div class="col">{{ one_star }}</div>
-                            </div>
+                    <div class="row">Scores: {{ num_scores }}</div>
+                    <div class="row">Charts Played: {{ num_charts_played }}</div>
+                </div>
+                <div class="col-2">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col text-end">★★★★</div>
+                            <div class="col">{{ four_stars }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col text-end">★★★</div>
+                            <div class="col">{{ three_stars }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col text-end">★★</div>
+                            <div class="col">{{ two_stars }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col text-end">★</div>
+                            <div class="col">{{ one_star }}</div>
                         </div>
                     </div>
                 </div>
             </div>
-            <script src="{% static "boogie_ui/vendor/jquery-3.6.0.min.js" %}"></script>
-            <script src="{% static "boogie_ui/vendor/bootstrap-5.2.0-beta1-dist/js/bootstrap.min.js" %}"></script>
-            <script src="{% static "boogie_ui/boogiestats.js" %}"></script>
-        </body>
-    </html>
+        </div>
+        <script src="{% static "boogie_ui/vendor/jquery-3.6.0.min.js" %}"></script>
+        <script src="{% static "boogie_ui/vendor/bootstrap-5.2.0-beta1-dist/js/bootstrap.min.js" %}"></script>
+        <script src="{% static "boogie_ui/boogiestats.js" %}"></script>
+    </body>
+</html>
