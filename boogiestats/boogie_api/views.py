@@ -19,11 +19,7 @@ GROOVESTATS_RESPONSES = {
     },
     "NEW_SESSION": {
         "activeEvents": [
-            {
-                "name": "Stamina RPG 6",
-                "shortName": "SRPG6",
-                "url": r"https:\/\/srpg6.groovestats.com",
-            },
+            {"name": "ITL Online 2023", "shortName": "ITL2023", "url": "https:\\/\\/itl2023.groovestats.com"}
         ],
         "servicesResult": "OK",
         "servicesAllowed": {
