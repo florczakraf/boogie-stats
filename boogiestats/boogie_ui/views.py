@@ -112,17 +112,29 @@ class PlayerScoresByDayView(generic.ListView):
         context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
         context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
         context["four_stars"] = scores.filter(is_top=True, score=10000).count()
-        sums = scores.aggregate(
-            fantastics_plus=Sum("fantastics_plus"),
-            fantastics=Sum("fantastics"),
-            excellents=Sum("excellents"),
-            greats=Sum("greats"),
-            decents=Sum("decents"),
-            way_offs=Sum("way_offs"),
-            misses=Sum("misses"),
+        context.update(
+            fantastics_plus=0,
+            fantastics=0,
+            excellents=0,
+            greats=0,
+            decents=0,
+            way_offs=0,
+            misses=0,
+            steps_hit=0,
         )
-        context["steps_hit"] = sum(sums.values()) - sums["misses"]
-        context.update(sums)
+
+        if scores.count():
+            sums = scores.aggregate(
+                fantastics_plus=Sum("fantastics_plus"),
+                fantastics=Sum("fantastics"),
+                excellents=Sum("excellents"),
+                greats=Sum("greats"),
+                decents=Sum("decents"),
+                way_offs=Sum("way_offs"),
+                misses=Sum("misses"),
+            )
+            context["steps_hit"] = sum(sums.values()) - sums["misses"]
+            context.update(sums)
 
         return context
 
