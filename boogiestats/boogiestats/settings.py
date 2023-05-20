@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "mathfilters",
+    "django_bootstrap_icons",
     "boogiestats.boogie_api",
 ]
 
