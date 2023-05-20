@@ -117,7 +117,7 @@
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">
-            <thead class="table-secondary">
+            <thead class="bg-body-secondary">
                 <tr>
                     {% if request.resolver_match.url_name == "player_most_played" %}
                         <th scope="col" class="w-1 text-nowrap">Play Count ↓</th>

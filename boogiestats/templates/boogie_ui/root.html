@@ -1,12 +1,13 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+      data-bs-theme="{{ request.COOKIES.bs_theme|default:"light" }}">
     <head>
         <meta charset="utf-8" />
         <meta name="keywords" content="boogiestats,stepmania,groovestats" />
         <meta name="Description"
               content="A pass-through proxy for groovestats.com that records non-ranked song scores." />
-        <link rel="stylesheet" href="{% static "boogie_ui/vendor/bootstrap-5.2.0-beta1-dist/css/bootstrap.min.css" %}" />
+        <link rel="stylesheet" href="{% static "boogie_ui/vendor/bootstrap-5.3.0-alpha3-dist/css/bootstrap.min.css" %}" />
         <link rel="stylesheet" href="{% static "boogie_ui/boogiestats.css" %}" />
         <title>
             {% block title %}
@@ -30,11 +31,22 @@
         {% include "boogie_ui/footer.html" %}
         <script src="{% static "boogie_ui/vendor/jquery-3.6.0.min.js" %}"></script>
         <script src="{% static "boogie_ui/vendor/popper.min.js" %}"></script>
-        <script src="{% static "boogie_ui/vendor/bootstrap-5.2.0-beta1-dist/js/bootstrap.min.js" %}"></script>
+        <script src="{% static "boogie_ui/vendor/bootstrap-5.3.0-alpha3-dist/js/bootstrap.min.js" %}"></script>
         <script src="{% static "boogie_ui/boogiestats.js" %}"></script>
         <script>
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
             const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+            document.getElementById('darkModeSwitch').addEventListener('click', () => {
+                if (document.documentElement.getAttribute('data-bs-theme') === 'dark') {
+                    document.documentElement.setAttribute('data-bs-theme', 'light')
+                    document.cookie = "bs_theme=light; Name=Value; Max-Age=1707109200; Path=/"
+                }
+                else {
+                    document.documentElement.setAttribute('data-bs-theme', 'dark')
+                    document.cookie = "bs_theme=dark; Name=Value; Max-Age=1707109200; Path=/"
+                }
+            })
         </script>
     </body>
 </html>
