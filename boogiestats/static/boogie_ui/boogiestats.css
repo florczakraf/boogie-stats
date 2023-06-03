@@ -207,6 +207,50 @@ form label {
   filter: invert(100%);
 }
 
+[data-bs-theme=dark] .min-plays-0 {
+  background-color: #202020;
+}
+
+[data-bs-theme=dark] .min-plays-1 {
+  background-color: #3f2005;
+}
+
+[data-bs-theme=dark] .min-plays-10 {
+  background-color: #5f2222;
+}
+
+[data-bs-theme=dark] .min-plays-15 {
+  background-color: #7f3f0a;
+}
+
+[data-bs-theme=dark] .min-plays-20 {
+  background-color: #be5f0f;
+}
+
+[data-bs-theme=dark] .min-plays-25 {
+  background-color: #fd7e14;
+}
+
+[data-bs-theme=dark] .min-plays-30 {
+  background-color: #fe9e12;
+}
+
+[data-bs-theme=dark] .min-plays-35 {
+  background-color: #febf3f;
+}
+
+[data-bs-theme=dark] .min-plays-40 {
+  background-color: #fecd69;
+}
+
+[data-bs-theme=dark] .min-plays-50 {
+  background-color: #feda90;
+}
+
+[data-bs-theme=dark] .min-plays-60 {
+  background-color: #feeac2;
+}
+
 .tooltip-inner {
   text-align: left;
 }
