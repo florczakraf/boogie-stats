@@ -203,6 +203,10 @@ form label {
   background-image: url("skull.svg");
 }
 
+[data-bs-theme=dark] .min-plays-100 {
+  filter: invert(100%);
+}
+
 .tooltip-inner {
   text-align: left;
 }
