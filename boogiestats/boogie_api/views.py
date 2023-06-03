@@ -275,6 +275,7 @@ def handle_scores(body_parsed, gs_response, players):
         song.set_ranked(is_ranked)
 
         player_instance = get_or_create_player(gs_api_key)
+        player_instance.update_name_and_tag(gs_player)
 
         _, old_score = song.get_highscore(player_instance)
 
