@@ -1,3 +1,7 @@
+[data-bs-theme=dark] {
+  --bs-link-color-rgb: #adb5bd;
+}
+
 form table td {
   padding-top: 10px;
   padding-bottom: 10px;
