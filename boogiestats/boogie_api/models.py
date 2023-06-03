@@ -184,6 +184,11 @@ class Player(models.Model):
         "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="latest_score_for"
     )
     join_date = models.DateTimeField(default=now, db_index=True)
+    pull_gs_name_and_tag = models.BooleanField(
+        default=True,
+        verbose_name="Pull GrooveStats name and tag",
+        help_text="Pull name and tag on successful GS-ranked score submission",
+    )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -207,6 +212,19 @@ class Player(models.Model):
             return Player.objects.get(*args, **kwargs)
         except Player.DoesNotExist:
             raise Managed404Error("Requested player does not exist.")
+
+    def update_name_and_tag(self, gs_player):
+        if self.pull_gs_name_and_tag:
+            leaderboard = gs_player.get("gsLeaderboard", [])
+            try:
+                self_entry = next(x for x in leaderboard if x["isSelf"])
+            except StopIteration:
+                self_entry = None
+
+            if self_entry:
+                self.name = self_entry["name"]
+                self.machine_tag = self_entry["machineTag"]
+                self.save()
 
 
 def validate_rivals(sender, **kwargs):
