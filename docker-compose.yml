@@ -30,3 +30,6 @@ services:
       - type: bind
         source: ./prod/redis-data
         target: /data
+    deploy:
+      restart_policy:
+        condition: any
