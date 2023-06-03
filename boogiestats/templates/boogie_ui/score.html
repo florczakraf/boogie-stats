@@ -17,34 +17,35 @@
             <a href="{% url "song" song_hash=song.hash %}">{% include "boogie_ui/song_display_name.html" %}</a>
         </h2>
     {% endwith %}
-    <h3 class="text-center">{{ score.score|div:100|stringformat:".2f" }}%</h3>
+    <h3 class="text-center">ITG Score: {{ score.score|div:100|stringformat:".2f" }}%</h3>
     {% if score.has_judgments %}
         <h3 class="text-center">EX Score: {{ score.ex }}%</h3>
-        {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
-            <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
-                <br />
-                Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)
-                <br />
-                Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%)
-                <br />
-                Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%)
-                <br />
-                Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%)
-                <br />
-                Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%)
-                <br />
-                ">
-                <div class="big-score-box"
-                     style="grid-template-columns: {{ both_fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
-                    <div class="fantastic"></div>
-                    <div class="excellent"></div>
-                    <div class="great"></div>
-                    <div class="decent"></div>
-                    <div class="wayoff"></div>
-                    <div class="miss"></div>
-                </div>
+        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics+: {{ score.fantastics_plus }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%)
+            <br />
+            Fantastics: {{ score.fantastics }} ({% widthratio score.fantastics score.total_steps 100 %}%)
+            <br />
+            Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)
+            <br />
+            Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%)
+            <br />
+            Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%)
+            <br />
+            Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%)
+            <br />
+            Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%)
+            <br />
+            ">
+            <div class="big-score-box"
+                 style="grid-template-columns: {{ score.fantastics_plus }}fr {{ score.fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
+                <div class="fantastic"></div>
+                <div class="fantastic_white"></div>
+                <div class="excellent"></div>
+                <div class="great"></div>
+                <div class="decent"></div>
+                <div class="wayoff"></div>
+                <div class="miss"></div>
             </div>
-        {% endwith %}
+        </div>
     {% endif %}
     <div class="d-flex">
         <div class="col">
@@ -68,7 +69,7 @@
                 <div class="col">
                     <ul>
                         <li>
-                            Fantastics: {{ both_fantastics }} ({{ score.fantastics_plus }} +  {{ score.fantastics }}) — {% widthratio both_fantastics score.total_steps 100 %}%
+                            Fantastics: {{ both_fantastics }} ({{ score.fantastics_plus }} + {{ score.fantastics }}) — {% widthratio both_fantastics score.total_steps 100 %}%
                         </li>
                         <li>Excellents: {{ score.excellents }} — {% widthratio score.excellents score.total_steps 100 %}%</li>
                         <li>Greats: {{ score.greats }} — {% widthratio score.greats score.total_steps 100 %}%</li>
