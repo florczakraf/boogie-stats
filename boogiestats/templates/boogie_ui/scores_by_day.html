@@ -31,6 +31,34 @@
         </div>
         {% include "boogie_ui/stars.html" %}
     </div>
+    {% with both_fantastics=fantastics|add:fantastics_plus %}
+        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics+: {{ fantastics_plus }} ({% widthratio fantastics_plus total_steps 100 %}%)
+            <br />
+            Fantastics: {{ fantastics }} ({% widthratio fantastics total_steps 100 %}%)
+            <br />
+            Excellents: {{ excellents }} ({% widthratio excellents total_steps 100 %}%)
+            <br />
+            Greats: {{ greats }} ({% widthratio greats total_steps 100 %}%)
+            <br />
+            Decents: {{ decents }} ({% widthratio decents total_steps 100 %}%)
+            <br />
+            Way-offs: {{ way_offs }} ({% widthratio way_offs total_steps 100 %}%)
+            <br />
+            Misses: {{ misses }} ({% widthratio misses total_steps 100 %}%)
+            <br />
+            ">
+            <div class="big-score-box"
+                 style="grid-template-columns: {{ fantastics_plus }}fr {{ fantastics }}fr {{ excellents }}fr {{ greats }}fr {{ decents }}fr {{ way_offs }}fr {{ misses }}fr">
+                <div class="fantastic"></div>
+                <div class="fantastic_white"></div>
+                <div class="excellent"></div>
+                <div class="great"></div>
+                <div class="decent"></div>
+                <div class="wayoff"></div>
+                <div class="miss"></div>
+            </div>
+        </div>
+    {% endwith %}
     <hr />
     <h3>{{ day }} Scores</h3>
     {% if scores %}
@@ -40,7 +68,7 @@
                 <tr>
                     <th scope="col" class="w-100 text-nowrap">Song</th>
                     <th scope="col" class="w-1 text-nowrap">Comment</th>
-                    <th scope="col" class="w-1 text-nowrap">Score</th>
+                    <th scope="col" class="w-1 text-nowrap">ITG Score</th>
                     <th scope="col" class="w-1 text-nowrap">Submission Date ↓</th>
                 </tr>
             </thead>

@@ -3,7 +3,11 @@
     {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
         <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="EX Score: {{ score.ex }}%
             <br />
-            Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
+            Both Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
+            <br />
+            Fantastics+: {{ score.fantastics_plus }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%)
+            <br />
+            Fantastics: {{ score.fantastics }} ({% widthratio score.fantastics score.total_steps 100 %}%)
             <br />
             Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)
             <br />
@@ -20,8 +24,9 @@
                 <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
             </a>
             <div class="score-box"
-                 style="grid-template-columns: {{ both_fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
+                 style="grid-template-columns: {{ score.fantastics_plus }}fr {{ score.fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
                 <div class="fantastic"></div>
+                <div class="fantastic_white"></div>
                 <div class="excellent"></div>
                 <div class="great"></div>
                 <div class="decent"></div>

@@ -134,6 +134,7 @@ class PlayerScoresByDayView(generic.ListView):
                 misses=Sum("misses"),
             )
             context["steps_hit"] = sum(sums.values()) - sums["misses"]
+            context["total_steps"] = sum(sums.values())
             context.update(sums)
 
         return context
