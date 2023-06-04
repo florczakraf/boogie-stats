@@ -1161,3 +1161,58 @@ def test_pulling_gs_name_and_tag(
         assert player.name == "andr_test"
     else:
         assert player.name == player.machine_tag == "1234"
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+@pytest.mark.parametrize("extra_attribute", [("name", "andr_test"), ("machineTag", "DUPA")])
+def test_pulling_gs_name_and_tag_with_missing_attributes(
+    client, some_player, some_player_gs_api_key, requests_mock, player_index, extra_attribute
+):
+    some_player.pull_gs_name_and_tag = True
+    some_player.save()
+
+    hash = "76957dd1f96f764d"
+    expected_result = {
+        f"player{player_index}": {
+            "chartHash": hash,
+            "isRanked": True,
+            "gsLeaderboard": [
+                {
+                    "rank": 1,
+                    "score": 5809,
+                    "date": "2021-11-13 10:33:34",
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                },
+            ],
+            "scoreDelta": 5809,
+            "result": "score-added",
+        }
+    }
+    key, value = extra_attribute
+    expected_result[f"player{player_index}"]["gsLeaderboard"][0][key] = value
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(expected_result))
+    kwargs = {
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
+    }
+    client.post(
+        f"/score-submit.php?chartHashP{player_index}={hash}&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "score": 5805,
+                "comment": "50e, 42g, 8d, 11wo, 4m, C300",
+                "rate": 100,
+            }
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    player = Player.objects.first()
+    if key == "name":
+        assert player.name == "andr_test"
+        assert player.machine_tag == "1234"
+    else:
+        assert player.name == "1234"
+        assert player.machine_tag == "DUPA"

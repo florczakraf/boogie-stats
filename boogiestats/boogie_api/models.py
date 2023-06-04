@@ -213,18 +213,28 @@ class Player(models.Model):
         except Player.DoesNotExist:
             raise Managed404Error("Requested player does not exist.")
 
-    def update_name_and_tag(self, gs_player):
-        if self.pull_gs_name_and_tag:
-            leaderboard = gs_player.get("gsLeaderboard", [])
-            try:
-                self_entry = next(x for x in leaderboard if x["isSelf"])
-            except StopIteration:
-                self_entry = None
+    def _get_self_entry(self, gs_player):
+        leaderboard = gs_player.get("gsLeaderboard", [])
+        try:
+            self_entry = next(x for x in leaderboard if x["isSelf"])
+        except StopIteration:
+            self_entry = None
 
-            if self_entry:
-                self.name = self_entry["name"]
-                self.machine_tag = self_entry["machineTag"]
-                self.save()
+        return self_entry
+
+    def update_name_and_tag(self, gs_player):
+        if not self.pull_gs_name_and_tag:
+            return
+
+        if self_entry := self._get_self_entry(gs_player):
+            # Turns out that at least tag can be unset
+            if (name := self_entry.get("name")) is not None:
+                self.name = name
+
+            if (machine_tag := self_entry.get("machineTag")) is not None:
+                self.machine_tag = machine_tag
+
+            self.save()
 
 
 def validate_rivals(sender, **kwargs):
