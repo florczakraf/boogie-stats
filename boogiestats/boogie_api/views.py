@@ -130,30 +130,14 @@ def get_or_create_player(gs_api_key):
     return player_instance
 
 
-def player_scores(request):
-    headers = create_headers(request)
-
+def _request_leaderboards(request):
     try:
         players = parse_players(request)
     except ValueError as e:
         sentry_sdk.capture_exception(e)
         return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
-    try:
-        gs_response = requests.get(
-            GROOVESTATS_ENDPOINT + "/player-scores.php",
-            params=request.GET,
-            headers=headers,
-            timeout=GROOVESTATS_TIMEOUT,
-        ).json()
-        logger.info(gs_response)
-    except (requests.Timeout, requests.ConnectionError) as e:
-        sentry_sdk.capture_exception(e)
-        logger.error(f"Request to GrooveStats failed: {e}")
-
-        # we can serve a local leaderboard instead of an error
-        gs_response = {}
-
+    gs_response = _try_gs_get(request)
     final_response = {}
 
     for player_index, player in players.items():
@@ -167,54 +151,7 @@ def player_scores(request):
 
         gs_player = gs_response.get(player_id, {})
         gs_leaderboard = gs_player.get("gsLeaderboard", [])
-        leaderboard = gs_leaderboard or get_local_leaderboard(player, num_entries=1)  # limit is not present in request
-
-        final_response[player_id]["gsLeaderboard"] = leaderboard
-
-        fill_event_leaderboards(final_response, gs_player, player_id)
-
-    return JsonResponse(data=final_response)
-
-
-def player_leaderboards(request):
-    headers = create_headers(request)
-
-    try:
-        players = parse_players(request)
-    except ValueError as e:
-        sentry_sdk.capture_exception(e)
-        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
-
-    max_results = int(request.GET.get("maxLeaderboardResults", 1))
-
-    try:
-        gs_response = requests.get(
-            GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
-            params=request.GET,
-            headers=headers,
-            timeout=GROOVESTATS_TIMEOUT,
-        ).json()
-        logger.info(gs_response)
-    except (requests.Timeout, requests.ConnectionError) as e:
-        sentry_sdk.capture_exception(e)
-        logger.error(f"Request to GrooveStats failed: {e}")
-
-        # we can serve a local leaderboard instead of an error
-        gs_response = {}
-
-    final_response = {}
-
-    for player_index, player in players.items():
-        chart_hash = player["chartHash"]
-        player_id = f"player{player_index}"
-
-        final_response[player_id] = {
-            "chartHash": chart_hash,
-            "isRanked": True,
-        }
-
-        gs_player = gs_response.get(player_id, {})
-        gs_leaderboard = gs_player.get("gsLeaderboard", [])
+        max_results = int(request.GET.get("maxLeaderboardResults", 1))
         leaderboard = gs_leaderboard or get_local_leaderboard(player, max_results)
 
         final_response[player_id]["gsLeaderboard"] = leaderboard
@@ -222,6 +159,34 @@ def player_leaderboards(request):
         fill_event_leaderboards(final_response, gs_player, player_id)
 
     return JsonResponse(data=final_response)
+
+
+def _try_gs_get(request):
+    headers = create_headers(request)
+    try:
+        gs_response = requests.get(
+            GROOVESTATS_ENDPOINT + request.path,
+            params=request.GET,
+            headers=headers,
+            timeout=GROOVESTATS_TIMEOUT,
+        ).json()
+        logger.info(gs_response)
+    except (requests.Timeout, requests.ConnectionError) as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Request to GrooveStats failed: {e}")
+
+        # we can serve a local leaderboard instead of an error
+        gs_response = {}
+
+    return gs_response
+
+
+def player_scores(request):
+    return _request_leaderboards(request)
+
+
+def player_leaderboards(request):
+    return _request_leaderboards(request)
 
 
 @csrf_exempt
