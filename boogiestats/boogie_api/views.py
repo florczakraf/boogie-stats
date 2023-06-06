@@ -4,6 +4,7 @@ import uuid
 from collections import defaultdict
 
 import requests
+import sentry_sdk
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -134,7 +135,8 @@ def player_scores(request):
 
     try:
         players = parse_players(request)
-    except ValueError:
+    except ValueError as e:
+        sentry_sdk.capture_exception(e)
         return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
     try:
@@ -144,11 +146,13 @@ def player_scores(request):
             headers=headers,
             timeout=GROOVESTATS_TIMEOUT,
         ).json()
-    except requests.Timeout as e:
-        logger.error(f"Request to GrooveStats timed-out: {e}")
-        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
+        logger.info(gs_response)
+    except (requests.Timeout, requests.ConnectionError) as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Request to GrooveStats failed: {e}")
 
-    logger.info(gs_response)
+        # we can serve a local leaderboard instead of an error
+        gs_response = {}
 
     final_response = {}
 
@@ -177,7 +181,8 @@ def player_leaderboards(request):
 
     try:
         players = parse_players(request)
-    except ValueError:
+    except ValueError as e:
+        sentry_sdk.capture_exception(e)
         return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
     max_results = int(request.GET.get("maxLeaderboardResults", 1))
@@ -189,10 +194,13 @@ def player_leaderboards(request):
             headers=headers,
             timeout=GROOVESTATS_TIMEOUT,
         ).json()
-    except requests.Timeout as e:
-        logger.error(f"Request to GrooveStats timed-out: {e}")
-        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
-    logger.info(gs_response)
+        logger.info(gs_response)
+    except (requests.Timeout, requests.ConnectionError) as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Request to GrooveStats failed: {e}")
+
+        # we can serve a local leaderboard instead of an error
+        gs_response = {}
 
     final_response = {}
 
@@ -223,7 +231,8 @@ def score_submit(request):
     try:
         players = parse_players(request)
         body_parsed = json.loads(request.body)
-    except (ValueError, json.JSONDecodeError):
+    except (ValueError, json.JSONDecodeError) as e:
+        sentry_sdk.capture_exception(e)
         return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
     max_results = int(request.GET.get("maxLeaderboardResults", 1))
@@ -236,10 +245,13 @@ def score_submit(request):
             json=body_parsed,
             timeout=GROOVESTATS_TIMEOUT,
         ).json()
-    except requests.Timeout as e:
-        logger.error(f"Request to GrooveStats timed-out: {e}")
+        logger.info(gs_response)
+    except (requests.Timeout, requests.ConnectionError) as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Request to GrooveStats failed: {e}")
+
+        # we can't ignore GS errors silently in case of score submissions
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
-    logger.info(gs_response)
 
     handle_scores(body_parsed, gs_response, players)
 
