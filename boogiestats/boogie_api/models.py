@@ -315,4 +315,7 @@ class Score(models.Model):
             + self.mines_hit * weights["mine"]
         )
 
-        return max(0, math.floor(points / total_possible * 10000) / 100)
+        try:
+            return max(0, math.floor(points / total_possible * 10000) / 100)
+        except ZeroDivisionError:
+            return 0
