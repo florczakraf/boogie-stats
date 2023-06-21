@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 from collections import defaultdict
+from copy import deepcopy
 
 import requests
 import sentry_sdk
@@ -19,9 +20,7 @@ GROOVESTATS_RESPONSES = {
         "error": "No valid players found.",
     },
     "NEW_SESSION": {
-        "activeEvents": [
-            {"name": "ITL Online 2023", "shortName": "ITL2023", "url": "https:\\/\\/itl2023.groovestats.com"}
-        ],
+        "activeEvents": [],
         "servicesResult": "OK",
         "servicesAllowed": {
             "scoreSubmit": True,
@@ -42,8 +41,12 @@ GROOVESTATS_TIMEOUT = 12
 SUPPORTED_EVENTS = ("rpg", "itl")
 
 
-def new_session(request):  # TODO add proxying to groovestats / caching?
-    return JsonResponse(data=GROOVESTATS_RESPONSES["NEW_SESSION"])
+def new_session(request):
+    gs_response = _try_gs_get(request)
+    response = deepcopy(GROOVESTATS_RESPONSES["NEW_SESSION"])
+    response["activeEvents"] = gs_response.get("activeEvents", [])
+
+    return JsonResponse(data=response)
 
 
 def validate_players(players):
