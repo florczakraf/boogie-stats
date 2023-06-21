@@ -19,9 +19,7 @@ GROOVESTATS_RESPONSES = {
         "error": "No valid players found.",
     },
     "NEW_SESSION": {
-        "activeEvents": [
-            {"name": "ITL Online 2023", "shortName": "ITL2023", "url": "https:\\/\\/itl2023.groovestats.com"}
-        ],
+        "activeEvents": [],
         "servicesResult": "OK",
         "servicesAllowed": {
             "scoreSubmit": True,
@@ -42,8 +40,9 @@ GROOVESTATS_TIMEOUT = 12
 SUPPORTED_EVENTS = ("rpg", "itl")
 
 
-def new_session(request):  # TODO add proxying to groovestats / caching?
-    return JsonResponse(data=GROOVESTATS_RESPONSES["NEW_SESSION"])
+def new_session(request):
+    data = _try_gs_get(request) or GROOVESTATS_RESPONSES["NEW_SESSION"]
+    return JsonResponse(data=data)
 
 
 def validate_players(players):
