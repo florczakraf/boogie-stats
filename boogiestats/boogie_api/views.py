@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 from collections import defaultdict
+from copy import deepcopy
 
 import requests
 import sentry_sdk
@@ -41,8 +42,11 @@ SUPPORTED_EVENTS = ("rpg", "itl")
 
 
 def new_session(request):
-    data = _try_gs_get(request) or GROOVESTATS_RESPONSES["NEW_SESSION"]
-    return JsonResponse(data=data)
+    gs_response = _try_gs_get(request)
+    response = deepcopy(GROOVESTATS_RESPONSES["NEW_SESSION"])
+    response["activeEvents"] = gs_response.get("activeEvents", [])
+
+    return JsonResponse(data=response)
 
 
 def validate_players(players):
