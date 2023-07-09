@@ -105,15 +105,6 @@
        class="btn {% if request.resolver_match.url_name == "player_most_played" %}btn-success{% else %}btn-secondary{% endif %}">
         Most Played
     </a>
-    <h3>
-        {% if request.resolver_match.url_name == "player" %}
-            Recent Scores
-        {% elif request.resolver_match.url_name == "player_most_played" %}
-            Most Played
-        {% else %}
-            Highscores
-        {% endif %}
-    </h3>
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">
