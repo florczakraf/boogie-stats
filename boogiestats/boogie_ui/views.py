@@ -373,6 +373,16 @@ class SongView(generic.ListView):
         )
 
 
+class SongByDateView(SongView):
+    def get_queryset(self):
+        song_hash = self.kwargs["song_hash"]
+        return (
+            Song.get_or_404(hash=song_hash)
+            .scores.order_by("-submission_date", "score")
+            .select_related("song", "player")
+        )
+
+
 class ScoreView(generic.DetailView):
     template_name = "boogie_ui/score.html"
     model = Score

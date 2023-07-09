@@ -23,6 +23,7 @@ urlpatterns = [
     path("songs_by_players/", views.SongsByPlayersListView.as_view(), name="songs_by_players"),
     path("song_by_player/<str:song_hash>/<int:player_id>", views.SongByPlayerView.as_view(), name="song_by_player"),
     path("songs/<str:song_hash>/", views.SongView.as_view(), name="song"),
+    path("song_by_date/<str:song_hash>/", views.SongByDateView.as_view(), name="song_by_date"),
     path("songs/<str:song_hash>/highscores", views.SongHighscoresView.as_view(), name="song_highscores"),
     path("scores/", views.ScoreListView.as_view(), name="scores"),
     path("scores/<int:pk>/", views.ScoreView.as_view(), name="score"),
