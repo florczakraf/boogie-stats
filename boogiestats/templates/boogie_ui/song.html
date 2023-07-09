@@ -15,7 +15,7 @@
     <h2 class="mt-2">{% include "boogie_ui/song_display_name.html" %}</h2>
     <p>Pack: {{ song.chart_info.pack_name }}</p>
     <a href="{% url "song" song_hash=song.hash %}"
-       class="btn {% if request.resolver_match.url_name == "song" %}btn-success{% else %}btn-secondary{% endif %}">
+       class="btn {% if request.resolver_match.url_name in "song,song_by_date" %}btn-success{% else %}btn-secondary{% endif %}">
         All Scores ({{ song.scores.count }})
     </a>
     <a href="{% url "song_highscores" song_hash=song.hash %}"
@@ -48,10 +48,30 @@
         <table class="table table-striped">
             <thead class="bg-body-secondary">
                 <tr>
-                    <th scope="col" class="w-1 text-nowrap">ITG Score ↓</th>
+                    <th scope="col" class="w-1 text-nowrap">
+                        {% if request.resolver_match.url_name == "song_highscores" %}
+                            ITG Highscore ↓
+                        {% elif request.resolver_match.url_name in "song,song_by_date" %}
+                            <a href="{% url "song" song_hash=song.hash %}">
+                                ITG Score
+                                {% if request.resolver_match.url_name == "song" %}↓{% endif %}
+                            </a>
+                        {% else %}
+                            ITG Score ↓
+                        {% endif %}
+                    </th>
                     <th scope="col" class="w-1 text-nowrap">Player</th>
                     <th scope="col" class="w-100 text-nowrap">Comment</th>
-                    <th scope="col" class="w-1 text-nowrap">Submission Date</th>
+                    <th scope="col" class="w-1 text-nowrap">
+                        {% if request.resolver_match.url_name in "song,song_by_date" %}
+                            <a href="{% url "song_by_date" song_hash=song.hash %}">
+                                Submission Date
+                                {% if request.resolver_match.url_name == "song_by_date" %}↓{% endif %}
+                            </a>
+                        {% else %}
+                            Submission Date
+                        {% endif %}
+                    </th>
                 </tr>
             </thead>
             <tbody class="align-middle">
