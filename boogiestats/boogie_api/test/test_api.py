@@ -59,6 +59,7 @@ def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
             "gsLeaderboard": [],
         }
     }
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -93,6 +94,7 @@ def test_player_scores_given_groovestats_ranked_song(client, gs_api_key, request
     assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
     assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
     assert response.json() == ranked_song
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "GS"
 
 
 def test_create_headers_filters_headers():
@@ -180,6 +182,7 @@ def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
     assert requests_mock.last_request.qs["maxLeaderboardResults"] == ["3"]
     assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
     assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -223,6 +226,7 @@ def test_player_leaderboards_given_groovestats_ranked_song(client, gs_api_key, r
     )
 
     assert response.json() == ranked_song
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "GS"
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -300,6 +304,7 @@ def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests
     player = Player.objects.first()
     assert player.machine_tag == "DUPA"
     assert player.name == "andr_test"
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "GS"
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -360,6 +365,7 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
             "result": "score-added",
         }
     }
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -1015,6 +1021,8 @@ def test_score_submit_with_two_players_playing_the_same_unranked_song(client, gs
             "result": "score-added",
         },
     }
+    assert response.headers["bs-leaderboard-player-1"] == "BS"
+    assert response.headers["bs-leaderboard-player-2"] == "BS"
 
 
 def test_score_submit_with_two_players_playing_the_same_ranked_song(client, gs_api_key, requests_mock):
@@ -1107,6 +1115,66 @@ def test_score_submit_with_two_players_playing_the_same_ranked_song(client, gs_a
     assert Player.objects.count() == 2
 
     assert response.json() == ranked_songs
+    assert response.headers["bs-leaderboard-player-1"] == "GS"
+    assert response.headers["bs-leaderboard-player-2"] == "GS"
+
+
+def test_score_submit_with_two_players_playing_ranked_and_unranked_song(client, gs_api_key, requests_mock):
+    ranked_songs = {
+        "player1": {
+            "chartHash": "aaaaadd1f96f764e",
+            "isRanked": True,
+            "gsLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "foo",
+                    "score": 6500,
+                    "date": "2021-11-13 10:33:34",
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "FOO",
+                }
+            ],
+            "scoreDelta": 5500,
+            "result": "score-added",
+        },
+        "player2": {
+            "chartHash": "bbbbbdd1f96f764e",
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 6500,
+        },
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(ranked_songs))
+    kwargs = {
+        "HTTP_x_api_key_player_1": "abcdef0123456789" * 4,
+        "HTTP_x_api_key_player_2": "abcdef0123456789"[::-1] * 4,
+    }
+    response = client.post(
+        "/score-submit.php?chartHashP1=aaaaadd1f96f764e&chartHashP2=bbbbbdd1f96f764e&maxLeaderboardResults=3",
+        data={
+            "player1": {
+                "score": 5500,
+                "comment": "foo",
+                "rate": 100,
+            },
+            "player2": {
+                "score": 6500,
+                "comment": "bar",
+                "rate": 100,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 2
+    assert Score.objects.count() == 2
+    assert Player.objects.count() == 2
+
+    assert response.headers["bs-leaderboard-player-1"] == "GS"
+    assert response.headers["bs-leaderboard-player-2"] == "BS"
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
