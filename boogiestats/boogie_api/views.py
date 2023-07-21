@@ -142,6 +142,7 @@ def _request_leaderboards(request):
 
     gs_response = _try_gs_get(request)
     final_response = {}
+    response_headers = {}
 
     for player_index, player in players.items():
         chart_hash = player["chartHash"]
@@ -156,12 +157,13 @@ def _request_leaderboards(request):
         gs_leaderboard = gs_player.get("gsLeaderboard", [])
         max_results = int(request.GET.get("maxLeaderboardResults", 1))
         leaderboard = gs_leaderboard or get_local_leaderboard(player, max_results)
+        _fill_response_headers(response_headers, gs_leaderboard, player_index)
 
         final_response[player_id]["gsLeaderboard"] = leaderboard
 
         fill_event_leaderboards(final_response, gs_player, player_id)
 
-    return JsonResponse(data=final_response)
+    return JsonResponse(data=final_response, headers=response_headers)
 
 
 def _try_gs_get(request):
@@ -190,6 +192,15 @@ def player_scores(request):
 
 def player_leaderboards(request):
     return _request_leaderboards(request)
+
+
+def _fill_response_headers(response_headers, gs_leaderboard, player_index):
+    if gs_leaderboard:
+        leaderboard_source = "GS"
+    else:
+        leaderboard_source = "BS"
+
+    response_headers[f"bs-leaderboard-player-{player_index}"] = leaderboard_source
 
 
 @csrf_exempt
@@ -224,12 +235,14 @@ def score_submit(request):
     handle_scores(body_parsed, gs_response, players)
 
     final_response = {}
+    response_headers = {}
 
     for player_index, player in players.items():
         player_id = f"player{player_index}"
         gs_player = gs_response.get(player_id, {})
         gs_leaderboard = gs_player.get("gsLeaderboard", [])
         leaderboard = gs_leaderboard or get_local_leaderboard(player, max_results)
+        _fill_response_headers(response_headers, gs_leaderboard, player_index)
 
         final_response[player_id] = {
             "chartHash": player["chartHash"],
@@ -240,7 +253,7 @@ def score_submit(request):
         }
         fill_event_leaderboards(final_response, gs_player, player_id)
 
-    return JsonResponse(data=final_response)
+    return JsonResponse(data=final_response, headers=response_headers)
 
 
 def handle_scores(body_parsed, gs_response, players):
