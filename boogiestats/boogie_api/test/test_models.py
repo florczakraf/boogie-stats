@@ -16,6 +16,11 @@ def other_song():
 
 
 @pytest.fixture
+def song_without_scores():
+    return Song.objects.create(hash="yetanothersong")
+
+
+@pytest.fixture
 def player(song, other_song):
     p = Player.objects.create(gs_api_key="playerkey", machine_tag="PL")
     p.scores.create(
@@ -407,3 +412,28 @@ def test_score_create_updates_players_latest_score(player, song):
     player.refresh_from_db()
     assert previous_latest_score != player.latest_score
     assert player.latest_score == score
+
+
+def test_score_create_updates_songs_number_of_players(player, rival1, song_without_scores):
+    player.scores.create(song=song_without_scores, score=5900, comment="comment", rate=100)
+
+    song_without_scores.refresh_from_db()
+    assert song_without_scores.number_of_players == 1
+
+    rival1.scores.create(song=song_without_scores, score=5900, comment="comment", rate=100)
+
+    song_without_scores.refresh_from_db()
+    assert song_without_scores.number_of_players == 2
+
+
+def test_score_create_updates_songs_number_of_scores(player, rival1, song_without_scores):
+    player.scores.create(song=song_without_scores, score=5900, comment="comment", rate=100)
+
+    song_without_scores.refresh_from_db()
+    assert song_without_scores.number_of_scores == 1
+
+    rival1.scores.create(song=song_without_scores, score=5900, comment="comment", rate=100)
+    player.scores.create(song=song_without_scores, score=5900, comment="comment", rate=100)
+
+    song_without_scores.refresh_from_db()
+    assert song_without_scores.number_of_scores == 3

@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.db.models import Count
 from django.db.models.signals import m2m_changed
 from django.utils.timezone import now
 from django.utils.functional import cached_property
@@ -41,6 +42,8 @@ class Song(models.Model):
     highscore = models.ForeignKey(
         "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="highscore_for"
     )
+    number_of_scores = models.PositiveIntegerField(default=0, db_index=True)
+    number_of_players = models.PositiveIntegerField(default=0, db_index=True)
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -168,6 +171,15 @@ class Song(models.Model):
             return True
 
         return False
+
+    def update_number_of_players_and_scores(self):
+        annotated_song = (
+            Song.objects.filter(hash=self.hash)
+            .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
+            .first()
+        )
+        self.number_of_players = annotated_song.num_players
+        self.number_of_scores = annotated_song.num_scores
 
 
 class Player(models.Model):
