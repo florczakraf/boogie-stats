@@ -28,8 +28,8 @@
                 {% for song in songs %}
                     <tr>
                         <td>{% include "boogie_ui/song_link.html" %}</td>
-                        <td class="text-nowrap">{{ song.num_scores }}</td>
-                        <td class="text-nowrap">{{ song.num_players }}</td>
+                        <td class="text-nowrap">{{ song.number_of_scores }}</td>
+                        <td class="text-nowrap">{{ song.number_of_players }}</td>
                         <td class="text-nowrap">
                             {% if song.highscore %}
                                 <a href="{% url "score" pk=song.highscore.id %}">{{ song.highscore.score|div:100|stringformat:".2f" }}%</a> by

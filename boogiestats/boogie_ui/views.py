@@ -412,27 +412,15 @@ class SongsListView(generic.ListView):
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
-        return (
-            Song.objects.all()
-            .prefetch_related("scores__player")
-            .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
-            .order_by("-num_scores")
-            .prefetch_related(
-                "highscore",
-                "highscore__player",
-            )
+        return Song.objects.order_by("-number_of_scores").prefetch_related(
+            "highscore",
+            "highscore__player",
         )
 
 
 class SongsByPlayersListView(SongsListView):
     def get_queryset(self):
-        return (
-            Song.objects.all()
-            .prefetch_related("scores__player")
-            .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
-            .order_by("-num_players")
-            .prefetch_related("highscore", "highscore__player")
-        )
+        return Song.objects.order_by("-number_of_players").prefetch_related("highscore", "highscore__player")
 
 
 class EditPlayerView(LoginRequiredMixin, generic.UpdateView):

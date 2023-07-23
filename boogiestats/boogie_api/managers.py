@@ -55,8 +55,8 @@ class ScoreManager(models.Manager):
 
         score_object.save()
 
-        self._handle_highscore_update(score_object, song)
-        self._handle_latest_score_update(score_object, player)
+        self._update_song(score_object, song)
+        self._update_player(score_object, player)
         song.update_search_cache()  # TODO: this *really* needs to be done async
 
         return score_object
@@ -91,12 +91,14 @@ class ScoreManager(models.Manager):
             for src, dst in JUDGMENTS_MAP.items():
                 setattr(score_object, dst, judgments.get(src, 0))
 
-    def _handle_highscore_update(self, score_object, song):
+    def _update_song(self, score_object, song):
         if not song.highscore or score_object.score > song.highscore.score:
             song.highscore = score_object
-            song.save()
 
-    def _handle_latest_score_update(self, score_object, player):
+        song.update_number_of_players_and_scores()
+        song.save()
+
+    def _update_player(self, score_object, player):
         player.latest_score = score_object
         player.save()
 
