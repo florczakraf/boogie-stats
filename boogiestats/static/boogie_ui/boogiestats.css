@@ -258,3 +258,7 @@ form label {
 .tooltip-inner {
   text-align: left;
 }
+
+pre {
+  color: var(--bs-code-color);
+}
