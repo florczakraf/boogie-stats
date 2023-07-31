@@ -1284,3 +1284,86 @@ def test_pulling_gs_name_and_tag_with_missing_attributes(
     else:
         assert player.name == "1234"
         assert player.machine_tag == "DUPA"
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_player_leaderboards_given_groovestats_partially_ranked_song(
+    client, some_player_gs_api_key, requests_mock, player_index, some_player
+):
+    # for some reason on 2023-07-31 GS started accepting scores (gsLeaderboards were set in the response) but the
+    # isRanked field was False, this lead to discrepancy in displayed boards. For now, we stick to GS boards only when
+    # isRanked is True, not when gsLeaderboard is non-empty.
+    hash = "76957dd1f96f764d"
+    gs_response = {
+        f"player{player_index}": {
+            "chartHash": hash,
+            "isRanked": False,
+            "gsLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "GS_NAME",
+                    "score": 5809,
+                    "date": "2018-02-07 19:49:20",
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "TAG",
+                },
+            ],
+            "scoreDelta": 5809,
+            "result": "score-added",
+        }
+    }
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(gs_response))
+    kwargs = {
+        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}={hash}&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "score": 5809,
+                "comment": "50e, 42g, 8d, 11wo, 4m, C300",
+                "rate": 100,
+            }
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert Song.objects.count() == 1
+    song = Song.objects.first()
+    assert song.hash == hash
+    assert song.gs_ranked is False
+    assert Score.objects.count() == 1
+    assert Player.objects.count() == 1
+    assert response.json() == {
+        f"player{player_index}": {
+            "chartHash": hash,
+            "isRanked": True,
+            "gsLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "GS_NAME",
+                    "score": 5809,
+                    "date": song.get_highscore(some_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "TAG",
+                },
+            ],
+            "scoreDelta": 5809,
+            "result": "score-added",
+        }
+    }
+
+    assert len(requests_mock.request_history) == 1
+    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
+    assert requests_mock.last_request.qs["maxLeaderboardResults"] == ["3"]
+    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == some_player_gs_api_key
+    assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
+    player = Player.objects.first()
+    assert player.machine_tag == "TAG"
+    assert player.name == "GS_NAME"
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"

@@ -156,8 +156,9 @@ def _request_leaderboards(request):
         gs_player = gs_response.get(player_id, {})
         gs_leaderboard = gs_player.get("gsLeaderboard", [])
         max_results = int(request.GET.get("maxLeaderboardResults", 1))
-        leaderboard = gs_leaderboard or get_local_leaderboard(player, max_results)
-        _fill_response_headers(response_headers, gs_leaderboard, player_index)
+        is_ranked = gs_player.get("isRanked", False)
+        leaderboard = gs_leaderboard if is_ranked else get_local_leaderboard(player, max_results)
+        _fill_response_headers(response_headers, is_ranked, player_index)
 
         final_response[player_id]["gsLeaderboard"] = leaderboard
 
@@ -194,8 +195,8 @@ def player_leaderboards(request):
     return _request_leaderboards(request)
 
 
-def _fill_response_headers(response_headers, gs_leaderboard, player_index):
-    if gs_leaderboard:
+def _fill_response_headers(response_headers, is_ranked, player_index):
+    if is_ranked:
         leaderboard_source = "GS"
     else:
         leaderboard_source = "BS"
@@ -241,8 +242,9 @@ def score_submit(request):
         player_id = f"player{player_index}"
         gs_player = gs_response.get(player_id, {})
         gs_leaderboard = gs_player.get("gsLeaderboard", [])
-        leaderboard = gs_leaderboard or get_local_leaderboard(player, max_results)
-        _fill_response_headers(response_headers, gs_leaderboard, player_index)
+        is_ranked = gs_player.get("isRanked", False)
+        leaderboard = gs_leaderboard if is_ranked else get_local_leaderboard(player, max_results)
+        _fill_response_headers(response_headers, is_ranked, player_index)
 
         final_response[player_id] = {
             "chartHash": player["chartHash"],
