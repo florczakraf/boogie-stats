@@ -4,11 +4,71 @@
 {% endblock title %}
 {% block content %}
     <h2>User Manual</h2>
-    In order to use this BoogieStats instance as your score aggregator you will have to follow the steps below.
-    If you already have GrooveStats integration up and running in <b>ITGmania</b> (BoogieStats don't support GrooveStats Launcher method anymore), you can skip to <a href="#join-and-enable-boogiestats">Join and Enable BoogieStats section</a>.
+    <h3>Table of Contents</h3>
+    <ul>
+        <li>
+            <a href="#join-and-enable-groovestats">Join and Enable GrooveStats</a>
+        </li>
+        <li>
+            <a href="#join-and-enable-boogiestats">Join and Enable BoogieStats</a>
+            <ul>
+                <li>
+                    <a href="#zmod-sl">Zarzob's Simply Love Fork (zmod)</a>
+                </li>
+                <li>
+                    <a href="#stock-sl">Stock Simply Love</a>
+                </li>
+                <li>
+                    <a href="#other-themes">Other Themes</a>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <a href="#first-score">Your First BoogieStats Score</a>
+        </li>
+        <li>
+            <a href="#locating-game-settings">Locating Game Settings</a>
+            <ul>
+                <li>
+                    <a href="#portable-installations">Portable Installations</a>
+                </li>
+                <li>
+                    <a href="#windows">Windows</a>
+                </li>
+                <li>
+                    <a href="#linux">Linux</a>
+                </li>
+                <li>
+                    <a href="#macos">macOS</a>
+                </li>
+                <li>
+                    <a href="#player-profiles">Player Profiles</a>
+                </li>
+            </ul>
+        </li>
+        {% if BS_SEARCH_ENABLED %}
+            <li>
+                <a href="#search">Search Guide</a>
+            </li>
+        {% endif %}
+        <li>
+            <a href="#qna">Q&A</a>
+        </li>
+        <ul>
+            {% for q in q_and_a %}
+                <li>
+                    <a href="#qna{{ forloop.counter }}">{{ q|safe }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </ul>
+    <hr>
     <h3 id="join-and-enable-groovestats">
         Join and Enable GrooveStats <a class="text-muted small" href="#join-and-enable-groovestats">#</a>
     </h3>
+    In order to use this BoogieStats instance as your score aggregator you will first have to set up GrooveStats integration.
+    If you already have GrooveStats up and running in <b>ITGmania</b> (<a href="https://github.com/GrooveStats/gslauncher/pull/15"
+   target="_blank">BoogieStats don't support GrooveStats Launcher method anymore</a>), you can skip to <a href="#join-and-enable-boogiestats">Join and Enable BoogieStats section</a>.
     <ol>
         <li>
             Download and install ITGmania from the <a href="https://www.itgmania.com/" target="_blank">official website</a>.
@@ -17,65 +77,187 @@
         </li>
         <li>Start the game, create a profile (if you haven't migrated a profile) and set it to a desired player slot.</li>
         <li>
-            <code>Sign Up</code> and generate an <code>API Key</code> on <a href="https://groovestats.com/" target="_blank">GrooveStats</a>.
-        </li>
-        <li>
             Set <code>Enable GrooveStats</code> to <code>Yes</code> in the <code>GrooveStats Options</code> inside the <code>Game Options</code> submenu of <code>Options</code>.
         </li>
+        <li>Turn off the game (it's important, because Stepmania overwrites config files).</li>
         <li>
-            Configure GrooveStats in your profile by creating a <code>GrooveStats.ini</code> file inside your profile directory.
-            You will find your <code>Save</code> directory inside <code>%appdata%</code> if you picked a normal installer version of ITGmania,
-            or directly inside the game's directory in case of a "portable" installation.
-            For example: <code>Save/LocalProfiles/00000000/GrooveStats.ini</code> (where <code>00000000</code> is an ID of your profile, you can check the <code>Editable.ini</code> to make sure that you picked the correct profile if you have more than one) should have the following contents:
+            Go to <a href="https://groovestats.com/" target="_blank">GrooveStats</a> website and <code>Sign Up</code>.
+            Then log in and go to the <a href="https://groovestats.com/index.php?page=register&action=update"
+    target="_blank">Edit Profile page</a> to generate and/or copy an <code>API Key</code>.
+        </li>
+        <li>
+            Configure GrooveStats in your game profile by creating/editing a <code>GrooveStats.ini</code> file inside your profile's directory.
+            If you need help locating your profile, see <a href="#locating-game-settings">Locating Game Settings section</a>.
+            The file must have the following contents:
             <pre>
 <code>
 [GrooveStats]
 ApiKey=your API key from groovestats.com
 IsPadPlayer=1
 </code></pre>
+            Make sure that there are no spaces around the pasted API Key and that <code>IsPadPlayer</code> is set to 1,
+            otherwise the game will only fetch scores without ability to send them.
         </li>
     </ol>
+    <hr>
     <h3 id="join-and-enable-boogiestats">
         Join and Enable BoogieStats <a class="text-muted small" href="#join-and-enable-boogiestats">#</a>
     </h3>
-    <ol>
-        <li>
-            Modify <code>Simply Love</code> theme to redirect request from <code>api.groovestats.com</code> to your BoogieStats URL.
-            Find and modify <code>ITGMANIA_PATH/Themes/Simply Love/Scripts/SL-Helpers-GrooveStats.lua</code> -- change line 44 from:
-            <pre><code>
-local url_prefix = "https://api.groovestats.com/"
-</code></pre>
-            to:
-            <pre><code>
-local url_prefix = "{{ boogiestats_url_prefix }}"
-</code></pre>
-        </li>
-        <li>
-            Allow ITGmania to make network requests to your BoogieStats URL.
-            Locate your <code>Save</code> directory the same way as in the previous step.
-            Find and modify <code>Save/Preferences.ini</code> -- change line 95 from:
-            <pre><code>
+    <p>
+        You don't have to create any accounts, just configure the game using this guide and start playing.
+        If you don't have a GrooveStats integration in your ITGmania, please start with <a href="#join-and-enable-groovestats">Join and Enable GrooveStats section</a>.
+        There's a common configuration needed no matter what theme you use.
+    </p>
+    <p>
+        First you need to allow ITGmania to make network requests to BoogieStats address.
+        Make sure to turn your game off before modifying the configuration.
+        Locate your <code>Preferences.ini</code> file in the <a href="#locating-game-settings">configuration directory</a>.
+        Find the line that starts with <code>HttpAllowHosts=</code> and append <code>,{{ boogiestats_allow_host }}</code>.
+        Make sure that there are <b>no extra spaces or protocol</b>, just the address after a comma.
+        It's important to keep GrooveStats in the list to allow downloads of unlockable songs in the contests held on GrooveStats.
+    </p>
+    For example, change:
+    <pre><code>
 HttpAllowHosts=*.groovestats.com
 </code></pre>
-            to:
-            <pre><code>
+    to:
+    <pre><code>
 HttpAllowHosts=*.groovestats.com,{{ boogiestats_allow_host }}
 </code></pre>
-            It's important to still allow the usual GrooveStats requests in order to allow downloads of unlockable songs in the
-            future contests held by GrooveStats.
+    <p>
+        Now pick the theme-specific instructions that apply to you.
+        If you start with a fresh ITGmania installation and don't know what to choose, zmod offers the best BoogieStats user experience at the moment.
+    </p>
+    <h4 id="zmod-sl">
+        Zarzob's Simply Love Fork (zmod) <a class="text-muted small" href="#zmod-sl">#</a>
+    </h4>
+    <p>
+        Zarzob's fork of Simply Love, commonly referred to as zmod, has an extended support for BoogieStats.
+        You can download it from the <a href="https://github.com/zarzob/Simply-Love-SM5" target="_blank">project's GitHub page</a>.
+    </p>
+    <p>
+        If you run already have a recent version of zmod, just
+        set <code>Use BoogieStats</code> to <code>Yes</code> in the <code>GrooveStats Options</code> inside the <code>Game Options</code> submenu of <code>Options</code>.
+    </p>
+    <h4 id="stock-sl">
+        Stock Simply Love <a class="text-muted small" href="#stock-sl">#</a>
+    </h4>
+    Modify <code>Simply Love</code> theme to redirect requests from <code>api.groovestats.com</code> to this BoogieStats instance.
+    Find and modify <code>ITGMANIA_PATH/Themes/Simply Love/Scripts/SL-Helpers-GrooveStats.lua</code> — change line that starts with <code>local url_prefix</code> from:
+    <pre><code>
+local url_prefix = "https://api.groovestats.com/"
+</code></pre>
+    to:
+    <pre><code>
+local url_prefix = "{{ boogiestats_url_prefix }}"
+</code></pre>
+    <p>
+        Make sure that the trailing forward slash (<code>/</code>) is included and that there are no extra spaces on either end of the address.
+    </p>
+    <h4 id="other-themes">
+        Other Themes <a class="text-muted small" href="#other-themes">#</a>
+    </h4>
+    <p>
+        There's a chance that if your current theme supports automatic score submissions from ITGmania without GrooveStats Launcher,
+        the method described for <a href="#stock-sl">Stock Simply Love</a> theme could also be adapted for your theme, but it's not been tested.
+    </p>
+    <hr>
+    <h4 id="first-score">
+        Your First BoogieStats Score <a class="text-muted small" href="#first-score">#</a>
+    </h4>
+    <p>
+        When you completed all required configuration you can just start playing. All songs will now appear as "ranked" in game.
+        If you use zmod theme, the leaderboards will display the source of scores (either GS or BS).
+    </p>
+    <p>
+        After you play and <b>pass</b> any song and your score is not disqualified locally by the game, your
+        score will appear on the <a href="{% url "scores" %}" target="_blank">recent scores page</a>.
+        Make sure that the bottom of the result screen in game says <code>Submitted!</code>.
+        If for any reason the score is disqualified, the panel with QR code should give you more details.
+    </p>
+    <p>
+        When the score has been submitted by game, a BoogieStats player profile will be created automatically.
+        If you chose to play a GS-ranked song, the profile will already have your nickname and machine tag pulled from GS,
+        otherwise they will remain randomly generated until you complete a GS-ranked song or set them manually on the <a href="{% url "edit" %}" target="_blank">Edit Profile page</a>.
+        Use your GrooveStats API Key to log in (you can paste the whole key, it will be automatically cut to the limit inside the form), the same one that's been set in <code>GrooveStats.ini</code> file.
+        You can also disable the automatic name and tag updates on that page.
+    </p>
+    <p>
+        <a href="{% url "edit" %}" target="_blank">Edit Profile</a> also allows you to choose rivals.
+        Historically you could only set up to 3 rivals but BoogieStats currently allows you to choose as many as you want.
+        All of them will be shown on your BoogieStats profile with option to open the comparison page,
+        but only the top 3 scores of your rivals on a given chart will be displayed on the leaderboards in the game.
+        If you don't like this in-game behavior, just set up to 3 rivals.
+    </p>
+    <p>
+        If you ever need to change your GS API Key, <a href="{% url "edit" %}" target="_blank">Edit Profile</a> page will also allow to update it in your BoogieStats account.
+        If you submit a score with <b>a new GS API Key without updating it first there</b>, a new account will be created. See Q&A section for details.
+    </p>
+    <hr>
+    <h3 id="locating-game-settings">
+        Locating Game Settings <a class="text-muted small" href="#locating-game-settings">#</a>
+    </h3>
+    Stepmania keeps configuration and player profiles inside a directory that depends on type of installation and your system.
+    Remember to <b>only modify the configuration when the game is not running</b>, otherwise it will be overwritten.
+    <h4 id="portable-installations">
+        Portable Installations <a class="text-muted small" href="#portable-installations">#</a>
+    </h4>
+    Your configuration will be in <code>GAME_INSTALLATION_DIR/Save</code> directory.
+    <ul>
+        <li>
+            Preferences: <code>INSTALLATION_DIR/Save/Preferences.ini</code>
         </li>
         <li>
-            Play and <b>pass</b> any song to automatically create an account on BoogieStats. Make sure that the bottom of the result screen says <code>Submitted!</code>.
+            Profiles: <code>INSTALLATION_DIR/Save/LocalProfiles/</code>
+        </li>
+    </ul>
+    <h4 id="windows">
+        Windows <a class="text-muted small" href="#windows">#</a>
+    </h4>
+    Your configuration will be in <code>%appdata%/ITGmania/Save</code> directory (paste this path to a navigation bar of file explorer and hit enter).
+    <ul>
+        <li>
+            Preferences: <code>%appdata%/ITGmania/Save/Preferences.ini</code>
         </li>
         <li>
-            Edit your profile on BoogieStats.
-            Use your GrooveStats API key to log in (you can try to paste the whole key, it will be automatically cut to the limit
-            inside the form) <a href="{% url "edit" %}" target="_blank">here</a>. You can set as many Rivals as you want, only the top 3 will be used when more of them completed
-            a song that you request a leaderboard for in game.
+            Profiles: <code>%appdata%/ITGmania/Save/LocalProfiles/</code>
         </li>
-        <li>Enjoy!</li>
-    </ol>
+    </ul>
+    <h4 id="linux">
+        Linux <a class="text-muted small" href="#linux">#</a>
+    </h4>
+    Your configuration will be in <code>~/.itgmania/Save</code> directory.
+    <ul>
+        <li>
+            Preferences: <code>~/.itgmania/Save/Preferences.ini</code>
+        </li>
+        <li>
+            Profiles: <code>~/.itgmania/Save/LocalProfiles/</code>
+        </li>
+    </ul>
+    <h4 id="macos">
+        macOS <a class="text-muted small" href="#macos">#</a>
+    </h4>
+    Your configuration will be in <code>~/Library/Preferences/ITGmania</code> directory.
+    Please note that by default it might be hidden in Finder.
+    You can display <code>Library</code> directory by navigating to your home directory, pressing <code>Cmd+J</code> and checking <code>Show Library Folder</code>.
+    <ul>
+        <li>
+            Preferences: <code>~/Library/Preferences/ITGmania/Preferences.ini</code>
+        </li>
+        <li>
+            Profiles: <code>~/Library/Preferences/ITGmania/LocalProfiles/</code>
+        </li>
+    </ul>
+    <h4 id="player-profiles">
+        Player Profiles <a class="text-muted small" href="#player-profiles">#</a>
+    </h4>
+    Profiles are stored inside <code>LocalProfiles</code> directory, they are usually named using consecutive ids,
+    for example: <code>Save/LocalProfiles/00000000/</code>.
+    If you have more than one profile, you can check the <code>Editable.ini</code> inside a profile to make sure that
+    you picked the correct one.
     {% if BS_SEARCH_ENABLED %}
+        <hr>
         <h3 id="search">
             Search Guide <a class="text-muted small" href="#search">#</a>
         </h3>
@@ -128,53 +310,15 @@ HttpAllowHosts=*.groovestats.com,{{ boogiestats_allow_host }}
             </li>
         </ul>
     {% endif %}
+    <hr>
     <h3 id="qna">
         Q&A <a class="text-muted small" href="#qna">#</a>
     </h3>
-    <ul>
-        <li>
-            <b>Q:</b> Will the scores be saved to GrooveStats when I use BoogieStats?
-            <br />
-            <b>A:</b> Yes! BoogieStats acts as a proxy for GrooveStats.
-            It records all received scores and also passes them to GrooveStats.
-            When you retrieve scores in the game, the ones from GrooveStats will take precedence so the behavior for GS-ranked songs should remain the same.
-        </li>
-        <li>
-            <b>Q:</b> Is it safe?
-            <br />
-            <b>A:</b> It's probably as safe as using a USB Profile on a public PC in an arcade or during a convention. I don't store your GrooveStats API key in a clear form, and the whole key is used only during forwarding scores to GrooveStats. You can inspect the code <a href="https://github.com/florczakraf/boogie-stats" target="_blank">on GitHub</a> or host the app for yourself if you don't plan to use the comparison & leaderboards features.
-        </li>
-        <li>
-            <b>Q:</b> What if I play a ranked song? What scores will I see?
-            <br />
-            <b>A:</b> You will receive an official leaderboard from GrooveStats in your game.
-            However, in the UI of BoogieStats, only the local scores will be displayed for a given song, with an information that it's a GS-ranked song and the leaderboard might be incomplete.
-        </li>
-        <li>
-            <b>Q:</b> What if I play a song that's not in your database?
-            <br />
-            <b>A:</b> BoogieStats will automatically accept and track its scores. It will look like any other ranked song in your game. In the UI, the song will display a song hash instead of a title until its information is added to the <a href="https://github.com/florczakraf/stepmania-chart-db"
-    target="_blank">public database</a>. Please send me a list of packs that are missing when you encounter this issue. Once the song metadata is added to the database, the UI will show it for the scores sent in the past as well.
-        </li>
-        <li>
-            <b>Q:</b> Will you support <code>Stats.xml</code> or <a href="https://simply.training" target="_blank">simply.training</a> jsons?
-            <br />
-            <b>A:</b>  Not in the current form. They don't use the unique song identifiers, therefore BoogieStats is not going to try and match songs by their paths, which has already been proven by GrooveStats to be a tedious, troublesome and ambiguous.
-        </li>
-        <li>
-            <b>Q:</b> Do events held by GrooveStats and the related leaderboards work with BoogieStats?
-            <br />
-            <b>A:</b> ITL and SRPG as well as their custom leaderboards are supported. As for the other events, it's probably a matter of a little time if they introduce a custom API. Additionally, the event songs that are "unranked" in GrooveStats will still be recorded in BoogieStats.
-        </li>
-        <li>
-            <b>Q:</b> What if a song becomes "ranked" on GrooveStats after it's been recorded in BoogieStats?
-            <br />
-            <b>A:</b> That hasn't been a case so far but if it's going to happen, I will probably introduce a way to export old highscores to GrooveStats. I won't be able to do it automatically because I don't store your API key, so it will require you to provide a full key in the UI. I could also generate a list of QR codes / links for you to export them manually.
-        </li>
-        <li>
-            <b>Q:</b> Will it work in a public arcade with a USB Profile?
-            <br />
-            <b>A:</b> It could if <code>Simply Love</code> and <code>Preferences.ini</code> were modified on the machine as described in <a href="#join-and-enable-boogiestats">Join and Enable BoogieStats section</a>. However, I don't recommend it for public machines because their users might not be aware that their GrooveStats API key would be exposed to a 3rd-party proxy.
-        </li>
-    </ul>
+    {% for q, a in q_and_a.items %}
+        <h4 id="qna{{ forloop.counter }}">
+            <b>Q:</b> {{ q|safe }} <a class="text-muted small" href="#qna{{ forloop.counter }}">#</a>
+        </h4>
+        {{ a|safe }}
+        <hr>
+    {% endfor %}
 {% endblock content %}

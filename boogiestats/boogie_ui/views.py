@@ -2,6 +2,7 @@ import datetime
 import itertools
 
 import sentry_sdk
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -444,7 +445,14 @@ def login_user(request):
             login(request, user)
             return HttpResponseRedirect(request.POST.get("next") or "/")
         else:
-            messages.error(request, "Invalid GS API Key, please try again", extra_tags="alert-danger")
+            messages.error(
+                request,
+                "Invalid GS API Key, please try again."
+                " This can also mean that you don't have a BoogieStats account yet."
+                " Please submit the first score to create an account."
+                f""" Consult the <a href="{reverse("manual")}">User Manual</a> for more information.""",
+                extra_tags="alert-danger",
+            )
 
     next = request.GET.get("next") or request.POST.get("next")
     return render(request, template_name="boogie_ui/login.html", context={"next": next})
@@ -484,10 +492,30 @@ def user_manual(request):
         request.build_absolute_uri().replace("http:", "https:").removesuffix(request.get_full_path()) + "/"
     )
 
+    q_and_a = {
+        "Will the scores be saved to GrooveStats when I use BoogieStats?": "Yes! BoogieStats acts as a proxy for GrooveStats. It records all received scores and also passes them to GrooveStats. When you retrieve scores in the game, the ones from GrooveStats will take precedence so the behavior for GS-ranked songs should remain the same.",
+        "Is it safe?": """It's probably as safe as using a USB Profile on a public PC in an arcade or during a convention. I don't store your GrooveStats API key in a clear form, and the whole key is used only during forwarding scores to GrooveStats. You can inspect the code <a href="https://github.com/florczakraf/boogie-stats" target="_blank">on GitHub</a> or host the app for yourself if you don't plan to use the comparison & leaderboards features.""",
+        "What if I play a ranked song? What scores will I see?": "You will receive an official leaderboard from GrooveStats in your game. However, in the UI of BoogieStats, only the local scores will be displayed for a given song, with an information that it's a GS-ranked song and the leaderboard might be incomplete.",
+        "What if I play a song that's not in your database?": """BoogieStats will automatically accept and track its scores. It will look like any other ranked song in your game. In the UI, the song will display a song hash instead of a title until its information is added to the <a href="https://github.com/florczakraf/stepmania-chart-db" target="_blank">public database</a>. Please send me a list of packs that are missing when you encounter this issue. Once the song metadata is added to the database, the UI will show it for the scores sent in the past as well.""",
+        "Will you support <code>Stats.xml</code> or <code>simply.training</code> jsons?": "Not in the current form. They don't use the unique song identifiers, therefore BoogieStats is not going to try and match songs by their paths, which has already been proven by GrooveStats to be a tedious, troublesome and ambiguous.",
+        "Do events held by GrooveStats and the related leaderboards work with BoogieStats?": """ITL and SRPG as well as their custom leaderboards are supported. As for the other events, it's probably a matter of a little time if they introduce a custom API. Additionally, the event songs that are "unranked" in GrooveStats will still be recorded in BoogieStats.""",
+        """What if a song becomes "ranked" on GrooveStats after it's been recorded in BoogieStats?""": """<s>That hasn't been a case so far but if it's going to happen,</s> I will probably introduce a way to export old highscores to GrooveStats. I won't be able to do it automatically because I don't store your API key, so it will require you to provide a full key in the UI. You can track the <a href="https://github.com/florczakraf/boogie-stats/issues/111">status of this issue on GitHub</a>""",
+        "Will it work in a public arcade with a USB Profile?": """Yes, as long as the machine is set up to use BoogieStats. If you run a public machine, please let your players know that their GrooveStats API key would be exposed to a 3rd-party proxy.""",
+        "I generated a new API Key, now what?": f"""Don't panic and please don't send any scores before updating your BoogieStats profile. Use your <b>old</b> Api Key to log in to <a href="{reverse("edit")}">Edit Profile</a> page and paste the <b>new</b> key into <code>New GrooveStats API key</code> field and click <code>Update</code>. You can now send scores using the new API Key.""",
+        "I already sent a score with a new API Key and there are two profiles on the site, now what?": """Currently there's no way to merge profiles, but it's <a href="https://github.com/florczakraf/boogie-stats/issues/84">planned for the future</a>. Please keep your old API Key saved somewhere so that you can claim your profile and scores later in the future.""",
+        "How can I support the development of the project?": """If you spot a bug or would like to request a new functionality, please <a href="https://github.com/florczakraf/boogie-stats/issues" target="_blank">create an issue on project's GitHub page.</a> Source code contributions are also welcome, please create an issue before submitting a Pull Request so we can talk about it first.""",
+    }
+
+    q_and_a.update(settings.BS_EXTRA_Q_AND_A)
+
     return render(
         request,
         template_name="boogie_ui/manual.html",
-        context={"boogiestats_allow_host": boogiestats_allow_host, "boogiestats_url_prefix": boogiestats_url_prefix},
+        context={
+            "boogiestats_allow_host": boogiestats_allow_host,
+            "boogiestats_url_prefix": boogiestats_url_prefix,
+            "q_and_a": q_and_a,
+        },
     )
 
 

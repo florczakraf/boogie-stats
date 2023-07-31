@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-from typing import Optional
+from typing import Optional, Dict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -147,3 +147,7 @@ BS_LOGO_CREDITS: Optional[str] = None  # credits for a logo, will be shown in th
 # When configured, and chart database is also provided, the search functionality will be enabled
 BS_REDIS_HOST: Optional[str] = None
 BS_REDIS_PORT: Optional[int] = None
+
+# Use BS_EXTRA_Q_AND_A to set any extra instance-specific questions and answers to appear in the Q&A section.
+# It's a dictionary in Question -> Answer format. The question will also appear in the Table of Contents in the User Manual.
+BS_EXTRA_Q_AND_A: Dict[str, str] = {}
