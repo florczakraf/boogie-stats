@@ -182,6 +182,11 @@ class Song(models.Model):
         self.number_of_scores = annotated_song.num_scores
 
 
+class LeaderboardSource(models.IntegerChoices):
+    BOOGIESTATS_ITG = 1, "BoogieStats ITG Scores"
+    GROOVESTATS_ITG = 2, "GrooveStats ITG Scores"
+
+
 class Player(models.Model):
     objects = PlayerManager()
 
@@ -200,6 +205,9 @@ class Player(models.Model):
         default=True,
         verbose_name="Pull GrooveStats name and tag",
         help_text="Pull name and tag on successful GS-ranked score submission",
+    )
+    leaderboard_source = models.IntegerField(
+        choices=LeaderboardSource.choices, default=LeaderboardSource.BOOGIESTATS_ITG
     )
 
     def save(self, *args, **kwargs):
