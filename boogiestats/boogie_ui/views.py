@@ -424,10 +424,27 @@ class SongsByPlayersListView(SongsListView):
         return Song.objects.order_by("-number_of_players").prefetch_related("highscore", "highscore__player")
 
 
-class EditPlayerView(LoginRequiredMixin, generic.UpdateView):
+class SuccessMessageExtraTagsMixin:
+    success_message = ""
+    success_message_extra_tags = ""
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        success_message = self.get_success_message(form.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message, extra_tags=self.success_message_extra_tags)
+        return response
+
+    def get_success_message(self, cleaned_data):
+        return self.success_message % cleaned_data
+
+
+class EditPlayerView(LoginRequiredMixin, SuccessMessageExtraTagsMixin, generic.UpdateView):
     login_url = "/login/"
     template_name = "boogie_ui/player_update.html"
     form_class = EditPlayerForm
+    success_message = "Profile updated successfully!"
+    success_message_extra_tags = "alert-success"
 
     def get_object(self, **kwargs):
         return self.request.user.player
