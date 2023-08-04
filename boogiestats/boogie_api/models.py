@@ -27,7 +27,7 @@ def make_leaderboard_entry(rank, score, is_rival=False, is_self=False):
     return {
         "rank": rank,
         "name": score.player.name or score.player.machine_tag,  # use name if available
-        "score": score.score,
+        "score": score.itg_score,
         "date": score.submission_date.strftime("%Y-%m-%d %H:%M:%S"),
         "isSelf": is_self,
         "isRival": is_rival,
@@ -39,8 +39,8 @@ def make_leaderboard_entry(rank, score, is_rival=False, is_self=False):
 class Song(models.Model):
     hash = models.CharField(max_length=16, primary_key=True, db_index=True)  # V3 GrooveStats hash 16 a-f0-9
     gs_ranked = models.BooleanField(default=False)
-    highscore = models.ForeignKey(
-        "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="highscore_for"
+    itg_highscore = models.ForeignKey(
+        "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="itg_highscore_for"
     )
     number_of_scores = models.PositiveIntegerField(default=0, db_index=True)
     number_of_players = models.PositiveIntegerField(default=0, db_index=True)
@@ -68,21 +68,21 @@ class Song(models.Model):
         remaining_scores = max(0, num_entries - len(scores))
 
         top_scores = (
-            self.scores.filter(is_top=True)
+            self.scores.filter(is_itg_top=True)
             .exclude(pk__in=used_score_pks)
-            .order_by("-score", "submission_date", "id")[:remaining_scores]
+            .order_by("-itg_score", "submission_date", "id")[:remaining_scores]
         )
 
         for score in top_scores:
             rank = Score.rank(score)
             scores.append((score, make_leaderboard_entry(rank, score)))
 
-        sorted_scores = sorted(scores, key=lambda x: (-x[0].score, x[0].submission_date, x[0].id))
+        sorted_scores = sorted(scores, key=lambda x: (-x[0].itg_score, x[0].submission_date, x[0].id))
         return [x[1] for x in sorted_scores]
 
     def get_highscore(self, player) -> (int, "Score"):
         try:
-            highscore = self.scores.get(player=player, is_top=True)
+            highscore = self.scores.get(player=player, is_itg_top=True)
         except Score.DoesNotExist:
             return None, None
 
@@ -90,8 +90,8 @@ class Song(models.Model):
 
     def get_rival_highscores(self, player) -> [(int, "Score")]:
         scores = (
-            self.scores.filter(is_top=True, player__in=player.rivals.all())
-            .order_by("-score", "submission_date", "id")[:MAX_LEADERBOARD_RIVALS]
+            self.scores.filter(is_itg_top=True, player__in=player.rivals.all())
+            .order_by("-itg_score", "submission_date", "id")[:MAX_LEADERBOARD_RIVALS]
             .all()
         )
 
@@ -275,9 +275,9 @@ class Score(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="scores")
     submission_date = models.DateTimeField(default=now, db_index=True)
     submission_day = models.DateField(default=now, db_index=True)
-    score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)], db_index=True)
+    itg_score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)], db_index=True)
     comment = models.CharField(max_length=MAX_COMMENT_LENGTH, blank=True)
-    is_top = models.BooleanField(default=True, db_index=True)
+    is_itg_top = models.BooleanField(default=True, db_index=True)
     used_cmod = models.BooleanField(default=False)
     rate = models.PositiveIntegerField(default=100, validators=[MaxValueValidator(MAX_RATE)])
 
@@ -305,8 +305,8 @@ class Score(models.Model):
     def rank(cls, score):
         return (
             list(
-                cls.objects.filter(song=score.song, is_top=True, score__gte=score.score)
-                .order_by("-score", "submission_date", "id")
+                cls.objects.filter(song=score.song, is_itg_top=True, itg_score__gte=score.itg_score)
+                .order_by("-itg_score", "submission_date", "id")
                 .values_list("id", flat=True)
             ).index(score.id)
             + 1

@@ -141,8 +141,8 @@ def other_player(other_player_gs_api_key):
 @pytest.fixture
 def song(some_player, other_player):
     s = Song.objects.create(hash="0123456789ABCDEF")
-    s.scores.create(player=some_player, score=8495, comment="C420", rate=100)
-    s.scores.create(player=other_player, score=8595, comment="C420", rate=100)
+    s.scores.create(player=some_player, itg_score=8495, comment="C420", rate=100)
+    s.scores.create(player=other_player, itg_score=8595, comment="C420", rate=100)
 
     return s
 
@@ -740,7 +740,7 @@ def test_score_submit_with_some_judgments(
     assert score.total_rolls == 3
     assert score.total_steps == 92
     assert score.rate == 105
-    assert score.score == 7560
+    assert score.itg_score == 7560
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -811,7 +811,7 @@ def test_score_submit_with_all_judgments(
     assert score.total_rolls == 0
     assert score.total_steps == 89
     assert score.rate == 100
-    assert score.score == 5340
+    assert score.itg_score == 5340
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -967,7 +967,7 @@ def test_score_submit_with_two_players_playing_the_same_song_when_lb_source_is_b
     assert song.gs_ranked is True
     assert Score.objects.count() == 2
     assert Player.objects.count() == 2
-    scores = Score.objects.all().order_by("-score")
+    scores = Score.objects.all().order_by("-itg_score")
 
     assert response.json() == {
         "player1": {

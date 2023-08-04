@@ -57,7 +57,7 @@ class ScoreListView(generic.ListView):
 
 class HighscoreListView(ScoreListView):
     def get_queryset(self):
-        return Score.objects.order_by("-score", "submission_date").select_related("song", "player")
+        return Score.objects.order_by("-itg_score", "submission_date").select_related("song", "player")
 
 
 class PlayersListView(generic.ListView):
@@ -109,10 +109,10 @@ class PlayerScoresByDayView(generic.ListView):
         context["player"] = player
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.values("song").distinct().count()
-        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
         context.update(
             fantastics_plus=0,
             fantastics=0,
@@ -163,11 +163,11 @@ class PlayerView(generic.ListView):
         context["rivals"] = player.rivals.all()
         scores = player.scores
         context["num_scores"] = scores.count()
-        context["num_charts_played"] = scores.filter(is_top=True).count()
-        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+        context["num_charts_played"] = scores.filter(is_itg_top=True).count()
+        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
 
         today = datetime.date.today()
         a_year_ago = today.replace(year=today.year - 1)
@@ -221,7 +221,7 @@ class PlayerHighscoresView(PlayerView):
         player_id = self.kwargs["player_id"]
         player = Player.get_or_404(id=player_id)
 
-        return player.scores.filter(is_top=True).order_by("-score").prefetch_related("song")
+        return player.scores.filter(is_itg_top=True).order_by("-itg_score").prefetch_related("song")
 
 
 class PlayerMostPlayedView(PlayerView):
@@ -238,7 +238,7 @@ class PlayerMostPlayedView(PlayerView):
 
         songs = [song["song"] for song in songs_by_plays_page]
         songs_plays = {song["song"]: song["num_scores"] for song in songs_by_plays_page}
-        scores = player.scores.filter(is_top=True, song__hash__in=songs).prefetch_related("song")
+        scores = player.scores.filter(is_itg_top=True, song__hash__in=songs).prefetch_related("song")
 
         scores = sorted(scores, key=lambda x: songs.index(x.song.hash))
         for score in scores:
@@ -267,11 +267,11 @@ class PlayerStatsView(generic.base.TemplateView):
         scores = player.scores
 
         context["num_scores"] = scores.count()
-        context["num_charts_played"] = scores.filter(is_top=True).count()
-        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+        context["num_charts_played"] = scores.filter(is_itg_top=True).count()
+        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
 
         return context
 
@@ -280,13 +280,13 @@ class VersusView(generic.ListView):
     template_name = "boogie_ui/versus.html"
 
     def sort_key(self, x):
-        return x[0].score
+        return x[0].itg_score
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         p1, p2 = self.get_players()
-        p1_scores_qs = p1.scores.filter(is_top=True).order_by("-score").all().select_related("song")
-        p2_scores_qs = p2.scores.filter(is_top=True, song__hash__in=[score.song_id for score in p1_scores_qs])
+        p1_scores_qs = p1.scores.filter(is_itg_top=True).order_by("-itg_score").all().select_related("song")
+        p2_scores_qs = p2.scores.filter(is_itg_top=True, song__hash__in=[score.song_id for score in p1_scores_qs])
         p2_scores_dict = {score.song_id: score for score in p2_scores_qs}
         scores = sorted(
             [
@@ -300,20 +300,20 @@ class VersusView(generic.ListView):
         paginator, page, score_page, is_paginated = self.paginate_queryset(scores, ENTRIES_PER_PAGE)
 
         context["p1_num_scores"] = p1.scores.count()
-        context["p1_num_charts_played"] = p1.scores.filter(is_top=True).count()
-        context["p1_wins"] = sum((1 for x in scores if x[0].score > x[1].score))
-        context["p1_one_star"] = p1.scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["p1_two_stars"] = p1.scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["p1_three_stars"] = p1.scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["p1_four_stars"] = p1.scores.filter(is_top=True, score=10000).count()
+        context["p1_num_charts_played"] = p1.scores.filter(is_itg_top=True).count()
+        context["p1_wins"] = sum((1 for x in scores if x[0].itg_score > x[1].itg_score))
+        context["p1_one_star"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["p1_two_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["p1_three_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["p1_four_stars"] = p1.scores.filter(is_itg_top=True, itg_score=10000).count()
 
         context["p2_num_scores"] = p2.scores.count()
-        context["p2_num_charts_played"] = p2.scores.filter(is_top=True).count()
-        context["p2_wins"] = sum((1 for x in scores if x[0].score < x[1].score))
-        context["p2_one_star"] = p2.scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["p2_two_stars"] = p2.scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["p2_three_stars"] = p2.scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["p2_four_stars"] = p2.scores.filter(is_top=True, score=10000).count()
+        context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()
+        context["p2_wins"] = sum((1 for x in scores if x[0].itg_score < x[1].itg_score))
+        context["p2_one_star"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["p2_two_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["p2_three_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["p2_four_stars"] = p2.scores.filter(is_itg_top=True, score=10000).count()
 
         context["ties"] = len(scores) - context["p1_wins"] - context["p2_wins"]
         context["common_charts"] = len(scores)
@@ -342,7 +342,7 @@ class VersusView(generic.ListView):
 
 class VersusByDifferenceView(VersusView):
     def sort_key(self, x):
-        return x[0].score - x[1].score
+        return x[0].itg_score - x[1].itg_score
 
 
 class SongView(generic.ListView):
@@ -356,7 +356,7 @@ class SongView(generic.ListView):
         song_hash = self.kwargs["song_hash"]
         song = Song.get_or_404(hash=song_hash)
         context["song"] = song
-        context["num_highscores"] = song.scores.filter(is_top=True).count()
+        context["num_highscores"] = song.scores.filter(is_itg_top=True).count()
         if hasattr(self.request.user, "player"):
             context["my_scores"] = song.scores.filter(player=self.request.user.player).count()
 
@@ -369,7 +369,7 @@ class SongView(generic.ListView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.order_by("-score", "submission_date")
+            .scores.order_by("-itg_score", "submission_date")
             .select_related("song", "player")
         )
 
@@ -379,7 +379,7 @@ class SongByDateView(SongView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.order_by("-submission_date", "score")
+            .scores.order_by("-submission_date", "itg_score")
             .select_related("song", "player")
         )
 
@@ -394,8 +394,8 @@ class SongHighscoresView(SongView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.filter(is_top=True)
-            .order_by("-score", "submission_date")
+            .scores.filter(is_itg_top=True)
+            .order_by("-itg_score", "submission_date")
             .select_related("song", "player")
         )
 
@@ -404,7 +404,9 @@ class SongByPlayerView(SongView):
     def get_queryset(self):
         player = Player.get_or_404(id=self.kwargs["player_id"])
         song = Song.get_or_404(hash=self.kwargs["song_hash"])
-        return song.scores.filter(player=player).order_by("-score", "submission_date").select_related("song", "player")
+        return (
+            song.scores.filter(player=player).order_by("-itg_score", "submission_date").select_related("song", "player")
+        )
 
 
 class SongsListView(generic.ListView):
@@ -414,14 +416,14 @@ class SongsListView(generic.ListView):
 
     def get_queryset(self):
         return Song.objects.order_by("-number_of_scores").prefetch_related(
-            "highscore",
-            "highscore__player",
+            "itg_highscore",
+            "itg_highscore__player",
         )
 
 
 class SongsByPlayersListView(SongsListView):
     def get_queryset(self):
-        return Song.objects.order_by("-number_of_players").prefetch_related("highscore", "highscore__player")
+        return Song.objects.order_by("-number_of_players").prefetch_related("itg_highscore", "itg_highscore__player")
 
 
 class SuccessMessageExtraTagsMixin:
@@ -598,8 +600,8 @@ class SearchView(generic.ListView):
         songs = (
             Song.objects.filter(hash__in=hashes)
             .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
-            .prefetch_related("highscore", "highscore__player")
-            .order_by("-num_scores", "-highscore__score")
+            .prefetch_related("highscore", "itg_highscore__player")
+            .order_by("-num_scores", "-itg_highscore__score")
         )
 
         paginator, page, _, is_paginated = self.paginate_queryset(range(n_results), ENTRIES_PER_PAGE)

@@ -104,12 +104,12 @@ def fill_event_leaderboards(final_response, gs_player, player_id):
 
 def handle_score_results(player, old_score, new_score_value):
     if old_score:
-        if old_score.score < new_score_value:
+        if old_score.itg_score < new_score_value:
             player["result"] = "improved"
         else:
             player["result"] = "score-not-improved"
 
-        player["delta"] = new_score_value - old_score.score
+        player["delta"] = new_score_value - old_score.itg_score
     else:
         player["result"] = "score-added"
         player["delta"] = new_score_value
@@ -293,7 +293,7 @@ def handle_scores(body_parsed, gs_response, players):
 
         player_instance.scores.create(
             song=song,
-            score=score_submission["score"],
+            itg_score=score_submission["score"],
             comment=comment,
             rate=score_submission.get("rate", 100),
             used_cmod=used_cmod,

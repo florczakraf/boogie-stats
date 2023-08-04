@@ -32,21 +32,21 @@ class ScoreManager(models.Manager):
         self,
         song: "Song",
         player: "Player",
-        score: int,
+        itg_score: int,
         comment: str,
         rate: int,
         used_cmod: Optional[bool] = None,
         judgments: Optional = None,
     ):
         used_cmod = self._handle_used_cmod(used_cmod, comment)
-        new_is_top = self._handle_is_top(song, player, score)
+        new_is_itg_top = self._handle_is_itg_top(song, player, itg_score)
 
         score_object = self.model(
             song=song,
             player=player,
-            score=score,
+            itg_score=itg_score,
             comment=comment,
-            is_top=new_is_top,
+            is_itg_top=new_is_itg_top,
             rate=rate,
             used_cmod=used_cmod,
         )
@@ -69,21 +69,21 @@ class ScoreManager(models.Manager):
 
         return used_cmod
 
-    def _handle_is_top(self, song, player, score):
-        new_is_top = False
+    def _handle_is_itg_top(self, song, player, score):
+        new_is_itg_top = False
 
         try:
-            previous_top = song.scores.get(player=player, is_top=True)
+            previous_top = song.scores.get(player=player, is_itg_top=True)
         except ObjectDoesNotExist:
             previous_top = None
-            new_is_top = True
+            new_is_itg_top = True
 
-        if previous_top and previous_top.score < score:
-            new_is_top = True
-            previous_top.is_top = False
+        if previous_top and previous_top.itg_score < score:
+            new_is_itg_top = True
+            previous_top.is_itg_top = False
             previous_top.save()
 
-        return new_is_top
+        return new_is_itg_top
 
     def _handle_judgments(self, score_object, judgments):
         if judgments is not None:
@@ -92,8 +92,8 @@ class ScoreManager(models.Manager):
                 setattr(score_object, dst, judgments.get(src, 0))
 
     def _update_song(self, score_object, song):
-        if not song.highscore or score_object.score > song.highscore.score:
-            song.highscore = score_object
+        if not song.itg_highscore or score_object.itg_score > song.itg_highscore.itg_score:
+            song.itg_highscore = score_object
 
         song.update_number_of_players_and_scores()
         song.save()
