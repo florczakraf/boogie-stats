@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load boogiestats_tags %}
 {% block title %}
     {{ p1.name }} ({{ p1.machine_tag }})
     vs
@@ -20,6 +21,7 @@
                 <div>
                     <hr />
                 </div>
+                <div>{{ p1_five_stars }}</div>
                 <div>{{ p1_four_stars }}</div>
                 <div>{{ p1_three_stars }}</div>
                 <div>{{ p1_two_stars }}</div>
@@ -41,6 +43,7 @@
                 <div>
                     <hr />
                 </div>
+                <div>★★★★★</div>
                 <div>★★★★</div>
                 <div>★★★</div>
                 <div>★★</div>
@@ -64,6 +67,7 @@
                 <div>
                     <hr />
                 </div>
+                <div>{{ p2_five_stars }}</div>
                 <div>{{ p2_four_stars }}</div>
                 <div>{{ p2_three_stars }}</div>
                 <div>{{ p2_two_stars }}</div>
@@ -89,12 +93,12 @@
                         </a>
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "versus" p1=p1.id p2=p2.id %}">{{ p1.name }} ({{ p1.machine_tag }}) ITG score
+                        <a href="{% url "versus" p1=p1.id p2=p2.id %}">{{ p1.name }} ({{ p1.machine_tag }}) {{ lb_display_name }} score
                             {% if request.resolver_match.url_name == "versus" %}↓{% endif %}
                         </a>
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "versus" p1=p2.id p2=p1.id %}">{{ p2.name }} ({{ p2.machine_tag }}) ITG score</a>
+                        <a href="{% url "versus" p1=p2.id p2=p1.id %}">{{ p2.name }} ({{ p2.machine_tag }}) {{ lb_display_name }} score</a>
                     </th>
                 </tr>
             </thead>
@@ -106,13 +110,15 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td class="text-nowrap">{{ p1_score.itg_score|sub:p2_score.itg_score|div:100|stringformat:".2f" }}</td>
-                        <td class="text-nowrap bg-gradient {% if p1_score.itg_score > p2_score.itg_score %}bg-success-subtle{% elif p1_score.itg_score == p2_score.itg_score %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
-                            <a href="{% url "score" pk=p1_score.id %}">{{ p1_score.itg_score|div:100|stringformat:".2f" }}%</a>
-                        </td>
-                        <td class="text-nowrap bg-gradient {% if p1_score.itg_score < p2_score.itg_score %}bg-success-subtle{% elif p1_score.itg_score == p2_score.itg_score %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
-                            <a href="{% url "score" pk=p2_score.id %}">{{ p2_score.itg_score|div:100|stringformat:".2f" }}%</a>
-                        </td>
+                        {% with p1_score_value=p1_score|attr:lb_attribute p2_score_value=p2_score|attr:lb_attribute %}
+                            <td class="text-nowrap">{{ p1_score_value|sub:p2_score_value|div:100|stringformat:".2f" }}</td>
+                            <td class="text-nowrap bg-gradient {% if p1_score_value > p2_score_value %}bg-success-subtle{% elif p1_score_value == p2_score_value %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
+                                <a href="{% url "score" pk=p1_score.id %}">{{ p1_score_value|div:100|stringformat:".2f" }}%</a>
+                            </td>
+                            <td class="text-nowrap bg-gradient {% if p1_score_value < p2_score_value %}bg-success-subtle{% elif p1_score_value == p2_score_value %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
+                                <a href="{% url "score" pk=p2_score.id %}">{{ p2_score_value|div:100|stringformat:".2f" }}%</a>
+                            </td>
+                        {% endwith %}
                     </tr>
                 {% endfor %}
             </tbody>

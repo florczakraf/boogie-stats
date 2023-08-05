@@ -26,7 +26,28 @@ CALENDAR_VALUES = (1, 10, 15, 20, 25, 30, 35, 40, 50, 60)
 EXTRA_CALENDAR_VALUES = (100,)
 
 
-class IndexView(generic.ListView):
+class LeaderboardSourceMixin:
+    @property
+    def lb_source(self):
+        if self.request.COOKIES.get("bs_leaderboard") == "ex":
+            return "ex"
+        else:
+            return "itg"
+
+    @property
+    def lb_attribute(self):
+        return f"{self.lb_source}_score"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["lb_display_name"] = self.lb_source.upper()
+        context["lb_attribute"] = self.lb_attribute
+        context["highscore_attribute"] = f"{self.lb_source}_highscore"
+
+        return context
+
+
+class IndexView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/index.html"
     context_object_name = "latest_scores"
 
@@ -46,7 +67,7 @@ class IndexView(generic.ListView):
         return context
 
 
-class ScoreListView(generic.ListView):
+class ScoreListView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/scores.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -57,7 +78,7 @@ class ScoreListView(generic.ListView):
 
 class HighscoreListView(ScoreListView):
     def get_queryset(self):
-        return Score.objects.order_by("-itg_score", "submission_date").select_related("song", "player")
+        return Score.objects.order_by(f"-{self.lb_attribute}", "submission_date").select_related("song", "player")
 
 
 class PlayersListView(generic.ListView):
@@ -93,7 +114,7 @@ def plays_to_class(plays):
     return f"min-plays-{class_suffix}"
 
 
-class PlayerScoresByDayView(generic.ListView):
+class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/scores_by_day.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -113,6 +134,7 @@ class PlayerScoresByDayView(generic.ListView):
         context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
         context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
         context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
         context.update(
             fantastics_plus=0,
             fantastics=0,
@@ -149,7 +171,7 @@ class PlayerScoresByDayView(generic.ListView):
         return scores.order_by("-submission_date").prefetch_related("song")
 
 
-class PlayerView(generic.ListView):
+class PlayerView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/player.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -168,6 +190,7 @@ class PlayerView(generic.ListView):
         context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
         context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
         context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
 
         today = datetime.date.today()
         a_year_ago = today.replace(year=today.year - 1)
@@ -221,7 +244,11 @@ class PlayerHighscoresView(PlayerView):
         player_id = self.kwargs["player_id"]
         player = Player.get_or_404(id=player_id)
 
-        return player.scores.filter(is_itg_top=True).order_by("-itg_score").prefetch_related("song")
+        return (
+            player.scores.filter(**{f"is_{self.lb_source}_top": True})
+            .order_by(f"-{self.lb_attribute}")
+            .prefetch_related("song")
+        )
 
 
 class PlayerMostPlayedView(PlayerView):
@@ -272,21 +299,26 @@ class PlayerStatsView(generic.base.TemplateView):
         context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
         context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
         context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
 
         return context
 
 
-class VersusView(generic.ListView):
+class VersusView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/versus.html"
 
     def sort_key(self, x):
-        return x[0].itg_score
+        return getattr(x[0], self.lb_attribute)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         p1, p2 = self.get_players()
-        p1_scores_qs = p1.scores.filter(is_itg_top=True).order_by("-itg_score").all().select_related("song")
-        p2_scores_qs = p2.scores.filter(is_itg_top=True, song__hash__in=[score.song_id for score in p1_scores_qs])
+        p1_scores_qs = (
+            p1.scores.filter(**{f"is_{self.lb_source}_top": True}).order_by("-itg_score").all().select_related("song")
+        )
+        p2_scores_qs = p2.scores.filter(
+            **{f"is_{self.lb_source}_top": True}, song__hash__in=[score.song_id for score in p1_scores_qs]
+        )
         p2_scores_dict = {score.song_id: score for score in p2_scores_qs}
         scores = sorted(
             [
@@ -301,19 +333,25 @@ class VersusView(generic.ListView):
 
         context["p1_num_scores"] = p1.scores.count()
         context["p1_num_charts_played"] = p1.scores.filter(is_itg_top=True).count()
-        context["p1_wins"] = sum((1 for x in scores if x[0].itg_score > x[1].itg_score))
+        context["p1_wins"] = sum(
+            (1 for x in scores if getattr(x[0], self.lb_attribute) > getattr(x[1], self.lb_attribute))
+        )
         context["p1_one_star"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
         context["p1_two_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
         context["p1_three_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
         context["p1_four_stars"] = p1.scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["p1_five_stars"] = p1.scores.filter(is_ex_top=True, ex_score=10000).count()
 
         context["p2_num_scores"] = p2.scores.count()
         context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()
-        context["p2_wins"] = sum((1 for x in scores if x[0].itg_score < x[1].itg_score))
+        context["p2_wins"] = sum(
+            (1 for x in scores if getattr(x[0], self.lb_attribute) < getattr(x[1], self.lb_attribute))
+        )
         context["p2_one_star"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
         context["p2_two_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
         context["p2_three_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["p2_four_stars"] = p2.scores.filter(is_itg_top=True, score=10000).count()
+        context["p2_four_stars"] = p2.scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["p2_five_stars"] = p2.scores.filter(is_ex_top=True, ex_score=10000).count()
 
         context["ties"] = len(scores) - context["p1_wins"] - context["p2_wins"]
         context["common_charts"] = len(scores)
@@ -342,10 +380,10 @@ class VersusView(generic.ListView):
 
 class VersusByDifferenceView(VersusView):
     def sort_key(self, x):
-        return x[0].itg_score - x[1].itg_score
+        return getattr(x[0], self.lb_attribute) - getattr(x[1], self.lb_attribute)
 
 
-class SongView(generic.ListView):
+class SongView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/song.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -369,7 +407,7 @@ class SongView(generic.ListView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.order_by("-itg_score", "submission_date")
+            .scores.order_by(f"-{self.lb_attribute}", "submission_date")
             .select_related("song", "player")
         )
 
@@ -379,12 +417,12 @@ class SongByDateView(SongView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.order_by("-submission_date", "itg_score")
+            .scores.order_by("-submission_date", f"-{self.lb_attribute}")
             .select_related("song", "player")
         )
 
 
-class ScoreView(generic.DetailView):
+class ScoreView(LeaderboardSourceMixin, generic.DetailView):
     template_name = "boogie_ui/score.html"
     model = Score
 
@@ -394,8 +432,8 @@ class SongHighscoresView(SongView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.filter(is_itg_top=True)
-            .order_by("-itg_score", "submission_date")
+            .scores.filter(**{f"is_{self.lb_source}_top": True})
+            .order_by(f"-{self.lb_attribute}", "submission_date")
             .select_related("song", "player")
         )
 
@@ -405,25 +443,29 @@ class SongByPlayerView(SongView):
         player = Player.get_or_404(id=self.kwargs["player_id"])
         song = Song.get_or_404(hash=self.kwargs["song_hash"])
         return (
-            song.scores.filter(player=player).order_by("-itg_score", "submission_date").select_related("song", "player")
+            song.scores.filter(player=player)
+            .order_by(f"-{self.lb_attribute}", "submission_date")
+            .select_related("song", "player")
         )
 
 
-class SongsListView(generic.ListView):
+class SongsListView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/songs.html"
     context_object_name = "songs"
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
         return Song.objects.order_by("-number_of_scores").prefetch_related(
-            "itg_highscore",
-            "itg_highscore__player",
+            f"{self.lb_source}_highscore",
+            f"{self.lb_source}_highscore__player",
         )
 
 
 class SongsByPlayersListView(SongsListView):
     def get_queryset(self):
-        return Song.objects.order_by("-number_of_players").prefetch_related("itg_highscore", "itg_highscore__player")
+        return Song.objects.order_by("-number_of_players").prefetch_related(
+            f"{self.lb_source}_highscore", f"{self.lb_source}_highscore__player"
+        )
 
 
 class SuccessMessageExtraTagsMixin:
@@ -538,7 +580,7 @@ def user_manual(request):
     )
 
 
-class SearchView(generic.ListView):
+class SearchView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/search.html"
 
     def _process_query(self, user_query):
@@ -600,8 +642,11 @@ class SearchView(generic.ListView):
         songs = (
             Song.objects.filter(hash__in=hashes)
             .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
-            .prefetch_related("itg_highscore", "itg_highscore__player")
-            .order_by("-num_scores", "-itg_highscore__itg_score")
+            .prefetch_related(
+                f"{self.lb_source}_highscore",
+                f"{self.lb_source}_highscore__player",
+            )
+            .order_by("-num_scores", f"-{self.lb_source}_highscore__{self.lb_source}_score")
         )
 
         paginator, page, _, is_paginated = self.paginate_queryset(range(n_results), ENTRIES_PER_PAGE)

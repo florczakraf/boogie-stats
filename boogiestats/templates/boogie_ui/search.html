@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load boogiestats_tags %}
 {% block title %}
     Search Results
 {% endblock title %}
@@ -13,7 +14,7 @@
                     <th scope="col" class="w-100 text-nowrap">Song</th>
                     <th scope="col" class="w-1 text-nowrap">#Scores ↓</th>
                     <th scope="col" class="w-1 text-nowrap">#Players</th>
-                    <th scope="col" class="w-1 text-nowrap">ITG Highscore</th>
+                    <th scope="col" class="w-1 text-nowrap">{{ lb_display_name }} Highscore</th>
                 </tr>
             </thead>
             <tbody class="align-middle">
@@ -23,9 +24,11 @@
                         <td class="text-nowrap">{{ song.num_scores }}</td>
                         <td class="text-nowrap">{{ song.num_players }}</td>
                         <td class="text-nowrap">
-                            {% if song.itg_highscore %}
-                                <a href="{% url "score" pk=song.itg_highscore.id %}">{{ song.itg_highscore.itg_score|div:100|stringformat:".2f" }}%</a> by
-                                <a href="{% url "player" player_id=song.itg_highscore.player.id %}">{{ song.itg_highscore.player.name }}</a>
+                            {% if song|attr:highscore_attribute %}
+                                {% with highscore=song|attr:highscore_attribute %}
+                                    <a href="{% url "score" pk=highscore.id %}">{{ highscore|attr:lb_attribute|div:100|stringformat:".2f" }}%</a> by
+                                    <a href="{% url "player" player_id=highscore.player.id %}">{{ highscore.player.name }}</a>
+                                {% endwith %}
                             {% else %}
                                 -
                             {% endif %}

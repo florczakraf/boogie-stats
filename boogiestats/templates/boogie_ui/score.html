@@ -1,13 +1,14 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load boogiestats_tags %}
 {% block title %}
-    {{ score.itg_score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}
+    {{ score|attr:lb_attribute|div:100|stringformat:".2f" }}% {{ lb_display_name }} [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}
 {% endblock title %}
 {% block head_extras %}
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     <meta property="og:title"
-          content="{{ score.itg_score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}" />
+          content="{{ score.itg_score|div:100|stringformat:".2f" }}% ITG / {{ score.ex_score|div:100|stringformat:".2f" }}% EX [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}" />
     <meta property="og:description"
           content="By: {{ score.player.name }} ({{ score.player.machine_tag }}) | Date: {{ score.submission_date }}" />
 {% endblock head_extras %}
