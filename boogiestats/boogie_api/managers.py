@@ -52,6 +52,8 @@ class ScoreManager(models.Manager):
         )
 
         self._handle_judgments(score_object, judgments)
+        new_is_ex_top = self._handle_is_ex_top(song, player, score_object.ex_score)
+        score_object.is_ex_top = new_is_ex_top
 
         score_object.save()
 
@@ -85,15 +87,36 @@ class ScoreManager(models.Manager):
 
         return new_is_itg_top
 
+    def _handle_is_ex_top(self, song, player, ex_score):
+        new_is_ex_top = False
+
+        try:
+            previous_top = song.scores.get(player=player, is_ex_top=True)
+        except ObjectDoesNotExist:
+            previous_top = None
+            new_is_ex_top = True
+
+        if previous_top and previous_top.ex_score < ex_score:
+            new_is_ex_top = True
+            previous_top.is_ex_top = False
+            previous_top.save()
+
+        return new_is_ex_top
+
     def _handle_judgments(self, score_object, judgments):
         if judgments is not None:
             score_object.has_judgments = True
             for src, dst in JUDGMENTS_MAP.items():
                 setattr(score_object, dst, judgments.get(src, 0))
 
+            score_object.ex_score = score_object.calculate_ex()
+
     def _update_song(self, score_object, song):
         if not song.itg_highscore or score_object.itg_score > song.itg_highscore.itg_score:
             song.itg_highscore = score_object
+
+        if not song.ex_highscore or score_object.ex_score > song.ex_highscore.ex_score:
+            song.ex_highscore = score_object
 
         song.update_number_of_players_and_scores()
         song.save()

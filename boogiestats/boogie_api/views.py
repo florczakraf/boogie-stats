@@ -42,8 +42,9 @@ GROOVESTATS_RESPONSES = {
 GROOVESTATS_TIMEOUT = 12
 SUPPORTED_EVENTS = ("rpg", "itl")
 LB_SOURCE_MAPPING = {
-    LeaderboardSource.BOOGIESTATS_ITG.value: "BS",
-    LeaderboardSource.GROOVESTATS_ITG.value: "GS",
+    LeaderboardSource.BS_ITG.value: "BS",
+    LeaderboardSource.GS_ITG.value: "GS",
+    LeaderboardSource.BS_EX.value: "BS-EX",
 }
 
 
@@ -102,14 +103,19 @@ def fill_event_leaderboards(final_response, gs_player, player_id):
             final_response[player_id][event] = event_leaderboard
 
 
-def handle_score_results(player, old_score, new_score_value):
+def handle_score_results(player, old_score, new_score):
+    lb_source = player["player_instance"].leaderboard_source
+    new_score_value = new_score.itg_score if lb_source == LeaderboardSource.BS_ITG else new_score.ex_score
+
     if old_score:
-        if old_score.itg_score < new_score_value:
+        old_score_value = old_score.itg_score if lb_source == LeaderboardSource.BS_ITG else old_score.ex_score
+
+        if old_score_value < new_score_value:
             player["result"] = "improved"
         else:
             player["result"] = "score-not-improved"
 
-        player["delta"] = new_score_value - old_score.itg_score
+        player["delta"] = new_score_value - old_score_value
     else:
         player["result"] = "score-added"
         player["delta"] = new_score_value
@@ -152,12 +158,10 @@ def _request_leaderboards(request):
 
         player_instance: Optional[Player] = Player.get_by_gs_api_key(player["gsApiKey"])
         leaderboard_source = (
-            player_instance.leaderboard_source
-            if player_instance is not None
-            else LeaderboardSource.BOOGIESTATS_ITG.value
+            player_instance.leaderboard_source if player_instance is not None else LeaderboardSource.BS_ITG.value
         )
 
-        if leaderboard_source == LeaderboardSource.BOOGIESTATS_ITG.value:
+        if leaderboard_source in (LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX):
             final_response[player_id] = {
                 "chartHash": chart_hash,
                 "isRanked": True,
@@ -165,7 +169,7 @@ def _request_leaderboards(request):
             }
             fill_event_leaderboards(final_response, gs_player, player_id)
 
-        elif leaderboard_source == LeaderboardSource.GROOVESTATS_ITG.value:
+        elif leaderboard_source == LeaderboardSource.GS_ITG.value:
             final_response[player_id] = gs_player
 
         response_headers[f"bs-leaderboard-player-{player_index}"] = LB_SOURCE_MAPPING[leaderboard_source]
@@ -212,7 +216,7 @@ def _make_score_submit_response(gs_response, players, max_results):
         player_instance: Player = player["player_instance"]
         leaderboard_source = player_instance.leaderboard_source
 
-        if leaderboard_source == LeaderboardSource.BOOGIESTATS_ITG.value:
+        if leaderboard_source in (LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX):
             final_response[player_id] = {
                 "chartHash": player["chartHash"],
                 "isRanked": True,
@@ -221,7 +225,7 @@ def _make_score_submit_response(gs_response, players, max_results):
                 "result": player["result"],
             }
             fill_event_leaderboards(final_response, gs_player, player_id)
-        elif leaderboard_source == LeaderboardSource.GROOVESTATS_ITG.value:
+        elif leaderboard_source == LeaderboardSource.GS_ITG.value:
             final_response[player_id] = gs_player  # isRanked might be False /shrug
         else:
             raise ValueError(
@@ -291,7 +295,7 @@ def handle_scores(body_parsed, gs_response, players):
         used_cmod = score_submission.get("usedCmod", None)
         judgments = score_submission.get("judgmentCounts", None)
 
-        player_instance.scores.create(
+        new_score = player_instance.scores.create(
             song=song,
             itg_score=score_submission["score"],
             comment=comment,
@@ -300,5 +304,4 @@ def handle_scores(body_parsed, gs_response, players):
             judgments=judgments,
         )
 
-        new_score_value = score_submission["score"]
-        handle_score_results(player, old_score, new_score_value)
+        handle_score_results(player, old_score, new_score)

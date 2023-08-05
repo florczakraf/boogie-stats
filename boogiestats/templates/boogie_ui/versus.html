@@ -106,12 +106,12 @@
                                 {% include "boogie_ui/song_link.html" %}
                             {% endwith %}
                         </td>
-                        <td class="text-nowrap">{{ p1_score.score|sub:p2_score.score|div:100|stringformat:".2f" }}</td>
-                        <td class="text-nowrap bg-gradient {% if p1_score.score > p2_score.score %}bg-success-subtle{% elif p1_score.score == p2_score.score %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
-                            <a href="{% url "score" pk=p1_score.id %}">{{ p1_score.score|div:100|stringformat:".2f" }}%</a>
+                        <td class="text-nowrap">{{ p1_score.itg_score|sub:p2_score.itg_score|div:100|stringformat:".2f" }}</td>
+                        <td class="text-nowrap bg-gradient {% if p1_score.itg_score > p2_score.itg_score %}bg-success-subtle{% elif p1_score.itg_score == p2_score.itg_score %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
+                            <a href="{% url "score" pk=p1_score.id %}">{{ p1_score.itg_score|div:100|stringformat:".2f" }}%</a>
                         </td>
-                        <td class="text-nowrap bg-gradient {% if p1_score.score < p2_score.score %}bg-success-subtle{% elif p1_score.score == p2_score.score %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
-                            <a href="{% url "score" pk=p2_score.id %}">{{ p2_score.score|div:100|stringformat:".2f" }}%</a>
+                        <td class="text-nowrap bg-gradient {% if p1_score.itg_score < p2_score.itg_score %}bg-success-subtle{% elif p1_score.itg_score == p2_score.itg_score %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
+                            <a href="{% url "score" pk=p2_score.id %}">{{ p2_score.itg_score|div:100|stringformat:".2f" }}%</a>
                         </td>
                     </tr>
                 {% endfor %}

@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from boogiestats.boogie_api.models import Song, Player
+from boogiestats.boogie_api.models import Song, Player, LeaderboardSource
 
 
 @pytest.fixture
@@ -28,12 +28,40 @@ def player(song, other_song):
         itg_score=6442,
         comment="M400, OtherMod",
         rate=100,
+        judgments={
+            "excellent": 46,
+            "fantastic": 0,
+            "fantasticPlus": 0,
+            "great": 46,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
     )
     p.scores.create(
         song=other_song,
         itg_score=6666,
         comment="M400, OtherMod",
         rate=100,
+        judgments={
+            "excellent": 30,
+            "fantastic": 13,
+            "fantasticPlus": 21,
+            "great": 27,
+            "holdsHeld": 3,
+            "minesHit": 1,
+            "miss": 1,
+            "rollsHeld": 2,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
     )
     return p
 
@@ -46,6 +74,20 @@ def rival1(player, song):
         itg_score=4553,
         comment="C500",
         rate=100,
+        judgments={
+            "excellent": 0,
+            "fantastic": 0,
+            "fantasticPlus": 0,
+            "great": 92,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
     )
     player.rivals.add(rival)
     player.save()
@@ -60,6 +102,20 @@ def rival2(player, song):
         itg_score=7588,
         comment="C200",
         rate=100,
+        judgments={
+            "excellent": 90,
+            "fantastic": 0,
+            "fantasticPlus": 0,
+            "great": 2,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
     )
     player.rivals.add(rival)
     player.save()
@@ -74,6 +130,20 @@ def rival3(player, song):
         itg_score=7700,
         comment="M550",
         rate=100,
+        judgments={
+            "excellent": 92,
+            "fantastic": 0,
+            "fantasticPlus": 0,
+            "great": 0,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
     )
     player.rivals.add(rival)
     player.save()
@@ -88,6 +158,20 @@ def rival4(player, song):
         itg_score=7300,
         comment="M550",
         rate=105,
+        judgments={
+            "excellent": 88,
+            "fantastic": 0,
+            "fantasticPlus": 0,
+            "great": 4,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
     )
     player.rivals.add(rival)
     player.save()
@@ -103,6 +187,20 @@ def top_scores(song):
             itg_score=10_000 - i * 100,
             comment=f"M420, TOP{i}",
             rate=100,
+            judgments={
+                "excellent": 0,
+                "fantastic": i,
+                "fantasticPlus": 92 - i,
+                "great": 0,
+                "holdsHeld": 6,
+                "minesHit": 0,
+                "miss": 0,
+                "rollsHeld": 3,
+                "totalHolds": 6,
+                "totalMines": 5,
+                "totalRolls": 3,
+                "totalSteps": 92,
+            },
         )
 
 
@@ -115,10 +213,26 @@ def tied_scores(song):
             itg_score=10_000,
             comment=f"M420, TOP{i}",
             rate=100,
+            judgments={
+                "excellent": 0,
+                "fantastic": 0,
+                "fantasticPlus": 92,
+                "great": 0,
+                "holdsHeld": 6,
+                "minesHit": 0,
+                "miss": 0,
+                "rollsHeld": 3,
+                "totalHolds": 6,
+                "totalMines": 5,
+                "totalRolls": 3,
+                "totalSteps": 92,
+            },
         )
 
 
-def test_get_leaderboard_without_player_returns_top_players(song, player, rival1, rival2, rival3, top_scores):
+def test_get_leaderboard_without_player_returns_top_players_itg_scores(
+    song, player, rival1, rival2, rival3, top_scores
+):
     leaderboard = song.get_leaderboard(num_entries=2)
 
     assert len(leaderboard) == 2
@@ -167,25 +281,57 @@ def test_get_leaderboard_returns_up_to_num_entries(song, player, top_scores):
 def test_player_has_one_top_score_for_a_song(song, player):
     score = player.scores.first()
     assert score.is_itg_top is True
+    assert score.is_ex_top is True
 
-    new_low_score = player.scores.create(
+    new_low_itg_top_ex_score = player.scores.create(
         song=song,
         itg_score=2000,
         comment="M400, OtherMod",
         rate=100,
+        judgments={
+            "excellent": 0,
+            "fantastic": 0,
+            "fantasticPlus": 92,
+            "great": 0,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
     )
-    assert new_low_score.is_itg_top is False
+    assert new_low_itg_top_ex_score.is_itg_top is False
+    assert new_low_itg_top_ex_score.is_ex_top is True
 
-    new_top_score = player.scores.create(
+    new_top_itg_low_ex_score = player.scores.create(
         song=song,
         itg_score=8000,
         comment="M400, OtherMod",
         rate=100,
+        judgments={
+            "excellent": 0,
+            "fantastic": 0,
+            "fantasticPlus": 0,
+            "great": 92,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
     )
-    assert new_top_score.is_itg_top is True
+    assert new_top_itg_low_ex_score.is_itg_top is True
+    assert new_top_itg_low_ex_score.is_ex_top is False
 
     score.refresh_from_db()
     assert score.is_itg_top is False
+    assert score.is_ex_top is False
 
 
 def test_get_leaderboard_when_players_have_multiple_scores(song, player):
@@ -203,9 +349,12 @@ def test_get_leaderboard_when_players_have_multiple_scores(song, player):
     assert leaderboard[0]["score"] == 8888
 
 
+@pytest.mark.parametrize("leaderboard_source", [LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX])
 def test_get_leaderboard_given_player_returns_leaderboard_with_their_score_and_up_to_3_rivals(
-    song, player, top_scores, rival1, rival2, rival3, rival4
+    song, player, top_scores, rival1, rival2, rival3, rival4, leaderboard_source
 ):
+    player.leaderboard_source = leaderboard_source
+    player.save()
     leaderboard = song.get_leaderboard(num_entries=13, player=player)
 
     assert len(leaderboard) == 13
@@ -215,25 +364,25 @@ def test_get_leaderboard_given_player_returns_leaderboard_with_their_score_and_u
 
     assert leaderboard[9]["name"] == "RIV3"
     assert leaderboard[9]["rank"] == 21
-    assert leaderboard[9]["score"] == 7700
+    assert leaderboard[9]["score"] == (7700 if leaderboard_source == LeaderboardSource.BS_ITG else 5830)
     assert leaderboard[9]["isRival"] is True
     assert leaderboard[9]["isSelf"] is False
 
     assert leaderboard[10]["name"] == "RIV2"
     assert leaderboard[10]["rank"] == 22
-    assert leaderboard[10]["score"] == 7588
+    assert leaderboard[10]["score"] == (7588 if leaderboard_source == LeaderboardSource.BS_ITG else 5770)
     assert leaderboard[10]["isRival"] is True
     assert leaderboard[10]["isSelf"] is False
 
     assert leaderboard[11]["name"] == "RIV4"
     assert leaderboard[11]["rank"] == 23
-    assert leaderboard[11]["score"] == 7300
+    assert leaderboard[11]["score"] == (7300 if leaderboard_source == LeaderboardSource.BS_ITG else 5709)
     assert leaderboard[11]["isRival"] is True
     assert leaderboard[11]["isSelf"] is False
 
     assert leaderboard[12]["name"] == "PL"
     assert leaderboard[12]["rank"] == 24
-    assert leaderboard[12]["score"] == 6442
+    assert leaderboard[12]["score"] == (6442 if leaderboard_source == LeaderboardSource.BS_ITG else 4441)
     assert leaderboard[12]["isRival"] is False
     assert leaderboard[12]["isSelf"] is True
 
@@ -319,41 +468,125 @@ def test_get_leaderboard_when_there_are_multiple_songs(song, other_song, player,
 
 def test_highscore_updates(player, rival1, song):
     assert song.scores.order_by("-itg_score", "submission_date").first() == song.itg_highscore
+    assert song.scores.order_by("-ex_score", "submission_date").first() == song.ex_highscore
     assert song.itg_highscore.itg_score == 6442
-    previous_highscore = song.itg_highscore
+    assert song.ex_highscore.ex_score == 4441
+    previous_itg_highscore = song.itg_highscore
+    previous_ex_highscore = song.ex_highscore
 
-    new_score = song.scores.create(player=player, itg_score=6442, comment="foo", rate=100)
+    equal_score = song.scores.create(
+        player=player,
+        itg_score=6442,
+        comment="foo",
+        rate=100,
+        judgments={
+            "excellent": 46,
+            "fantastic": 0,
+            "fantasticPlus": 0,
+            "great": 46,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
+    )
     song.refresh_from_db()
 
-    assert song.itg_highscore == previous_highscore
-    assert song.scores.order_by("-itg_score", "submission_date").all()[1] == new_score
+    assert song.itg_highscore == previous_itg_highscore
+    assert song.ex_highscore == previous_ex_highscore
+    assert song.scores.order_by("-itg_score", "submission_date").all()[1] == equal_score
+    assert song.scores.order_by("-ex_score", "submission_date").all()[1] == equal_score
 
-    newer_score = song.scores.create(player=player, itg_score=6542, comment="foo", rate=100)
+    better_score = song.scores.create(
+        player=player,
+        itg_score=6542,
+        comment="foo",
+        rate=100,
+        judgments={
+            "excellent": 92,
+            "fantastic": 0,
+            "fantasticPlus": 0,
+            "great": 0,
+            "holdsHeld": 6,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 3,
+            "totalHolds": 6,
+            "totalMines": 5,
+            "totalRolls": 3,
+            "totalSteps": 92,
+        },
+    )
     song.refresh_from_db()
 
-    assert song.itg_highscore != previous_highscore
-    assert song.itg_highscore == newer_score
+    assert song.itg_highscore != previous_itg_highscore
+    assert song.itg_highscore == better_score
     assert song.itg_highscore.itg_score == 6542
-    assert newer_score.itg_highscore_for.first() == song
+    assert song.ex_highscore != previous_ex_highscore
+    assert song.ex_highscore == better_score
+    assert song.ex_highscore.ex_score == 5830
+    assert better_score.itg_highscore_for.first() == song
+    assert better_score.ex_highscore_for.first() == song
 
 
-def test_first_score_for_a_song_is_itg_top_for_a_player(player):
+def test_first_score_for_a_song_is_itg_and_ex_top_for_a_player(player):
     new_song = Song.objects.create(hash="new song")
     score = player.scores.create(song=new_song, itg_score=5050, comment="55g", rate=100)
 
     assert score.is_itg_top is True
+    assert score.is_ex_top is True
 
 
-def test_better_score_handles_is_itg_top_for_new_and_previous_top(player, song):
+def test_better_itg_score_handles_is_itg_top_for_new_and_previous_top(player, song):
     previous_score = song.scores.filter(player=player).first()
 
     assert previous_score.is_itg_top is True
+    assert previous_score.is_ex_top is True
 
-    better_score = player.scores.create(song=song, itg_score=10_000, comment="", rate=100)
+    better_itg_score = player.scores.create(
+        song=song,
+        itg_score=10_000,
+        comment="",
+        rate=100,
+        judgments={
+            "great": 92,
+            "totalSteps": 92,
+        },
+    )
 
     previous_score.refresh_from_db()
-    assert better_score.is_itg_top is True
+    assert better_itg_score.is_itg_top is True
+    assert better_itg_score.is_ex_top is False
     assert previous_score.is_itg_top is False
+    assert previous_score.is_ex_top is True
+
+
+def test_better_ex_score_handles_is_ex_top_for_new_and_previous_top(player, song):
+    previous_score = song.scores.filter(player=player).first()
+
+    assert previous_score.is_itg_top is True
+    assert previous_score.is_ex_top is True
+
+    better_ex_score = player.scores.create(
+        song=song,
+        itg_score=2_000,
+        comment="",
+        rate=100,
+        judgments={
+            "fantasticPlus": 92,
+            "totalSteps": 92,
+        },
+    )
+
+    previous_score.refresh_from_db()
+    assert better_ex_score.is_itg_top is False
+    assert better_ex_score.is_ex_top is True
+    assert previous_score.is_itg_top is True
+    assert previous_score.is_ex_top is False
 
 
 @pytest.mark.parametrize(
@@ -377,21 +610,46 @@ def test_score_create_used_cmod(player, song, used_cmod, comment, expected_used_
 def test_score_create_sets_songs_highscore(player):
     new_song = Song.objects.create(hash="new song")
     assert new_song.itg_highscore is None
+    assert new_song.ex_highscore is None
 
     score = player.scores.create(song=new_song, itg_score=10_000, comment="comment", rate=100)
 
     new_song.refresh_from_db()
     assert new_song.itg_highscore == score
+    assert new_song.ex_highscore == score
 
 
-def test_score_create_updates_songs_highscore(player, song):
-    previous_highscore = song.itg_highscore
+def test_score_create_updates_songs_itg_highscore(player, song):
+    previous_itg_highscore = song.itg_highscore
+    previous_ex_highscore = song.ex_highscore
 
     score = player.scores.create(song=song, itg_score=10_000, comment="comment", rate=100)
 
     song.refresh_from_db()
-    assert previous_highscore != score
+    assert previous_itg_highscore != score
     assert song.itg_highscore == score
+    assert song.ex_highscore == previous_ex_highscore
+
+
+def test_score_create_updates_songs_ex_highscore(player, song):
+    previous_itg_highscore = song.itg_highscore
+    previous_ex_highscore = song.ex_highscore
+
+    score = player.scores.create(
+        song=song,
+        itg_score=1_000,
+        comment="comment",
+        rate=100,
+        judgments={
+            "fantasticPlus": 92,
+            "totalSteps": 92,
+        },
+    )
+
+    song.refresh_from_db()
+    assert previous_ex_highscore != score
+    assert song.ex_highscore == score
+    assert song.itg_highscore == previous_itg_highscore
 
 
 def test_score_create_sets_players_latest_score(song):

@@ -23,9 +23,9 @@
                         <td class="text-nowrap">{{ song.num_scores }}</td>
                         <td class="text-nowrap">{{ song.num_players }}</td>
                         <td class="text-nowrap">
-                            {% if song.highscore %}
-                                <a href="{% url "score" pk=song.highscore.id %}">{{ song.highscore.score|div:100|stringformat:".2f" }}%</a> by
-                                <a href="{% url "player" player_id=song.highscore.player.id %}">{{ song.highscore.player.name }}</a>
+                            {% if song.itg_highscore %}
+                                <a href="{% url "score" pk=song.itg_highscore.id %}">{{ song.itg_highscore.itg_score|div:100|stringformat:".2f" }}%</a> by
+                                <a href="{% url "player" player_id=song.itg_highscore.player.id %}">{{ song.itg_highscore.player.name }}</a>
                             {% else %}
                                 -
                             {% endif %}

@@ -1,7 +1,7 @@
 {% load mathfilters %}
 {% if score.has_judgments %}
     {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
-        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="EX Score: {{ score.ex }}%
+        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="EX Score: {{ score.ex_score|div:100|stringformat:".2f" }}%
             <br />
             Both Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
             <br />
@@ -38,7 +38,7 @@
 {% else %}
     <a href="{% url "score" pk=score.id %}">
         <div class="text-center d-flex flex-column justify-content-evenly">
-            <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
+            <div>{{ score.itg_score|div:100|stringformat:".2f" }}%</div>
         </div>
     </a>
 {% endif %}

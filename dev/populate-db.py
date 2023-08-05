@@ -71,8 +71,12 @@ for i, song in enumerate(Song.objects.all()):
                 for _ in range(randint(SCORES_PER_SONG_PER_PLAYER, SCORES_PER_SONG_PER_PLAYER + 2))
             ]
         )
-        score = song.scores.filter(player=player).order_by("-score").first()
+        score = song.scores.filter(player=player).order_by("-itg_score").first()
         score.is_itg_top = True
+        score.save()
+
+        score = song.scores.filter(player=player).order_by("-ex_score").first()
+        score.is_ex_top = True
         score.save()
 
     if i % (SONGS // 100) == 0:
@@ -87,10 +91,16 @@ for player in Player.objects.all():
     player.latest_score = player.scores.order_by("-submission_date").first()
     player.save()
 
-print("Fixing highscores for songs...")
+print("Fixing ITG highscores for songs...")
 for song in Song.objects.all():
-    highscore = song.scores.filter(is_itg_top=True).order_by("-score", "submission_date").first()
-    song.highscore = highscore
+    highscore = song.scores.filter(is_itg_top=True).order_by("-itg_score", "submission_date").first()
+    song.itg_highscore = highscore
+    song.save()
+
+print("Fixing EX highscores for songs...")
+for song in Song.objects.all():
+    highscore = song.scores.filter(is_ex_top=True).order_by("-ex_score", "submission_date").first()
+    song.ex_highscore = highscore
     song.save()
 
 print("Done")

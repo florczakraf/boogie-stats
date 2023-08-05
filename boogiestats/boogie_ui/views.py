@@ -600,8 +600,8 @@ class SearchView(generic.ListView):
         songs = (
             Song.objects.filter(hash__in=hashes)
             .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
-            .prefetch_related("highscore", "itg_highscore__player")
-            .order_by("-num_scores", "-itg_highscore__score")
+            .prefetch_related("itg_highscore", "itg_highscore__player")
+            .order_by("-num_scores", "-itg_highscore__itg_score")
         )
 
         paginator, page, _, is_paginated = self.paginate_queryset(range(n_results), ENTRIES_PER_PAGE)

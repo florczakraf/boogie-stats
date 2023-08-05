@@ -23,11 +23,27 @@ MAX_LEADERBOARD_RIVALS = 3
 MAX_LEADERBOARD_ENTRIES = 50
 
 
-def make_leaderboard_entry(rank, score, is_rival=False, is_self=False):
+class LeaderboardSource(models.IntegerChoices):
+    BS_ITG = 1, "BoogieStats ITG Scores"
+    GS_ITG = 2, "GrooveStats ITG Scores"
+    BS_EX = 3, "BoogieStats EX Scores"
+
+
+SOURCE_FIELD_MAPPING = {
+    LeaderboardSource.BS_ITG: "itg",
+    LeaderboardSource.GS_ITG: "itg",
+    LeaderboardSource.BS_EX: "ex",
+}
+
+
+def make_leaderboard_entry(rank, score, leaderboard_source, is_rival=False, is_self=False):
+    if leaderboard_source not in (LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX):
+        raise ValueError(f"Unsupported leaderboard source: {leaderboard_source}")
+
     return {
         "rank": rank,
         "name": score.player.name or score.player.machine_tag,  # use name if available
-        "score": score.itg_score,
+        "score": score.itg_score if leaderboard_source == LeaderboardSource.BS_ITG else score.ex_score,
         "date": score.submission_date.strftime("%Y-%m-%d %H:%M:%S"),
         "isSelf": is_self,
         "isRival": is_rival,
@@ -42,6 +58,9 @@ class Song(models.Model):
     itg_highscore = models.ForeignKey(
         "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="itg_highscore_for"
     )
+    ex_highscore = models.ForeignKey(
+        "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="ex_highscore_for"
+    )
     number_of_scores = models.PositiveIntegerField(default=0, db_index=True)
     number_of_players = models.PositiveIntegerField(default=0, db_index=True)
 
@@ -51,51 +70,63 @@ class Song(models.Model):
 
     def get_leaderboard(self, num_entries, player=None):
         num_entries = min(MAX_LEADERBOARD_ENTRIES, num_entries)
+        lb_source = LeaderboardSource.BS_ITG
 
         scores = []
         used_score_pks = []
 
         if player:
+            lb_source = player.leaderboard_source
             rank, score = self.get_highscore(player)
             if rank:
-                scores.append((score, make_leaderboard_entry(rank, score, is_self=True)))
+                scores.append((score, make_leaderboard_entry(rank, score, lb_source, is_self=True)))
                 used_score_pks.append(score.pk)
 
             for rank, score in self.get_rival_highscores(player):
-                scores.append((score, make_leaderboard_entry(rank, score, is_rival=True)))
+                scores.append((score, make_leaderboard_entry(rank, score, lb_source, is_rival=True)))
                 used_score_pks.append(score.pk)
 
         remaining_scores = max(0, num_entries - len(scores))
+        prefix = SOURCE_FIELD_MAPPING[lb_source]
 
         top_scores = (
-            self.scores.filter(is_itg_top=True)
+            self.scores.filter(**{f"is_{prefix}_top": True})
             .exclude(pk__in=used_score_pks)
-            .order_by("-itg_score", "submission_date", "id")[:remaining_scores]
+            .order_by(f"-{prefix}_score", "submission_date", "id")[:remaining_scores]
         )
 
         for score in top_scores:
-            rank = Score.rank(score)
-            scores.append((score, make_leaderboard_entry(rank, score)))
+            rank = Score.rank(score, lb_source)
+            scores.append((score, make_leaderboard_entry(rank, score, lb_source)))
 
-        sorted_scores = sorted(scores, key=lambda x: (-x[0].itg_score, x[0].submission_date, x[0].id))
+        sorted_scores = sorted(
+            scores,
+            key=lambda x: (-getattr(x[0], f"{prefix}_score"), x[0].submission_date, x[0].id),
+        )
+
         return [x[1] for x in sorted_scores]
 
     def get_highscore(self, player) -> (int, "Score"):
+        leaderboard_source = player.leaderboard_source
+        prefix = SOURCE_FIELD_MAPPING[leaderboard_source]
         try:
-            highscore = self.scores.get(player=player, is_itg_top=True)
+            highscore = self.scores.get(player=player, **{f"is_{prefix}_top": True})
         except Score.DoesNotExist:
             return None, None
 
-        return Score.rank(highscore), highscore
+        return Score.rank(highscore, leaderboard_source), highscore
 
     def get_rival_highscores(self, player) -> [(int, "Score")]:
+        leaderboard_source = player.leaderboard_source
+        prefix = SOURCE_FIELD_MAPPING[leaderboard_source]
+
         scores = (
-            self.scores.filter(is_itg_top=True, player__in=player.rivals.all())
-            .order_by("-itg_score", "submission_date", "id")[:MAX_LEADERBOARD_RIVALS]
+            self.scores.filter(**{f"is_{prefix}_top": True, "player__in": player.rivals.all()})
+            .order_by(f"-{prefix}_score", "submission_date", "id")[:MAX_LEADERBOARD_RIVALS]
             .all()
         )
 
-        return [(Score.rank(score), score) for score in scores]
+        return [(Score.rank(score, leaderboard_source), score) for score in scores]
 
     @cached_property
     def chart_info(self):
@@ -182,11 +213,6 @@ class Song(models.Model):
         self.number_of_scores = annotated_song.num_scores
 
 
-class LeaderboardSource(models.IntegerChoices):
-    BOOGIESTATS_ITG = 1, "BoogieStats ITG Scores"
-    GROOVESTATS_ITG = 2, "GrooveStats ITG Scores"
-
-
 class Player(models.Model):
     objects = PlayerManager()
 
@@ -206,9 +232,7 @@ class Player(models.Model):
         verbose_name="Pull GrooveStats name and tag",
         help_text="Pull name and tag on successful GS-ranked score submission",
     )
-    leaderboard_source = models.IntegerField(
-        choices=LeaderboardSource.choices, default=LeaderboardSource.BOOGIESTATS_ITG
-    )
+    leaderboard_source = models.IntegerField(choices=LeaderboardSource.choices, default=LeaderboardSource.BS_ITG)
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -276,8 +300,11 @@ class Score(models.Model):
     submission_date = models.DateTimeField(default=now, db_index=True)
     submission_day = models.DateField(default=now, db_index=True)
     itg_score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)], db_index=True)
+    ex_score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)], default=0, db_index=True)
+
     comment = models.CharField(max_length=MAX_COMMENT_LENGTH, blank=True)
     is_itg_top = models.BooleanField(default=True, db_index=True)
+    is_ex_top = models.BooleanField(default=False, db_index=True)
     used_cmod = models.BooleanField(default=False)
     rate = models.PositiveIntegerField(default=100, validators=[MaxValueValidator(MAX_RATE)])
 
@@ -302,19 +329,23 @@ class Score(models.Model):
         return super().save(*args, **kwargs)
 
     @classmethod
-    def rank(cls, score):
+    def rank(cls, score, leaderboard_source: LeaderboardSource):
+        prefix = SOURCE_FIELD_MAPPING[leaderboard_source]
         return (
             list(
-                cls.objects.filter(song=score.song, is_itg_top=True, itg_score__gte=score.itg_score)
-                .order_by("-itg_score", "submission_date", "id")
+                cls.objects.filter(
+                    song=score.song,
+                    **{f"is_{prefix}_top": True, f"{prefix}_score__gte": getattr(score, f"{prefix}_score")},
+                )
+                .order_by(f"-{prefix}_score", "submission_date", "id")
                 .values_list("id", flat=True)
             ).index(score.id)
             + 1
         )
 
-    def ex(self):
+    def calculate_ex(self) -> int:
         if not self.has_judgments:
-            return None
+            return 0
 
         weights = {
             "fa+": 3.5,
@@ -336,6 +367,6 @@ class Score(models.Model):
         )
 
         try:
-            return max(0, math.floor(points / total_possible * 10000) / 100)
+            return int(max(0, math.floor(points / total_possible * 10_000)))
         except ZeroDivisionError:
             return 0

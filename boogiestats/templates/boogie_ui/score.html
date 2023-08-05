@@ -1,13 +1,13 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
 {% block title %}
-    {{ score.score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}
+    {{ score.itg_score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}
 {% endblock title %}
 {% block head_extras %}
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     <meta property="og:title"
-          content="{{ score.score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}" />
+          content="{{ score.itg_score|div:100|stringformat:".2f" }}% [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}" />
     <meta property="og:description"
           content="By: {{ score.player.name }} ({{ score.player.machine_tag }}) | Date: {{ score.submission_date }}" />
 {% endblock head_extras %}
@@ -15,9 +15,9 @@
     {% with song=score.song %}
         <h2 class="mt-2">{% include "boogie_ui/song_link.html" %}</h2>
     {% endwith %}
-    <h3 class="text-center">ITG Score: {{ score.score|div:100|stringformat:".2f" }}%</h3>
+    <h3 class="text-center">ITG Score: {{ score.itg_score|div:100|stringformat:".2f" }}%</h3>
     {% if score.has_judgments %}
-        <h3 class="text-center">EX Score: {{ score.ex }}%</h3>
+        <h3 class="text-center">EX Score: {{ score.ex_score|div:100|stringformat:".2f" }}%</h3>
         <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics+: {{ score.fantastics_plus }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%)
             <br />
             Fantastics: {{ score.fantastics }} ({% widthratio score.fantastics score.total_steps 100 %}%)

@@ -62,9 +62,7 @@ def test_player_scores_when_lb_source_is_bs(client, gs_api_key, requests_mock, p
 
 @pytest.mark.parametrize("player_index", [1, 2])
 def test_player_scores_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
-    Player.objects.create(
-        gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GROOVESTATS_ITG
-    )
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
 
     hash = "76957dd1f96f764d"
     ranked_song = {
@@ -149,9 +147,7 @@ def song(some_player, other_player):
 
 @pytest.mark.parametrize("player_index", [1, 2])
 def test_player_leaderboards_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
-    Player.objects.create(
-        gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GROOVESTATS_ITG
-    )
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
 
     ranked_song = {
         f"player{player_index}": {
@@ -196,9 +192,7 @@ def test_player_leaderboards_when_lb_source_is_gs(client, gs_api_key, requests_m
 
 @pytest.mark.parametrize("player_index", [1, 2])
 def test_score_submit_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
-    Player.objects.create(
-        gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GROOVESTATS_ITG
-    )
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
 
     hash = "76957dd1f96f764d"
     expected_result = {
@@ -558,7 +552,7 @@ def test_score_submit_without_a_comment(
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("lb_source", [LeaderboardSource.BOOGIESTATS_ITG, LeaderboardSource.GROOVESTATS_ITG])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
 def test_event_score_submit(
     client,
     some_player,
@@ -606,7 +600,7 @@ def test_event_score_submit(
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("lb_source", [LeaderboardSource.BOOGIESTATS_ITG, LeaderboardSource.GROOVESTATS_ITG])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
 def test_event_player_scores(
     client, some_player, requests_mock, some_player_gs_api_key, player_index, event_key, lb_source
 ):
@@ -642,7 +636,7 @@ def test_event_player_scores(
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("lb_source", [LeaderboardSource.BOOGIESTATS_ITG, LeaderboardSource.GROOVESTATS_ITG])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
 def test_event_player_leaderboards(
     client, some_player, requests_mock, some_player_gs_api_key, player_index, event_key, lb_source
 ):
@@ -1035,7 +1029,7 @@ def test_score_submit_with_two_players_when_using_bs_itg_and_gs_itg_lbs(
     client, gs_api_key, some_player_gs_api_key, requests_mock
 ):
     Player.objects.create(
-        gs_api_key=some_player_gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GROOVESTATS_ITG
+        gs_api_key=some_player_gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG
     )
 
     ranked_songs = {
