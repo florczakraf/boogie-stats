@@ -53,6 +53,18 @@
                 <li class="nav-item">
                     <a href="#" class="nav-link" id="darkModeSwitch">{% bs_icon "sun" %}/{% bs_icon "moon" %}</a>
                 </li>
+                <li class="nav-item">
+                    <div class="nav-link">
+                        <div class="form-check form-switch">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   role="switch"
+                                   id="leaderboardSwitch"
+                                   {% if request.COOKIES.bs_leaderboard == "ex" %}checked{% endif %}>
+                            <label class="custom-control-label" for="leaderboardSwitch">ITG/EX</label>
+                        </div>
+                    </div>
+                </li>
             </ul>
             {% if BS_SEARCH_ENABLED %}
                 <form class="form-inline" action="{% url "search" %}" method="get">

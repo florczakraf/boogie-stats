@@ -5,8 +5,8 @@ import pytest
 import requests_mock as requests_mock_lib
 
 from boogiestats import __version__ as boogiestats_version
-from boogiestats.boogie_api.models import Song, Player, Score
-from boogiestats.boogie_api.views import GROOVESTATS_ENDPOINT, GROOVESTATS_RESPONSES, create_headers
+from boogiestats.boogie_api.models import Song, Player, Score, LeaderboardSource
+from boogiestats.boogie_api.views import GROOVESTATS_ENDPOINT, GROOVESTATS_RESPONSES, create_headers, LB_SOURCE_MAPPING
 
 
 @pytest.fixture(autouse=True)
@@ -28,9 +28,7 @@ def gs_api_key():
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
-    client, gs_api_key, requests_mock, player_index
-):
+def test_player_scores_when_lb_source_is_bs(client, gs_api_key, requests_mock, player_index):
     hash = "0123456789ABCDEF"
     unranked_song = {
         f"player{player_index}": {
@@ -63,12 +61,14 @@ def test_player_scores_given_groovestats_unranked_song_that_we_dont_track(
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_player_scores_given_groovestats_ranked_song(client, gs_api_key, requests_mock, player_index):
+def test_player_scores_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
+
     hash = "76957dd1f96f764d"
     ranked_song = {
         f"player{player_index}": {
             "chartHash": hash,
-            "isRanked": True,
+            "isRanked": False,
             "gsLeaderboard": [
                 {
                     "rank": 1,
@@ -139,58 +139,19 @@ def other_player(other_player_gs_api_key):
 @pytest.fixture
 def song(some_player, other_player):
     s = Song.objects.create(hash="0123456789ABCDEF")
-    s.scores.create(player=some_player, score=8495, comment="C420", rate=100)
-    s.scores.create(player=other_player, score=8595, comment="C420", rate=100)
+    s.scores.create(player=some_player, itg_score=8495, comment="C420", rate=100)
+    s.scores.create(player=other_player, itg_score=8595, comment="C420", rate=100)
 
     return s
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_player_leaderboards_given_groovestats_unranked_song_that_we_dont_track(
-    client, gs_api_key, requests_mock, player_index
-):
-    hash = "0123456789ABCDEF"
-    unranked_song = {
-        f"player{player_index}": {
-            "chartHash": hash,
-            "isRanked": False,
-            "gsLeaderboard": [],
-        }
-    }
-    requests_mock.get(
-        GROOVESTATS_ENDPOINT + "/player-leaderboards.php",
-        text=json.dumps(unranked_song),
-    )
-    kwargs = {
-        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
-    }
-    response = client.get(
-        "/player-leaderboards.php",
-        data={f"chartHashP{player_index}": hash, "maxLeaderboardResults": 3},
-        **kwargs,
-    )
+def test_player_leaderboards_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
 
-    assert response.json() == {
-        f"player{player_index}": {
-            "chartHash": hash,
-            "isRanked": True,
-            "gsLeaderboard": [],
-        }
-    }
-    assert len(requests_mock.request_history) == 1
-    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
-    assert requests_mock.last_request.qs["maxLeaderboardResults"] == ["3"]
-    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
-    assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
-    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
-
-
-@pytest.mark.parametrize("player_index", [1, 2])
-def test_player_leaderboards_given_groovestats_ranked_song(client, gs_api_key, requests_mock, player_index):
     ranked_song = {
         f"player{player_index}": {
             "chartHash": "76957dd1f96f764d",
-            "isRanked": True,
             "gsLeaderboard": [
                 {
                     "rank": 1,
@@ -230,7 +191,9 @@ def test_player_leaderboards_given_groovestats_ranked_song(client, gs_api_key, r
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests_mock, player_index):
+def test_score_submit_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
+
     hash = "76957dd1f96f764d"
     expected_result = {
         f"player{player_index}": {
@@ -308,15 +271,35 @@ def test_score_submit_given_groovestats_ranked_song(client, gs_api_key, requests
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
-    client, gs_api_key, requests_mock, player_index
-):
+def test_score_submit_for_untracked_song_when_lb_source_is_bs_itg(client, gs_api_key, requests_mock, player_index):
     unranked_song = {
         f"player{player_index}": {
             "chartHash": "76957dd1f96f764e",
-            "isRanked": False,
-            "gsLeaderboard": [],
+            "isRanked": True,
+            "gsLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "Ash ketchum!",
+                    "score": 10000,
+                    "date": "2018-02-07 19:49:20",
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "A5H!",
+                },
+                {
+                    "rank": 2,
+                    "name": "name",
+                    "score": 5805,
+                    "date": "2018-02-07 19:49:20",
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "tag",
+                },
+            ],
             "scoreDelta": 5805,
+            "result": "score-added",
         }
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(unranked_song))
@@ -339,12 +322,10 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
     assert Song.objects.count() == 1
     song = Song.objects.first()
     assert song.hash == "76957dd1f96f764e"
-    assert song.gs_ranked is False
+    assert song.gs_ranked is True
     assert Score.objects.count() == 1
     assert Player.objects.count() == 1
     player = Player.objects.first()
-    machine_tag = player.machine_tag
-    assert player.name == machine_tag
     assert response.json() == {
         f"player{player_index}": {
             "chartHash": "76957dd1f96f764e",
@@ -352,13 +333,13 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
             "gsLeaderboard": [
                 {
                     "rank": 1,
-                    "name": machine_tag,
+                    "name": player.name,
                     "score": 5805,
                     "date": song.get_highscore(player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": True,
                     "isRival": False,
                     "isFail": False,
-                    "machineTag": machine_tag,
+                    "machineTag": player.machine_tag,
                 }
             ],
             "scoreDelta": 5805,
@@ -369,7 +350,7 @@ def test_score_submit_given_groovestats_unranked_song_that_we_dont_track_yet(
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_score_submit_given_groovestats_unranked_song_and_better_score(
+def test_score_submit_with_better_score_when_lb_source_is_bs(
     client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
 ):
     unranked_song = {
@@ -431,10 +412,11 @@ def test_score_submit_given_groovestats_unranked_song_and_better_score(
             "result": "improved",
         }
     }
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_score_submit_given_groovestats_unranked_song_and_worse_score(
+def test_score_submit_with_worse_score_when_lb_source_is_bs(
     client, song, some_player, other_player, requests_mock, some_player_gs_api_key, player_index
 ):
     unranked_song = {
@@ -496,6 +478,7 @@ def test_score_submit_given_groovestats_unranked_song_and_worse_score(
             "result": "score-not-improved",
         }
     }
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -569,17 +552,25 @@ def test_score_submit_without_a_comment(
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("is_ranked", [True, False])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
 def test_event_score_submit(
-    client, some_player, other_player, requests_mock, some_player_gs_api_key, player_index, is_ranked, event_key
+    client,
+    some_player,
+    requests_mock,
+    some_player_gs_api_key,
+    player_index,
+    event_key,
+    lb_source,
 ):
+    some_player.leaderboard_source = lb_source
+    some_player.save()
+
     gs_response = {
         f"player{player_index}": {
             "chartHash": "afc954d593fd8bbd",
             event_key: {"everything": "will be passed"},
             "gsLeaderboard": [],
             "scoreDelta": 8041,
-            "isRanked": is_ranked,
             "result": "improved",
         }
     }
@@ -604,21 +595,25 @@ def test_event_score_submit(
     assert Score.objects.count() == 1
     event_results = response.json()[f"player{player_index}"][event_key]
     assert event_results["everything"] == "will be passed"
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == LB_SOURCE_MAPPING[lb_source]
 
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("is_ranked", [True, False])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
 def test_event_player_scores(
-    client, some_player, other_player, requests_mock, some_player_gs_api_key, player_index, is_ranked, event_key
+    client, some_player, requests_mock, some_player_gs_api_key, player_index, event_key, lb_source
 ):
+    some_player.leaderboard_source = lb_source
+    some_player.save()
+
     gs_response = {
         f"player{player_index}": {
             "chartHash": "afc954d593fd8bbd",
             event_key: {"everything": "will be passed"},
             "gsLeaderboard": [],
             "scoreDelta": 8041,
-            "isRanked": is_ranked,
+            "isRanked": True,
             "result": "improved",
         }
     }
@@ -636,21 +631,25 @@ def test_event_player_scores(
     assert Score.objects.count() == 0
     event_results = response.json()[f"player{player_index}"][event_key]
     assert event_results["everything"] == "will be passed"
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == LB_SOURCE_MAPPING[lb_source]
 
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("is_ranked", [True, False])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
 def test_event_player_leaderboards(
-    client, some_player, other_player, requests_mock, some_player_gs_api_key, player_index, is_ranked, event_key
+    client, some_player, requests_mock, some_player_gs_api_key, player_index, event_key, lb_source
 ):
+    some_player.leaderboard_source = lb_source
+    some_player.save()
+
     gs_response = {
         f"player{player_index}": {
             "chartHash": "afc954d593fd8bbd",
             event_key: {"everything": "will be passed"},
             "gsLeaderboard": [],
             "scoreDelta": 8041,
-            "isRanked": is_ranked,
+            "isRanked": True,
             "result": "improved",
         }
     }
@@ -668,6 +667,7 @@ def test_event_player_leaderboards(
     assert Score.objects.count() == 0
     event_results = response.json()[f"player{player_index}"][event_key]
     assert event_results["everything"] == "will be passed"
+    assert response.headers[f"bs-leaderboard-player-{player_index}"] == LB_SOURCE_MAPPING[lb_source]
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -734,7 +734,7 @@ def test_score_submit_with_some_judgments(
     assert score.total_rolls == 3
     assert score.total_steps == 92
     assert score.rate == 105
-    assert score.score == 7560
+    assert score.itg_score == 7560
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -805,7 +805,7 @@ def test_score_submit_with_all_judgments(
     assert score.total_rolls == 0
     assert score.total_steps == 89
     assert score.rate == 100
-    assert score.score == 5340
+    assert score.itg_score == 5340
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -917,17 +917,17 @@ def test_score_submit_with_no_cmod_info(
     assert score.used_cmod is False
 
 
-def test_score_submit_with_two_players_playing_the_same_unranked_song(client, gs_api_key, requests_mock):
+def test_score_submit_with_two_players_playing_the_same_song_when_lb_source_is_bs(client, gs_api_key, requests_mock):
     unranked_songs = {
         "player1": {
             "chartHash": "aaaaadd1f96f764e",
-            "isRanked": False,
+            "isRanked": True,
             "gsLeaderboard": [],
             "scoreDelta": 5500,
         },
         "player2": {
             "chartHash": "aaaaadd1f96f764e",
-            "isRanked": False,
+            "isRanked": True,
             "gsLeaderboard": [],
             "scoreDelta": 6500,
         },
@@ -958,10 +958,10 @@ def test_score_submit_with_two_players_playing_the_same_unranked_song(client, gs
     assert Song.objects.count() == 1
     song = Song.objects.first()
     assert song.hash == "aaaaadd1f96f764e"
-    assert song.gs_ranked is False
+    assert song.gs_ranked is True
     assert Score.objects.count() == 2
     assert Player.objects.count() == 2
-    scores = Score.objects.all().order_by("-score")
+    scores = Score.objects.all().order_by("-itg_score")
 
     assert response.json() == {
         "player1": {
@@ -1025,105 +1025,17 @@ def test_score_submit_with_two_players_playing_the_same_unranked_song(client, gs
     assert response.headers["bs-leaderboard-player-2"] == "BS"
 
 
-def test_score_submit_with_two_players_playing_the_same_ranked_song(client, gs_api_key, requests_mock):
-    ranked_songs = {
-        "player1": {
-            "chartHash": "aaaaadd1f96f764e",
-            "isRanked": True,
-            "gsLeaderboard": [
-                {
-                    "rank": 1,
-                    "name": "foo",
-                    "score": 6500,
-                    "date": "2021-11-13 10:33:34",
-                    "isSelf": False,
-                    "isRival": False,
-                    "isFail": False,
-                    "machineTag": "FOO",
-                },
-                {
-                    "rank": 2,
-                    "name": "bar",
-                    "score": 5500,
-                    "date": "2021-11-13 10:33:34",
-                    "isSelf": True,
-                    "isRival": False,
-                    "isFail": False,
-                    "machineTag": "BAR",
-                },
-            ],
-            "scoreDelta": 5500,
-            "result": "score-added",
-        },
-        "player2": {
-            "chartHash": "aaaaadd1f96f764e",
-            "isRanked": True,
-            "gsLeaderboard": [
-                {
-                    "rank": 1,
-                    "name": "foo",
-                    "score": 6500,
-                    "date": "2021-11-13 10:33:34",
-                    "isSelf": True,
-                    "isRival": False,
-                    "isFail": False,
-                    "machineTag": "FOO",
-                },
-                {
-                    "rank": 2,
-                    "name": "bar",
-                    "score": 5500,
-                    "date": "2021-11-13 10:33:34",
-                    "isSelf": False,
-                    "isRival": False,
-                    "isFail": False,
-                    "machineTag": "BAR",
-                },
-            ],
-            "scoreDelta": 6500,
-            "result": "score-added",
-        },
-    }
-    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(ranked_songs))
-    kwargs = {
-        "HTTP_x_api_key_player_1": "abcdef0123456789" * 4,
-        "HTTP_x_api_key_player_2": "abcdef0123456789"[::-1] * 4,
-    }
-    response = client.post(
-        "/score-submit.php?chartHashP1=aaaaadd1f96f764e&chartHashP2=aaaaadd1f96f764e&maxLeaderboardResults=3",
-        data={
-            "player1": {
-                "score": 5500,
-                "comment": "foo",
-                "rate": 100,
-            },
-            "player2": {
-                "score": 6500,
-                "comment": "bar",
-                "rate": 100,
-            },
-        },
-        content_type="application/json",
-        **kwargs,
+def test_score_submit_with_two_players_when_using_bs_itg_and_gs_itg_lbs(
+    client, gs_api_key, some_player_gs_api_key, requests_mock
+):
+    Player.objects.create(
+        gs_api_key=some_player_gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG
     )
 
-    assert Song.objects.count() == 1
-    song = Song.objects.first()
-    assert song.hash == "aaaaadd1f96f764e"
-    assert song.gs_ranked is True
-    assert Score.objects.count() == 2
-    assert Player.objects.count() == 2
-
-    assert response.json() == ranked_songs
-    assert response.headers["bs-leaderboard-player-1"] == "GS"
-    assert response.headers["bs-leaderboard-player-2"] == "GS"
-
-
-def test_score_submit_with_two_players_playing_ranked_and_unranked_song(client, gs_api_key, requests_mock):
     ranked_songs = {
         "player1": {
             "chartHash": "aaaaadd1f96f764e",
-            "isRanked": True,
+            "isRanked": False,
             "gsLeaderboard": [
                 {
                     "rank": 1,
@@ -1141,15 +1053,15 @@ def test_score_submit_with_two_players_playing_ranked_and_unranked_song(client, 
         },
         "player2": {
             "chartHash": "bbbbbdd1f96f764e",
-            "isRanked": False,
+            "isRanked": True,
             "gsLeaderboard": [],
             "scoreDelta": 6500,
         },
     }
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(ranked_songs))
     kwargs = {
-        "HTTP_x_api_key_player_1": "abcdef0123456789" * 4,
-        "HTTP_x_api_key_player_2": "abcdef0123456789"[::-1] * 4,
+        "HTTP_x_api_key_player_1": some_player_gs_api_key,
+        "HTTP_x_api_key_player_2": gs_api_key,
     }
     response = client.post(
         "/score-submit.php?chartHashP1=aaaaadd1f96f764e&chartHashP2=bbbbbdd1f96f764e&maxLeaderboardResults=3",
@@ -1189,7 +1101,7 @@ def test_pulling_gs_name_and_tag(
     expected_result = {
         f"player{player_index}": {
             "chartHash": hash,
-            "isRanked": True,
+            "isRanked": False,
             "gsLeaderboard": [
                 {
                     "rank": 1,
@@ -1243,7 +1155,7 @@ def test_pulling_gs_name_and_tag_with_missing_attributes(
     expected_result = {
         f"player{player_index}": {
             "chartHash": hash,
-            "isRanked": True,
+            "isRanked": False,
             "gsLeaderboard": [
                 {
                     "rank": 1,
@@ -1284,86 +1196,3 @@ def test_pulling_gs_name_and_tag_with_missing_attributes(
     else:
         assert player.name == "1234"
         assert player.machine_tag == "DUPA"
-
-
-@pytest.mark.parametrize("player_index", [1, 2])
-def test_player_leaderboards_given_groovestats_partially_ranked_song(
-    client, some_player_gs_api_key, requests_mock, player_index, some_player
-):
-    # for some reason on 2023-07-31 GS started accepting scores (gsLeaderboards were set in the response) but the
-    # isRanked field was False, this lead to discrepancy in displayed boards. For now, we stick to GS boards only when
-    # isRanked is True, not when gsLeaderboard is non-empty.
-    hash = "76957dd1f96f764d"
-    gs_response = {
-        f"player{player_index}": {
-            "chartHash": hash,
-            "isRanked": False,
-            "gsLeaderboard": [
-                {
-                    "rank": 1,
-                    "name": "GS_NAME",
-                    "score": 5809,
-                    "date": "2018-02-07 19:49:20",
-                    "isSelf": True,
-                    "isRival": False,
-                    "isFail": False,
-                    "machineTag": "TAG",
-                },
-            ],
-            "scoreDelta": 5809,
-            "result": "score-added",
-        }
-    }
-    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(gs_response))
-    kwargs = {
-        f"HTTP_x_api_key_player_{player_index}": some_player_gs_api_key,
-    }
-    response = client.post(
-        f"/score-submit.php?chartHashP{player_index}={hash}&maxLeaderboardResults=3",
-        data={
-            f"player{player_index}": {
-                "score": 5809,
-                "comment": "50e, 42g, 8d, 11wo, 4m, C300",
-                "rate": 100,
-            }
-        },
-        content_type="application/json",
-        **kwargs,
-    )
-
-    assert Song.objects.count() == 1
-    song = Song.objects.first()
-    assert song.hash == hash
-    assert song.gs_ranked is False
-    assert Score.objects.count() == 1
-    assert Player.objects.count() == 1
-    assert response.json() == {
-        f"player{player_index}": {
-            "chartHash": hash,
-            "isRanked": True,
-            "gsLeaderboard": [
-                {
-                    "rank": 1,
-                    "name": "GS_NAME",
-                    "score": 5809,
-                    "date": song.get_highscore(some_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    "isSelf": True,
-                    "isRival": False,
-                    "isFail": False,
-                    "machineTag": "TAG",
-                },
-            ],
-            "scoreDelta": 5809,
-            "result": "score-added",
-        }
-    }
-
-    assert len(requests_mock.request_history) == 1
-    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
-    assert requests_mock.last_request.qs["maxLeaderboardResults"] == ["3"]
-    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == some_player_gs_api_key
-    assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
-    player = Player.objects.first()
-    assert player.machine_tag == "TAG"
-    assert player.name == "GS_NAME"
-    assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"

@@ -26,7 +26,28 @@ CALENDAR_VALUES = (1, 10, 15, 20, 25, 30, 35, 40, 50, 60)
 EXTRA_CALENDAR_VALUES = (100,)
 
 
-class IndexView(generic.ListView):
+class LeaderboardSourceMixin:
+    @property
+    def lb_source(self):
+        if self.request.COOKIES.get("bs_leaderboard") == "ex":
+            return "ex"
+        else:
+            return "itg"
+
+    @property
+    def lb_attribute(self):
+        return f"{self.lb_source}_score"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["lb_display_name"] = self.lb_source.upper()
+        context["lb_attribute"] = self.lb_attribute
+        context["highscore_attribute"] = f"{self.lb_source}_highscore"
+
+        return context
+
+
+class IndexView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/index.html"
     context_object_name = "latest_scores"
 
@@ -46,7 +67,7 @@ class IndexView(generic.ListView):
         return context
 
 
-class ScoreListView(generic.ListView):
+class ScoreListView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/scores.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -57,7 +78,7 @@ class ScoreListView(generic.ListView):
 
 class HighscoreListView(ScoreListView):
     def get_queryset(self):
-        return Score.objects.order_by("-score", "submission_date").select_related("song", "player")
+        return Score.objects.order_by(f"-{self.lb_attribute}", "submission_date").select_related("song", "player")
 
 
 class PlayersListView(generic.ListView):
@@ -93,7 +114,7 @@ def plays_to_class(plays):
     return f"min-plays-{class_suffix}"
 
 
-class PlayerScoresByDayView(generic.ListView):
+class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/scores_by_day.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -109,10 +130,11 @@ class PlayerScoresByDayView(generic.ListView):
         context["player"] = player
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.values("song").distinct().count()
-        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
         context.update(
             fantastics_plus=0,
             fantastics=0,
@@ -149,7 +171,7 @@ class PlayerScoresByDayView(generic.ListView):
         return scores.order_by("-submission_date").prefetch_related("song")
 
 
-class PlayerView(generic.ListView):
+class PlayerView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/player.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -163,11 +185,12 @@ class PlayerView(generic.ListView):
         context["rivals"] = player.rivals.all()
         scores = player.scores
         context["num_scores"] = scores.count()
-        context["num_charts_played"] = scores.filter(is_top=True).count()
-        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+        context["num_charts_played"] = scores.filter(is_itg_top=True).count()
+        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
 
         today = datetime.date.today()
         a_year_ago = today.replace(year=today.year - 1)
@@ -221,7 +244,11 @@ class PlayerHighscoresView(PlayerView):
         player_id = self.kwargs["player_id"]
         player = Player.get_or_404(id=player_id)
 
-        return player.scores.filter(is_top=True).order_by("-score").prefetch_related("song")
+        return (
+            player.scores.filter(**{f"is_{self.lb_source}_top": True})
+            .order_by(f"-{self.lb_attribute}")
+            .prefetch_related("song")
+        )
 
 
 class PlayerMostPlayedView(PlayerView):
@@ -238,7 +265,7 @@ class PlayerMostPlayedView(PlayerView):
 
         songs = [song["song"] for song in songs_by_plays_page]
         songs_plays = {song["song"]: song["num_scores"] for song in songs_by_plays_page}
-        scores = player.scores.filter(is_top=True, song__hash__in=songs).prefetch_related("song")
+        scores = player.scores.filter(is_itg_top=True, song__hash__in=songs).prefetch_related("song")
 
         scores = sorted(scores, key=lambda x: songs.index(x.song.hash))
         for score in scores:
@@ -267,26 +294,31 @@ class PlayerStatsView(generic.base.TemplateView):
         scores = player.scores
 
         context["num_scores"] = scores.count()
-        context["num_charts_played"] = scores.filter(is_top=True).count()
-        context["one_star"] = scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_top=True, score=10000).count()
+        context["num_charts_played"] = scores.filter(is_itg_top=True).count()
+        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
 
         return context
 
 
-class VersusView(generic.ListView):
+class VersusView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/versus.html"
 
     def sort_key(self, x):
-        return x[0].score
+        return getattr(x[0], self.lb_attribute)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         p1, p2 = self.get_players()
-        p1_scores_qs = p1.scores.filter(is_top=True).order_by("-score").all().select_related("song")
-        p2_scores_qs = p2.scores.filter(is_top=True, song__hash__in=[score.song_id for score in p1_scores_qs])
+        p1_scores_qs = (
+            p1.scores.filter(**{f"is_{self.lb_source}_top": True}).order_by("-itg_score").all().select_related("song")
+        )
+        p2_scores_qs = p2.scores.filter(
+            **{f"is_{self.lb_source}_top": True}, song__hash__in=[score.song_id for score in p1_scores_qs]
+        )
         p2_scores_dict = {score.song_id: score for score in p2_scores_qs}
         scores = sorted(
             [
@@ -300,20 +332,26 @@ class VersusView(generic.ListView):
         paginator, page, score_page, is_paginated = self.paginate_queryset(scores, ENTRIES_PER_PAGE)
 
         context["p1_num_scores"] = p1.scores.count()
-        context["p1_num_charts_played"] = p1.scores.filter(is_top=True).count()
-        context["p1_wins"] = sum((1 for x in scores if x[0].score > x[1].score))
-        context["p1_one_star"] = p1.scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["p1_two_stars"] = p1.scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["p1_three_stars"] = p1.scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["p1_four_stars"] = p1.scores.filter(is_top=True, score=10000).count()
+        context["p1_num_charts_played"] = p1.scores.filter(is_itg_top=True).count()
+        context["p1_wins"] = sum(
+            (1 for x in scores if getattr(x[0], self.lb_attribute) > getattr(x[1], self.lb_attribute))
+        )
+        context["p1_one_star"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["p1_two_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["p1_three_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["p1_four_stars"] = p1.scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["p1_five_stars"] = p1.scores.filter(is_ex_top=True, ex_score=10000).count()
 
         context["p2_num_scores"] = p2.scores.count()
-        context["p2_num_charts_played"] = p2.scores.filter(is_top=True).count()
-        context["p2_wins"] = sum((1 for x in scores if x[0].score < x[1].score))
-        context["p2_one_star"] = p2.scores.filter(is_top=True, score__gte=9600, score__lt=9800).count()
-        context["p2_two_stars"] = p2.scores.filter(is_top=True, score__gte=9800, score__lt=9900).count()
-        context["p2_three_stars"] = p2.scores.filter(is_top=True, score__gte=9900, score__lt=10000).count()
-        context["p2_four_stars"] = p2.scores.filter(is_top=True, score=10000).count()
+        context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()
+        context["p2_wins"] = sum(
+            (1 for x in scores if getattr(x[0], self.lb_attribute) < getattr(x[1], self.lb_attribute))
+        )
+        context["p2_one_star"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["p2_two_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["p2_three_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["p2_four_stars"] = p2.scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["p2_five_stars"] = p2.scores.filter(is_ex_top=True, ex_score=10000).count()
 
         context["ties"] = len(scores) - context["p1_wins"] - context["p2_wins"]
         context["common_charts"] = len(scores)
@@ -342,10 +380,10 @@ class VersusView(generic.ListView):
 
 class VersusByDifferenceView(VersusView):
     def sort_key(self, x):
-        return x[0].score - x[1].score
+        return getattr(x[0], self.lb_attribute) - getattr(x[1], self.lb_attribute)
 
 
-class SongView(generic.ListView):
+class SongView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/song.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -356,7 +394,7 @@ class SongView(generic.ListView):
         song_hash = self.kwargs["song_hash"]
         song = Song.get_or_404(hash=song_hash)
         context["song"] = song
-        context["num_highscores"] = song.scores.filter(is_top=True).count()
+        context["num_highscores"] = song.scores.filter(is_itg_top=True).count()
         if hasattr(self.request.user, "player"):
             context["my_scores"] = song.scores.filter(player=self.request.user.player).count()
 
@@ -369,7 +407,7 @@ class SongView(generic.ListView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.order_by("-score", "submission_date")
+            .scores.order_by(f"-{self.lb_attribute}", "submission_date")
             .select_related("song", "player")
         )
 
@@ -379,12 +417,12 @@ class SongByDateView(SongView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.order_by("-submission_date", "score")
+            .scores.order_by("-submission_date", f"-{self.lb_attribute}")
             .select_related("song", "player")
         )
 
 
-class ScoreView(generic.DetailView):
+class ScoreView(LeaderboardSourceMixin, generic.DetailView):
     template_name = "boogie_ui/score.html"
     model = Score
 
@@ -394,8 +432,8 @@ class SongHighscoresView(SongView):
         song_hash = self.kwargs["song_hash"]
         return (
             Song.get_or_404(hash=song_hash)
-            .scores.filter(is_top=True)
-            .order_by("-score", "submission_date")
+            .scores.filter(**{f"is_{self.lb_source}_top": True})
+            .order_by(f"-{self.lb_attribute}", "submission_date")
             .select_related("song", "player")
         )
 
@@ -404,24 +442,30 @@ class SongByPlayerView(SongView):
     def get_queryset(self):
         player = Player.get_or_404(id=self.kwargs["player_id"])
         song = Song.get_or_404(hash=self.kwargs["song_hash"])
-        return song.scores.filter(player=player).order_by("-score", "submission_date").select_related("song", "player")
+        return (
+            song.scores.filter(player=player)
+            .order_by(f"-{self.lb_attribute}", "submission_date")
+            .select_related("song", "player")
+        )
 
 
-class SongsListView(generic.ListView):
+class SongsListView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/songs.html"
     context_object_name = "songs"
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
         return Song.objects.order_by("-number_of_scores").prefetch_related(
-            "highscore",
-            "highscore__player",
+            f"{self.lb_source}_highscore",
+            f"{self.lb_source}_highscore__player",
         )
 
 
 class SongsByPlayersListView(SongsListView):
     def get_queryset(self):
-        return Song.objects.order_by("-number_of_players").prefetch_related("highscore", "highscore__player")
+        return Song.objects.order_by("-number_of_players").prefetch_related(
+            f"{self.lb_source}_highscore", f"{self.lb_source}_highscore__player"
+        )
 
 
 class SuccessMessageExtraTagsMixin:
@@ -510,13 +554,12 @@ def user_manual(request):
     )
 
     q_and_a = {
-        "Will the scores be saved to GrooveStats when I use BoogieStats?": "Yes! BoogieStats acts as a proxy for GrooveStats. It records all received scores and also passes them to GrooveStats. When you retrieve scores in the game, the ones from GrooveStats will take precedence so the behavior for GS-ranked songs should remain the same.",
-        "Is it safe?": """It's probably as safe as using a USB Profile on a public PC in an arcade or during a convention. I don't store your GrooveStats API key in a clear form, and the whole key is used only during forwarding scores to GrooveStats. You can inspect the code <a href="https://github.com/florczakraf/boogie-stats" target="_blank">on GitHub</a> or host the app for yourself if you don't plan to use the comparison & leaderboards features.""",
-        "What if I play a ranked song? What scores will I see?": "You will receive an official leaderboard from GrooveStats in your game. However, in the UI of BoogieStats, only the local scores will be displayed for a given song, with an information that it's a GS-ranked song and the leaderboard might be incomplete.",
-        "What if I play a song that's not in your database?": """BoogieStats will automatically accept and track its scores. It will look like any other ranked song in your game. In the UI, the song will display a song hash instead of a title until its information is added to the <a href="https://github.com/florczakraf/stepmania-chart-db" target="_blank">public database</a>. Please send me a list of packs that are missing when you encounter this issue. Once the song metadata is added to the database, the UI will show it for the scores sent in the past as well.""",
+        "Will the scores be saved to GrooveStats when I use BoogieStats?": f"""Yes! BoogieStats acts as a proxy for GrooveStats. It records all received scores and also passes them to GrooveStats. You can select which leaderboards you want to see in game in your <a href="{reverse("edit")}">Profile</a>.""",
+        """How to enable EX Score leaderboards?""": f"""Go to <a href="{reverse("edit")}">Edit Profile</a> page and select <code>BoogieStats EX Scores</code> from the <code>Leaderboard source</code> drop-down list and and click <code>Update</code> to enable EX Scores for the in-game leaderboards. UI has a toggle for ITG/EX Scores in the navbar at the top.""",  # nosec
+        "Is it safe?": """It's probably as safe as using a USB Profile on a public machine in an arcade or during a convention. I don't store your GrooveStats API key in a clear form, and the whole key is used only during forwarding scores to GrooveStats. You can inspect the code <a href="https://github.com/florczakraf/boogie-stats" target="_blank">on GitHub</a> or host the app for yourself if you don't plan to use the comparison & leaderboards features.""",
+        "What if I play a song that's not in your database?": """BoogieStats will automatically accept and track its scores. It will look like any other ranked song in your game. In the UI, the song will display a song hash instead of a title until its information is added to the <a href="https://github.com/florczakraf/stepmania-chart-db" target="_blank">public chart database</a>. Please send me a list of packs that are missing when you encounter this issue. Once the song metadata is added to the database, the UI will show it for the scores sent in the past as well.""",
         "Will you support <code>Stats.xml</code> or <code>simply.training</code> jsons?": "Not in the current form. They don't use the unique song identifiers, therefore BoogieStats is not going to try and match songs by their paths, which has already been proven by GrooveStats to be a tedious, troublesome and ambiguous.",
-        "Do events held by GrooveStats and the related leaderboards work with BoogieStats?": """ITL and SRPG as well as their custom leaderboards are supported. As for the other events, it's probably a matter of a little time if they introduce a custom API. Additionally, the event songs that are "unranked" in GrooveStats will still be recorded in BoogieStats.""",
-        """What if a song becomes "ranked" on GrooveStats after it's been recorded in BoogieStats?""": """<s>That hasn't been a case so far but if it's going to happen,</s> I will probably introduce a way to export old highscores to GrooveStats. I won't be able to do it automatically because I don't store your API key, so it will require you to provide a full key in the UI. You can track the <a href="https://github.com/florczakraf/boogie-stats/issues/111">status of this issue on GitHub</a>""",
+        "Do events held by GrooveStats and the related leaderboards work with BoogieStats?": """ITL and SRPG as well as their custom leaderboards are supported. As for the other events, it's probably a matter of a little time if they introduce a custom API.""",
         "Will it work in a public arcade with a USB Profile?": """Yes, as long as the machine is set up to use BoogieStats. If you run a public machine, please let your players know that their GrooveStats API key would be exposed to a 3rd-party proxy.""",
         "I generated a new API Key, now what?": f"""Don't panic and please don't send any scores before updating your BoogieStats profile. Use your <b>old</b> Api Key to log in to <a href="{reverse("edit")}">Edit Profile</a> page and paste the <b>new</b> key into <code>New GrooveStats API key</code> field and click <code>Update</code>. You can now send scores using the new API Key.""",
         "I already sent a score with a new API Key and there are two profiles on the site, now what?": """Currently there's no way to merge profiles, but it's <a href="https://github.com/florczakraf/boogie-stats/issues/84">planned for the future</a>. Please keep your old API Key saved somewhere so that you can claim your profile and scores later in the future.""",
@@ -536,7 +579,7 @@ def user_manual(request):
     )
 
 
-class SearchView(generic.ListView):
+class SearchView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/search.html"
 
     def _process_query(self, user_query):
@@ -598,8 +641,11 @@ class SearchView(generic.ListView):
         songs = (
             Song.objects.filter(hash__in=hashes)
             .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
-            .prefetch_related("highscore", "highscore__player")
-            .order_by("-num_scores", "-highscore__score")
+            .prefetch_related(
+                f"{self.lb_source}_highscore",
+                f"{self.lb_source}_highscore__player",
+            )
+            .order_by("-num_scores", f"-{self.lb_source}_highscore__{self.lb_source}_score")
         )
 
         paginator, page, _, is_paginated = self.paginate_queryset(range(n_results), ENTRIES_PER_PAGE)

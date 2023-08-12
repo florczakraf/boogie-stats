@@ -1,7 +1,10 @@
 {% load mathfilters %}
+{% load boogiestats_tags %}
 {% if score.has_judgments %}
     {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
-        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="EX Score: {{ score.ex }}%
+        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="ITG Score: {{ score.itg_score|div:100|stringformat:".2f" }}
+            <br />
+            EX Score: {{ score.ex_score|div:100|stringformat:".2f" }}%
             <br />
             Both Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%)
             <br />
@@ -21,7 +24,7 @@
             <br />
             ">
             <a href="{% url "score" pk=score.id %}">
-                <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
+                <div>{{ score|attr:lb_attribute|div:100|stringformat:".2f" }}%</div>
             </a>
             <div class="score-box mx-auto"
                  style="grid-template-columns: {{ score.fantastics_plus }}fr {{ score.fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
@@ -38,7 +41,7 @@
 {% else %}
     <a href="{% url "score" pk=score.id %}">
         <div class="text-center d-flex flex-column justify-content-evenly">
-            <div>{{ score.score|div:100|stringformat:".2f" }}%</div>
+            <div>{{ score|attr:lb_attribute|div:100|stringformat:".2f" }}%</div>
         </div>
     </a>
 {% endif %}

@@ -15,7 +15,7 @@ class EditPlayerForm(forms.ModelForm):
 
     class Meta:
         model = Player
-        fields = ["machine_tag", "name", "pull_gs_name_and_tag", "rivals", "gs_api_key"]
+        fields = ["machine_tag", "name", "pull_gs_name_and_tag", "leaderboard_source", "rivals", "gs_api_key"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -50,14 +50,14 @@
                 <tr>
                     <th scope="col" class="w-1 text-nowrap">
                         {% if request.resolver_match.url_name == "song_highscores" %}
-                            ITG Highscore ↓
+                            {{ lb_display_name }} Highscore ↓
                         {% elif request.resolver_match.url_name in "song,song_by_date" %}
                             <a href="{% url "song" song_hash=song.hash %}">
-                                ITG Score
+                                {{ lb_display_name }} Score
                                 {% if request.resolver_match.url_name == "song" %}↓{% endif %}
                             </a>
                         {% else %}
-                            ITG Score ↓
+                            {{ lb_display_name }} Score ↓
                         {% endif %}
                     </th>
                     <th scope="col" class="w-1 text-nowrap">Player</th>

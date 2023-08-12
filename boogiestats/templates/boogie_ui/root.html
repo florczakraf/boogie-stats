@@ -47,6 +47,26 @@
                     document.cookie = "bs_theme=dark; Name=Value; Max-Age=1707109200; Path=/"
                 }
             })
+
+            function get_cookie(name) {
+                let cookies = {}
+              document.cookie.split(';').forEach(function(cookie_pair) {
+                let [key, value] = cookie_pair.split('=');
+                cookies[key.trim()] = value;
+              })
+              return cookies[name];
+            }
+
+            document.getElementById('leaderboardSwitch').addEventListener('click', () => {
+                if (get_cookie('bs_leaderboard') === "ex") {
+                    document.cookie = "bs_leaderboard=itg; Name=Value; Max-Age=1707109200; Path=/";
+                    location.reload();
+                }
+                else {
+                    document.cookie = "bs_leaderboard=ex; Name=Value; Max-Age=1707109200; Path=/"
+                    location.reload();
+                }
+            })
         </script>
     </body>
 </html>

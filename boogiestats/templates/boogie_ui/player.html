@@ -117,9 +117,9 @@
                     <th scope="col" class="w-1 text-nowrap">Comment</th>
                     <th scope="col" class="w-1 text-nowrap">
                         {% if request.resolver_match.url_name == "player" %}
-                            ITG Score
+                            {{ lb_display_name }} Score
                         {% else %}
-                            ITG Highscore
+                            {{ lb_display_name }} Highscore
                         {% endif %}
                         {% if request.resolver_match.url_name == "player_highscores" %}↓{% endif %}
                     </th>

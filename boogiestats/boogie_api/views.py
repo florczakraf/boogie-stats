@@ -3,6 +3,7 @@ import logging
 import uuid
 from collections import defaultdict
 from copy import deepcopy
+from typing import Optional
 
 import requests
 import sentry_sdk
@@ -10,7 +11,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from boogiestats import __version__ as boogiestats_version
-from boogiestats.boogie_api.models import Player, Song
+from boogiestats.boogie_api.models import Player, Song, LeaderboardSource
+
 
 logger = logging.getLogger("django.server.boogiestats")
 GROOVESTATS_ENDPOINT = "https://api.groovestats.com"  # TODO take from settings?
@@ -39,6 +41,11 @@ GROOVESTATS_RESPONSES = {
 }
 GROOVESTATS_TIMEOUT = 12
 SUPPORTED_EVENTS = ("rpg", "itl")
+LB_SOURCE_MAPPING = {
+    LeaderboardSource.BS_ITG.value: "BS",
+    LeaderboardSource.GS_ITG.value: "GS",
+    LeaderboardSource.BS_EX.value: "BS-EX",
+}
 
 
 def new_session(request):
@@ -96,28 +103,25 @@ def fill_event_leaderboards(final_response, gs_player, player_id):
             final_response[player_id][event] = event_leaderboard
 
 
-def handle_score_results(player, gs_player, old_score, new_score_value):
-    is_ranked = gs_player.get("isRanked", False)
-    if is_ranked:
-        player["result"] = gs_player["result"]
-        player["delta"] = gs_player["scoreDelta"]
-    else:
-        if old_score:
-            if old_score.score < new_score_value:
-                player["result"] = "improved"
-            else:
-                player["result"] = "score-not-improved"
+def handle_score_results(player, old_score, new_score):
+    lb_source = player["player_instance"].leaderboard_source
+    new_score_value = new_score.itg_score if lb_source == LeaderboardSource.BS_ITG else new_score.ex_score
 
-            player["delta"] = new_score_value - old_score.score
+    if old_score:
+        old_score_value = old_score.itg_score if lb_source == LeaderboardSource.BS_ITG else old_score.ex_score
+
+        if old_score_value < new_score_value:
+            player["result"] = "improved"
         else:
-            player["result"] = "score-added"
-            player["delta"] = new_score_value
+            player["result"] = "score-not-improved"
+
+        player["delta"] = new_score_value - old_score_value
+    else:
+        player["result"] = "score-added"
+        player["delta"] = new_score_value
 
 
-def get_local_leaderboard(player, num_entries):
-    gs_api_key = player["gsApiKey"]
-    chart_hash = player["chartHash"]
-    player_instance = Player.get_by_gs_api_key(gs_api_key)
+def get_local_leaderboard(player_instance, chart_hash, num_entries):
     song = Song.objects.filter(hash=chart_hash).first()
 
     if song:
@@ -141,6 +145,7 @@ def _request_leaderboards(request):
         return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
     gs_response = _try_gs_get(request)
+
     final_response = {}
     response_headers = {}
 
@@ -148,21 +153,26 @@ def _request_leaderboards(request):
         chart_hash = player["chartHash"]
         player_id = f"player{player_index}"
 
-        final_response[player_id] = {
-            "chartHash": chart_hash,
-            "isRanked": True,
-        }
-
         gs_player = gs_response.get(player_id, {})
-        gs_leaderboard = gs_player.get("gsLeaderboard", [])
         max_results = int(request.GET.get("maxLeaderboardResults", 1))
-        is_ranked = gs_player.get("isRanked", False)
-        leaderboard = gs_leaderboard if is_ranked else get_local_leaderboard(player, max_results)
-        _fill_response_headers(response_headers, is_ranked, player_index)
 
-        final_response[player_id]["gsLeaderboard"] = leaderboard
+        player_instance: Optional[Player] = Player.get_by_gs_api_key(player["gsApiKey"])
+        leaderboard_source = (
+            player_instance.leaderboard_source if player_instance is not None else LeaderboardSource.BS_ITG.value
+        )
 
-        fill_event_leaderboards(final_response, gs_player, player_id)
+        if leaderboard_source in (LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX):
+            final_response[player_id] = {
+                "chartHash": chart_hash,
+                "isRanked": True,
+                "gsLeaderboard": get_local_leaderboard(player_instance, chart_hash, max_results),
+            }
+            fill_event_leaderboards(final_response, gs_player, player_id)
+
+        elif leaderboard_source == LeaderboardSource.GS_ITG.value:
+            final_response[player_id] = gs_player
+
+        response_headers[f"bs-leaderboard-player-{player_index}"] = LB_SOURCE_MAPPING[leaderboard_source]
 
     return JsonResponse(data=final_response, headers=response_headers)
 
@@ -195,13 +205,36 @@ def player_leaderboards(request):
     return _request_leaderboards(request)
 
 
-def _fill_response_headers(response_headers, is_ranked, player_index):
-    if is_ranked:
-        leaderboard_source = "GS"
-    else:
-        leaderboard_source = "BS"
+def _make_score_submit_response(gs_response, players, max_results):
+    final_response = {}
+    response_headers = {}
 
-    response_headers[f"bs-leaderboard-player-{player_index}"] = leaderboard_source
+    for player_index, player in players.items():
+        player_id = f"player{player_index}"
+        gs_player = gs_response.get(player_id, {})
+
+        player_instance: Player = player["player_instance"]
+        leaderboard_source = player_instance.leaderboard_source
+
+        if leaderboard_source in (LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX):
+            final_response[player_id] = {
+                "chartHash": player["chartHash"],
+                "isRanked": True,
+                "gsLeaderboard": get_local_leaderboard(player_instance, player["chartHash"], max_results),
+                "scoreDelta": player["delta"],
+                "result": player["result"],
+            }
+            fill_event_leaderboards(final_response, gs_player, player_id)
+        elif leaderboard_source == LeaderboardSource.GS_ITG.value:
+            final_response[player_id] = gs_player  # isRanked might be False /shrug
+        else:
+            raise ValueError(
+                f"unknown leaderboard source {player_instance.leaderboard_source} for player #{player_id} {player}"
+            )
+
+        response_headers[f"bs-leaderboard-player-{player_index}"] = LB_SOURCE_MAPPING[leaderboard_source]
+
+    return final_response, response_headers
 
 
 @csrf_exempt
@@ -230,30 +263,12 @@ def score_submit(request):
         sentry_sdk.capture_exception(e)
         logger.error(f"Request to GrooveStats failed: {e}")
 
-        # we can't ignore GS errors silently in case of score submissions
+        # we can't ignore GS errors silently in case of score submissions (yet)
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
 
     handle_scores(body_parsed, gs_response, players)
 
-    final_response = {}
-    response_headers = {}
-
-    for player_index, player in players.items():
-        player_id = f"player{player_index}"
-        gs_player = gs_response.get(player_id, {})
-        gs_leaderboard = gs_player.get("gsLeaderboard", [])
-        is_ranked = gs_player.get("isRanked", False)
-        leaderboard = gs_leaderboard if is_ranked else get_local_leaderboard(player, max_results)
-        _fill_response_headers(response_headers, is_ranked, player_index)
-
-        final_response[player_id] = {
-            "chartHash": player["chartHash"],
-            "isRanked": True,
-            "gsLeaderboard": leaderboard,
-            "scoreDelta": player["delta"],
-            "result": player["result"],
-        }
-        fill_event_leaderboards(final_response, gs_player, player_id)
+    final_response, response_headers = _make_score_submit_response(gs_response, players, max_results)
 
     return JsonResponse(data=final_response, headers=response_headers)
 
@@ -270,6 +285,7 @@ def handle_scores(body_parsed, gs_response, players):
         song.set_ranked(is_ranked)
 
         player_instance = get_or_create_player(gs_api_key)
+        player["player_instance"] = player_instance
         player_instance.update_name_and_tag(gs_player)
 
         _, old_score = song.get_highscore(player_instance)
@@ -279,14 +295,13 @@ def handle_scores(body_parsed, gs_response, players):
         used_cmod = score_submission.get("usedCmod", None)
         judgments = score_submission.get("judgmentCounts", None)
 
-        player_instance.scores.create(
+        new_score = player_instance.scores.create(
             song=song,
-            score=score_submission["score"],
+            itg_score=score_submission["score"],
             comment=comment,
             rate=score_submission.get("rate", 100),
             used_cmod=used_cmod,
             judgments=judgments,
         )
 
-        new_score_value = score_submission["score"]
-        handle_score_results(player, gs_player, old_score, new_score_value)
+        handle_score_results(player, old_score, new_score)

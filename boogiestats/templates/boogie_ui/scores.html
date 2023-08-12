@@ -16,7 +16,7 @@
                     </th>
                     <th scope="col" class="w-100 text-nowrap">Song</th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "highscores" %}">ITG Score
+                        <a href="{% url "highscores" %}">{{ lb_display_name }} Score
                             {% if request.resolver_match.url_name == "highscores" %}↓{% endif %}
                         </a>
                     </th>
