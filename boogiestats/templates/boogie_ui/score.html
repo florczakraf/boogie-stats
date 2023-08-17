@@ -88,4 +88,8 @@
             {% endwith %}
         {% endif %}
     </div>
+
+    {% with score=score %}
+        {% include "boogie_ui/scorecard.html" %}
+    {% endwith %}
 {% endblock content %}
