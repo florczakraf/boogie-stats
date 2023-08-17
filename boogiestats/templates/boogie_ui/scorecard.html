@@ -22,151 +22,152 @@
         return lines;
     }
 
-    const canvas = document.getElementById('statcard')
-    const context = canvas.getContext('2d')
-    const nodec = '{{ score.comment }}'.includes('No Dec/WO')
-    let diffColor
-    switch ('{{ score.song.chart_info.diff }}') {
-        case 'Beginner':
-            diffColor = '#a355b8'
-            break
-        case 'Easy':
-            diffColor = '#1ec51d'
-            break
-        case 'Medium':
-            diffColor = '#d6db41'
-            break
-        case 'Hard':
-            diffColor = '#ba3049'
-            break
-        case 'Challenge':
-            diffColor = '#2691c5'
-            break
-        default:
-            diffColor = '#ffffff'
-            break
-    }
+    function drawCanvas() {
+        const canvas = document.getElementById('statcard')
+        const context = canvas.getContext('2d')
+        const nodec = '{{ score.comment }}'.includes('No Dec/WO')
+        let diffColor
+        switch ('{{ score.song.chart_info.diff }}') {
+            case 'Beginner':
+                diffColor = '#a355b8'
+                break
+            case 'Easy':
+                diffColor = '#1ec51d'
+                break
+            case 'Medium':
+                diffColor = '#d6db41'
+                break
+            case 'Hard':
+                diffColor = '#ba3049'
+                break
+            case 'Challenge':
+                diffColor = '#2691c5'
+                break
+            default:
+                diffColor = '#ffffff'
+                break
+        }
 
-    barWidth = 306
+        barWidth = 306
 
-    const sum = parseInt('{{ score.total_steps }}')
-    const p = parseInt('{{ score.fantastics_plus }}') / sum * barWidth;
-    const f = parseInt('{{ score.fantastics }}') / sum * barWidth;
-    const e = parseInt('{{ score.excelents }}') / sum * barWidth;
-    const g = parseInt('{{ score.greats }}') / sum * barWidth;
-    const d = parseInt('{{ score.decents }}') / sum * barWidth;
-    const w = parseInt('{{ score.wayoffs }}') / sum * barWidth;
-    const m = parseInt('{{ score.misses }}') / sum * barWidth;
+        const sum = parseInt('{{ score.total_steps }}')
+        const p = parseInt('{{ score.fantastics_plus }}') / sum * barWidth;
+        const f = parseInt('{{ score.fantastics }}') / sum * barWidth;
+        const e = parseInt('{{ score.excellents }}') / sum * barWidth;
+        const g = parseInt('{{ score.greats }}') / sum * barWidth;
+        const d = parseInt('{{ score.decents }}') / sum * barWidth;
+        const w = parseInt('{{ score.wayoffs }}') / sum * barWidth;
+        const m = parseInt('{{ score.misses }}') / sum * barWidth;
 
-    context.fillStyle = '#000000'
-    context.fillRect(0, 0, 400, 600)
+        context.fillStyle = '#000000'
+        context.fillRect(0, 0, 400, 600)
 
-    context.fillStyle = diffColor
-    context.fillRect(47, 127, 65, 65)
+        context.fillStyle = diffColor
+        context.fillRect(47, 127, 65, 65)
 
-    context.textAlign = 'center'
-    if ('{{score.song.gs_ranked}}' === 'True') {
-        context.fillStyle = '#38abb5'
-        context.fillRect(350, 20, 30, 30)
+        context.textAlign = 'center'
+        if ('{{score.song.gs_ranked}}' === 'True') {
+            context.fillStyle = '#38abb5'
+            context.fillRect(350, 20, 30, 30)
+            context.fillStyle = '#ffffff'
+            context.font = '30px miso'
+            context.fillText('GS', 365, 45)
+
+        }
+
+        context.strokeStyle = '#ffffff'
+        context.rect(47, 210, 306, 30);
+        context.stroke()
+
+        let start = 47
+        context.fillStyle = '#21cce8'
+        context.fillRect(start, 210, p, 30)
+        start += p || 0
+        context.fillStyle = '#e0e0e0'
+        context.fillRect(start, 210, f, 30)
+        start += f || 0
+        context.fillStyle = '#e29c18'
+        context.fillRect(start, 210, e, 30)
+        start += e || 0
+        context.fillStyle = '#66c955'
+        context.fillRect(start, 210, g, 30)
+        start += g || 0
+        context.fillStyle = '#6365c9'
+        context.fillRect(start, 210, d, 30)
+        start += d || 0
+        context.fillStyle = '#e08c36'
+        context.fillRect(start, 210, w, 30)
+        start += w || 0
+        context.fillStyle = '#ff0000'
+        context.fillRect(start, 210, m, 30)
+
+        context.fillStyle = '#000000'
+        context.font = '80px Wendy'
+        context.fillText('{{ score.song.chart_info.diff_number }}' || '?', 86, 180)
+        context.font = '30px Wendy'
         context.fillStyle = '#ffffff'
+        if('{{ score.song.chart_info.steps_type }}'.includes('single')) context.fillText('SINGLE', 81, 123)
+        if('{{ score.song.chart_info.steps_type }}'.includes('double')) context.fillText('DOUBLE', 81, 123)
+
+        context.font = '50px miso'
+        context.fillText('BoogieStats', 200, 45)
+        context.font = '18px miso'
+        context.fillText(`Played by {{ score.player.name }}`, 200, 70)
+        context.fillText('on {{ score.submission_date }}', 200, 85)
         context.font = '30px miso'
-        context.fillText('GS', 365, 45)
+        context.fontWeight = '700'
 
+        const lines = getLines(context, '{{ score.song.chart_info.title }}'.replace('&#x27;', `'`) || '{{ score.song.hash }}', 260)
+        lines.forEach((line, i) => {
+            context.fillText(line, 270, 170 - (lines.length * 20) + (i * 20))
+        })
+        context.font = '19px miso'
+        context.fillText('{{ score.song.chart_info.artist }}'.replace('&#x27;', `'`), 270, 170)
+        context.fillText('{{ score.song.chart_info.pack_name }}'.replace('&#x27;', `'`), 270, 190)
+
+        context.font = '30px miso'
+        context.textAlign = 'right'
+
+        if (nodec) {
+            context.fillStyle = 'gray'
+        }
+        context.fillText('DECENT', 190, 400)
+        context.fillText('WAY OFF', 190, 440)
+
+        context.fillStyle = '#ffffff'
+        context.fillText('FANTASTIC', 190, 280)
+        context.fillText('EXCELLENT', 190, 320)
+        context.fillText('GREAT', 190, 360)
+        context.fillText('MISS', 190, 480)
+
+        context.font = '50px Wendy'
+        context.textAlign = 'left'
+        context.fillStyle = '#21cce8'
+        context.fillText(`${parseInt('{{ score.fantastics_plus }}') + parseInt('{{ score.fantastics }}')}`, 210, 283)
+        context.fillStyle = '#e29c18'
+        context.fillText('{{ score.excellents }}', 210, 323)
+        context.fillStyle = '#66c955'
+        context.fillText('{{ score.greats }}', 210, 363)
+        context.fillStyle = nodec ? 'gray' : '#6365c9'
+        context.fillText('{{ score.decents }}', 210, 403)
+        context.fillStyle = nodec ? 'gray' : '#e08c36'
+        context.fillText('{{ score.way_offs }} ', 210, 443)
+        context.fillStyle = '#ff0000'
+        context.fillText('{{ score.misses }} ', 210, 483)
+
+        context.fillStyle = '#ffffff'
+        context.font = '140px Wendy'
+        context.textAlign = 'right'
+        context.fillText('{{ score.itg_score|div:100|stringformat:".2f" }}', 320, 570)
+
+        context.font = '40px wendy'
+        context.fillText('EX', 395, 540)
+        context.fillText('{{ score.ex_score|div:100|stringformat:".2f" }}', 395, 570)
+
+        context.font = '15px miso'
+        context.textAlign = 'center'
+        context.fillText(document.location.hostname, 200, 590)
     }
 
-    context.strokeStyle = '#ffffff'
-    context.rect(47, 210, 306, 30);
-    context.stroke()
-
-    let start = 47
-    context.fillStyle = '#21cce8'
-    context.fillRect(start, 210, p, 30)
-    start += p || 0
-    context.fillStyle = '#e0e0e0'
-    context.fillRect(start, 210, f, 30)
-    start += f || 0
-    context.fillStyle = '#e29c18'
-    context.fillRect(start, 210, e, 30)
-    start += e || 0
-    context.fillStyle = '#66c955'
-    context.fillRect(start, 210, g, 30)
-    start += g || 0
-    context.fillStyle = '#6365c9'
-    context.fillRect(start, 210, d, 30)
-    start += d || 0
-    context.fillStyle = '#e08c36'
-    context.fillRect(start, 210, w, 30)
-    start += w || 0
-    context.fillStyle = '#ff0000'
-    context.fillRect(start, 210, m, 30)
-
-    context.fillStyle = '#000000'
-    context.font = '80px Wendy'
-    context.fillText('{{ score.song.chart_info.diff_number }}' || '?', 86, 180)
-    context.font = '30px Wendy'
-    context.fillStyle = '#ffffff'
-    if('{{ score.song.chart_info.steps_type}}'.includes('single')) context.fillText('SINGLE', 81, 123)
-    if('{{ score.song.chart_info.steps_type}}'.includes('double')) context.fillText('DOUBLE', 81, 123)
-    
-    context.font = '50px miso'
-    context.fillText('BoogieStats', 200, 45)
-    context.font = '18px miso'
-    context.fontWeight = '500'
-    context.fillText(`Played by {{ score.player.name }}`, 200, 70)
-    context.fillText('on {{ score.submission_date }}', 200, 85)
-    context.fillText('{{ song.chart_info.pack_name }}', 270, 200)
-    context.font = '30px miso'
-    context.fontWeight = '700'
-
-    const lines = getLines(context, '{{ score.song.chart_info.title }}' || '{{ score.song.hash }}', 260)
-    lines.forEach((line, i) => {
-        context.fillText(line, 270, 170 - (lines.length * 20) + (i * 20))
-    })
-    context.font = '19px miso'
-    context.fillText('{{ score.song.chart_info.artist }}', 270, 170)
-    context.fillText('{{ score.song.chart_info.pack_name }}'.replace('&#x27;', `'`), 270, 190)
-
-    context.font = '30px miso'
-    context.textAlign = 'right'
-
-    if (nodec) {
-        context.fillStyle = 'gray'
-    }
-    context.fillText('DECENT', 190, 400)
-    context.fillText('WAY OFF', 190, 440)
-
-    context.fillStyle = '#ffffff'
-    context.fillText('FANTASTIC', 190, 280)
-    context.fillText('EXCELENT', 190, 320)
-    context.fillText('GREAT', 190, 360)
-    context.fillText('MISS', 190, 480)
-
-    context.font = '50px Wendy'
-    context.textAlign = 'left'
-    context.fillStyle = '#21cce8'
-    context.fillText(`${parseInt('{{ score.fantastics_plus }}') + parseInt('{{ score.fantastics }}')}`, 210, 283)
-    context.fillStyle = '#e29c18'
-    context.fillText('{{ score.excellents }}', 210, 323)
-    context.fillStyle = '#66c955'
-    context.fillText('{{ score.greats }}', 210, 363)
-    context.fillStyle = nodec ? 'gray' : '#6365c9'
-    context.fillText('{{ score.decents }}', 210, 403)
-    context.fillStyle = nodec ? 'gray' : '#e08c36'
-    context.fillText('{{ score.way_offs }} ', 210, 443)
-    context.fillStyle = '#ff0000'
-    context.fillText('{{ score.misses }} ', 210, 483)
-
-    context.fillStyle = '#ffffff'
-    context.font = '140px Wendy'
-    context.textAlign = 'center'
-    context.fillText('{{ score.itg_score|div:100|stringformat:".2f" }}', 200, 570)
-
-    context.font = '40px Wendy'
-    context.textAlign = 'right'
-    context.fillText('EX', 355, 540)
-    context.textAlign = 'center'
-    context.fillText('{{ score.ex_score|div:100|stringformat:".2f" }}', 350, 570)
-
-    context.font = '15px miso'
-    context.fillText('boogiestats.andr.host', 200, 590)
+    window.addEventListener('load', drawCanvas)
 </script>
