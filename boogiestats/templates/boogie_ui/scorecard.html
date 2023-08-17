@@ -8,9 +8,9 @@
         let lines = [];
         let currentLine = words[0];
 
-        for (var i = 1; i < words.length; i++) {
-            var word = words[i];
-            var width = ctx.measureText(currentLine + " " + word).width;
+        for (let i = 1; i < words.length; i++) {
+            let word = words[i];
+            let width = ctx.measureText(currentLine + " " + word).width;
             if (width < maxWidth) {
                 currentLine += " " + word;
             } else {
