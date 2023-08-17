@@ -59,7 +59,7 @@ for i, song in enumerate(Song.objects.all()):
                 Score(
                     song=song,
                     player=player,
-                    score=randint(6_000, 10_000),
+                    itg_score=randint(6_000, 10_000),
                     is_itg_top=False,
                     comment="foo",
                     used_cmod=False,
@@ -71,13 +71,13 @@ for i, song in enumerate(Song.objects.all()):
                 for _ in range(randint(SCORES_PER_SONG_PER_PLAYER, SCORES_PER_SONG_PER_PLAYER + 2))
             ]
         )
-        score = song.scores.filter(player=player).order_by("-itg_score").first()
-        score.is_itg_top = True
-        score.save()
+        itg_score = song.scores.filter(player=player).order_by("-itg_score").first()
+        itg_score.is_itg_top = True
+        itg_score.save()
 
-        score = song.scores.filter(player=player).order_by("-ex_score").first()
-        score.is_ex_top = True
-        score.save()
+        itg_score = song.scores.filter(player=player).order_by("-ex_score").first()
+        itg_score.is_ex_top = True
+        itg_score.save()
 
     if i % (SONGS // 100) == 0:
         print(".", end="", flush=True)
