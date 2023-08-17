@@ -106,7 +106,9 @@
     context.fillText('{{ score.song.chart_info.diff_number }}' || '?', 86, 180)
     context.font = '30px Wendy'
     context.fillStyle = '#ffffff'
-    context.fillText('{{ score.song.chart_info.steps_type }}'.includes('single') ? 'SINGLE' : 'DOUBLE', 81, 123)
+    if('{{ score.song.chart_info.steps_type}}'.includes('single')) context.fillText('SINGLE', 81, 123)
+    if('{{ score.song.chart_info.steps_type}}'.includes('double')) context.fillText('DOUBLE', 81, 123)
+    
     context.font = '50px miso'
     context.fillText('BoogieStats', 200, 45)
     context.font = '18px miso'
@@ -117,7 +119,7 @@
     context.font = '30px miso'
     context.fontWeight = '700'
 
-    const lines = getLines(context, '{{ score.song.chart_info.title }}', 260)
+    const lines = getLines(context, '{{ score.song.chart_info.title }}' || '{{ score.song.hash }}', 260)
     lines.forEach((line, i) => {
         context.fillText(line, 270, 170 - (lines.length * 20) + (i * 20))
     })
