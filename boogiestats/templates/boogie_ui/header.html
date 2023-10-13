@@ -51,10 +51,16 @@
                     </li>
                 {% endif %}
                 <li class="nav-item">
-                    <a href="#" class="nav-link" id="darkModeSwitch">{% bs_icon "sun" %}/{% bs_icon "moon" %}</a>
+                    <a href="#"
+                       class="nav-link"
+                       id="darkModeSwitch"
+                       data-bs-toggle="tooltip"
+                       title="Switch between light and dark theme.">{% bs_icon "sun" %}/{% bs_icon "moon" %}</a>
                 </li>
                 <li class="nav-item">
-                    <div class="nav-link">
+                    <div class="nav-link"
+                         data-bs-toggle="tooltip"
+                         title="Switch between ITG and EX leaderboards on the website. If you want to change your in-game leaderboards, go to Edit Profile.">
                         <div class="form-check form-switch">
                             <input type="checkbox"
                                    class="form-check-input"
