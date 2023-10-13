@@ -5,6 +5,7 @@ import sentry_sdk
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
@@ -13,6 +14,7 @@ from django.db.models import Count, Sum
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.views import generic
+from django.views.decorators.http import require_POST
 from redis import ResponseError
 from redis.commands.search.query import Query
 
@@ -224,11 +226,13 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         for _ in range(today.month - 1):
             next(months_iterator)
         context["months"] = list(next(months_iterator) for _ in range(num_months))
-
         context["days"] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
         context["calendar_legend"] = tuple(
             [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
         )
+
+        if hasattr(self.request.user, "player"):
+            context["is_rival"] = self.request.user.player.rivals.filter(id=player_id).exists()
 
         return context
 
@@ -503,6 +507,36 @@ class MyProfileView(LoginRequiredMixin, generic.RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         player_id = self.request.user.player.id
         return reverse("player", kwargs={"player_id": player_id})
+
+
+@require_POST
+@login_required(login_url="/login/")
+def add_rival(request, player_id):
+    target_player: Player = Player.get_or_404(id=player_id)
+    myself: Player = request.user.player
+    myself.rivals.add(player_id)
+    myself.save()
+    messages.success(
+        request,
+        f"Added {target_player.name} to your rivals.",
+        extra_tags="alert-success",
+    )
+    return redirect("player", player_id=player_id)
+
+
+@require_POST
+@login_required(login_url="/login/")
+def remove_rival(request, player_id):
+    target_player: Player = Player.get_or_404(id=player_id)
+    myself: Player = request.user.player
+    myself.rivals.remove(player_id)
+    myself.save()
+    messages.success(
+        request,
+        f"Removed {target_player.name} from your rivals.",
+        extra_tags="alert-success",
+    )
+    return redirect("player", player_id=player_id)
 
 
 def login_user(request):
