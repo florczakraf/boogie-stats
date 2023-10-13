@@ -497,6 +497,14 @@ class EditPlayerView(LoginRequiredMixin, SuccessMessageExtraTagsMixin, generic.U
         return reverse("edit")
 
 
+class MyProfileView(LoginRequiredMixin, generic.RedirectView):
+    login_url = "/login/"
+
+    def get_redirect_url(self, *args, **kwargs):
+        player_id = self.request.user.player.id
+        return reverse("player", kwargs={"player_id": player_id})
+
+
 def login_user(request):
     if request.POST:
         gs_api_key = request.POST["gs_api_key"]
