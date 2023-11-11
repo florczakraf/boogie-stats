@@ -546,6 +546,7 @@ def login_user(request):
         user = authenticate(request, gs_api_key=gs_api_key)
         if user is not None:
             login(request, user)
+            messages.success(request, "Signed-in successfully.", extra_tags="alert-success")
             return HttpResponseRedirect(request.POST.get("next") or "/")
         else:
             messages.error(
