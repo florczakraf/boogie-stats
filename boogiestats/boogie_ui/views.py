@@ -1,5 +1,6 @@
 import datetime
 import itertools
+from http.client import UNAUTHORIZED, OK
 
 import sentry_sdk
 from django.conf import settings
@@ -540,6 +541,8 @@ def remove_rival(request, player_id):
 
 
 def login_user(request):
+    response_status = OK
+
     if request.POST:
         gs_api_key = request.POST["gs_api_key"]
 
@@ -557,9 +560,10 @@ def login_user(request):
                 f""" Consult the <a href="{reverse("manual")}">User Manual</a> for more information.""",
                 extra_tags="alert-danger",
             )
+            response_status = UNAUTHORIZED
 
     next = request.GET.get("next") or request.POST.get("next")
-    return render(request, template_name="boogie_ui/login.html", context={"next": next})
+    return render(request, template_name="boogie_ui/login.html", context={"next": next}, status=response_status)
 
 
 def logout_user(request):

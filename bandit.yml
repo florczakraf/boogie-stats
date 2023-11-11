@@ -1,1 +1,1 @@
-exclude_dirs: ["boogiestats/boogie_api/test"]
+exclude_dirs: ["boogiestats/boogie_api/test", "boogiestats/boogie_ui/test"]
