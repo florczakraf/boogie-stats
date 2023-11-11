@@ -12,6 +12,8 @@ urlpatterns = [
     path("players/<int:player_id>/most_played", views.PlayerMostPlayedView.as_view(), name="player_most_played"),
     path("players/<int:player_id>/highscores", views.PlayerHighscoresView.as_view(), name="player_highscores"),
     path("players/<int:player_id>/stats", views.PlayerStatsView.as_view(), name="player_stats"),
+    path("players/<int:player_id>/add_rival", views.add_rival, name="add_rival"),
+    path("players/<int:player_id>/remove_rival", views.remove_rival, name="remove_rival"),
     path("players/<int:player_id>/day/<str:day>", views.PlayerScoresByDayView.as_view(), name="player_scores_by_day"),
     path("players/<int:p1>/vs/<int:p2>/", views.VersusView.as_view(), name="versus"),
     path(

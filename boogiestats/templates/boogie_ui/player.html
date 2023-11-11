@@ -12,7 +12,26 @@
           content="Joined on: {{ player.join_date.date }} | Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}" />
 {% endblock head_extras %}
 {% block content %}
-    <h1>{{ player.name }} ({{ player.machine_tag }})</h1>
+    <h1>
+        {{ player.name }} ({{ player.machine_tag }})
+        {% if user.is_authenticated and user.player.id != player.id %}
+            {% if is_rival %}
+                <form method="post"
+                      class="d-inline"
+                      action="{% url "remove_rival" player_id=player.id %}">
+                    {% csrf_token %}
+                    <input type="submit" class="btn btn-sm btn-danger" value="Remove rival">
+                </form>
+            {% else %}
+                <form method="post"
+                      class="d-inline"
+                      action="{% url "add_rival" player_id=player.id %}">
+                    {% csrf_token %}
+                    <input type="submit" class="btn btn-sm btn-success" value="Add rival">
+                </form>
+            {% endif %}
+        {% endif %}
+    </h1>
     <div class="d-flex">
         <div class="col">
             <ul>
