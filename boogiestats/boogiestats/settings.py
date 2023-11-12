@@ -41,11 +41,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "mathfilters",
     "django_bootstrap_icons",
+    "django_prometheus",
     "boogiestats.boogie_api",
     "boogiestats.boogie_ui",
 ]
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",  # keep first
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -53,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",  # keep last
 ]
 
 ROOT_URLCONF = "boogiestats.boogiestats.urls"
@@ -83,7 +86,7 @@ WSGI_APPLICATION = "boogiestats.boogiestats.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
+        "ENGINE": "django_prometheus.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
@@ -136,6 +139,8 @@ STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesSto
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTHENTICATION_BACKENDS = ["boogiestats.boogie_api.auth_backend.GSApiKeyBackend"]
+
+PROMETHEUS_METRICS_EXPORT_PORT_RANGE = range(9000, 9050)
 
 # Path to chart database in a compatible format, as defined in https://github.com/florczakraf/stepmania-chart-db-generator
 # When provided, UI will try to utilize it to display information about charts.

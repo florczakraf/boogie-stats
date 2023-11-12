@@ -17,6 +17,8 @@ setuptools.setup(
         "redis >= 4.5.1, <5",
         "sentry-sdk >= 1.12, <2",
         "django-bootstrap-icons == 0.8.3",
+        "django-prometheus >= 2.3.1, <3",
+        "prometheus-client == 0.18.0",
     ],
     extras_require={
         "dev": [

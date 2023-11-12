@@ -9,6 +9,7 @@ import requests
 import sentry_sdk
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from prometheus_client import Counter
 
 from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.models import Player, Song, LeaderboardSource
@@ -46,6 +47,15 @@ LB_SOURCE_MAPPING = {
     LeaderboardSource.GS_ITG.value: "GS",
     LeaderboardSource.BS_EX.value: "BS-EX",
 }
+
+GS_GET_REQUESTS_TOTAL = Counter("boogiestats_gs_get_requests_total", "Number of GS GET requests")
+GS_GET_REQUESTS_ERRORS_TOTAL = Counter(
+    "boogiestats_gs_get_requests_errors_total", "Number of unsuccessful GS GET requests"
+)
+GS_POST_REQUESTS_TOTAL = Counter("boogiestats_gs_post_requests_total", "Number of GS POST requests")
+GS_POST_REQUESTS_ERRORS_TOTAL = Counter(
+    "boogiestats_gs_post_requests_errors_total", "Number of unsuccessful GS POST requests"
+)
 
 
 def new_session(request):
@@ -178,6 +188,7 @@ def _request_leaderboards(request):
 
 
 def _try_gs_get(request):
+    GS_GET_REQUESTS_TOTAL.inc()
     headers = create_headers(request)
     try:
         gs_response = requests.get(
@@ -188,6 +199,7 @@ def _try_gs_get(request):
         ).json()
         logger.info(gs_response)
     except (requests.Timeout, requests.ConnectionError) as e:
+        GS_GET_REQUESTS_ERRORS_TOTAL.inc()
         sentry_sdk.capture_exception(e)
         logger.error(f"Request to GrooveStats failed: {e}")
 
@@ -251,6 +263,7 @@ def score_submit(request):
     max_results = int(request.GET.get("maxLeaderboardResults", 1))
 
     try:
+        GS_POST_REQUESTS_TOTAL.inc()
         gs_response = requests.post(
             GROOVESTATS_ENDPOINT + "/score-submit.php",
             params=request.GET,
@@ -260,6 +273,7 @@ def score_submit(request):
         ).json()
         logger.info(gs_response)
     except (requests.Timeout, requests.ConnectionError) as e:
+        GS_POST_REQUESTS_TOTAL.inc()
         sentry_sdk.capture_exception(e)
         logger.error(f"Request to GrooveStats failed: {e}")
 
