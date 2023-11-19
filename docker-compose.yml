@@ -16,6 +16,7 @@ services:
 #        read_only: true
     environment:
       GUNICORN_THREADS: 6
+      GUNICORN_WORKERS: 2
     ports:
       - "127.0.0.1:55523:55523"
     depends_on:
@@ -33,3 +34,16 @@ services:
     deploy:
       restart_policy:
         condition: any
+
+#  grafana-agent:
+#    image: grafana/agent:v0.37.2
+#    depends_on:
+#      - boogiestats
+#    deploy:
+#      restart_policy:
+#        condition: any
+#    volumes:
+#      - type: bind
+#        source: ./prod/grafana-agent-config.yaml
+#        target: /etc/agent/agent.yaml
+#        read_only: true

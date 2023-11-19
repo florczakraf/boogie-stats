@@ -1,0 +1,14 @@
+metrics:
+  global:
+    scrape_interval: 60s
+  configs:
+  - name: hosted-prometheus
+    scrape_configs:
+      - job_name: boogiestats
+        static_configs:
+          - targets: ['boogiestats:9000', 'boogiestats:9001']  # add as many as $GUNICORN_WORKERS
+    remote_write:
+      - url: foo
+        basic_auth:
+          username: bar
+          password: qux
