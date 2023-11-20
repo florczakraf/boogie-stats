@@ -14,11 +14,12 @@ setuptools.setup(
         "Django >=4, <5",
         "gunicorn >=20.1.0, <21",
         "django-mathfilters >=1.0.0, <2",
-        "redis >= 4.5.1, <5",
-        "sentry-sdk >= 1.12, <2",
+        "redis >=4.5.1, <5",
+        "sentry-sdk >=1.12, <2",
         "django-bootstrap-icons == 0.8.3",
-        "django-prometheus >= 2.3.1, <3",
+        "django-prometheus >=2.3.1, <3",
         "prometheus-client == 0.18.0",
+        "django-ipware >=5.0.2, <6",
     ],
     extras_require={
         "dev": [
