@@ -20,7 +20,7 @@ from redis import ResponseError
 from redis.commands.search.query import Query
 
 from boogiestats.boogie_api.models import Score, Player, Song
-from boogiestats.boogie_api.utils import get_redis
+from boogiestats.boogie_api.utils import get_redis, set_sentry_user
 from boogiestats.boogie_ui.forms import EditPlayerForm
 from boogiestats.boogiestats.exceptions import Managed404Error
 
@@ -648,6 +648,7 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        set_sentry_user(self.request)
 
         r = get_redis()
         if not r:

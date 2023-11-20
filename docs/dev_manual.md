@@ -34,6 +34,8 @@ DEBUG = True
 
 # you might need to uncomment and modify ALLOWED_HOSTS if you don't run your development server on localhost
 # ALLOWED_HOSTS = ["localhost", "127.0.0.1", "any.extra.host.you.need"]
+
+PROMETHEUS_METRICS_EXPORT_PORT_RANGE = None
 ```
 Adjust it as needed.
 I usually put it next to the normal settings just for the ease of use (and I will assume that for the next commands):

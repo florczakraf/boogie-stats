@@ -13,7 +13,7 @@ from prometheus_client import Counter
 
 from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.models import Player, Song, LeaderboardSource
-
+from boogiestats.boogie_api.utils import set_sentry_user
 
 logger = logging.getLogger("django.server.boogiestats")
 GROOVESTATS_ENDPOINT = "https://api.groovestats.com"  # TODO take from settings?
@@ -87,6 +87,9 @@ def parse_players(request):
         if k.lower().startswith("x-api-key-player-"):
             player_index = int(k.lower().removeprefix("x-api-key-player-"))
             players[player_index]["gsApiKey"] = v
+            player_instance: Optional[Player] = Player.get_by_gs_api_key(v)
+            players[player_index]["player_instance"] = player_instance
+            set_sentry_user(request, player_instance)
 
     validate_players(players)
 
@@ -166,7 +169,7 @@ def _request_leaderboards(request):
         gs_player = gs_response.get(player_id, {})
         max_results = int(request.GET.get("maxLeaderboardResults", 1))
 
-        player_instance: Optional[Player] = Player.get_by_gs_api_key(player["gsApiKey"])
+        player_instance: Optional[Player] = player["player_instance"]
         leaderboard_source = (
             player_instance.leaderboard_source if player_instance is not None else LeaderboardSource.BS_ITG.value
         )
@@ -281,6 +284,9 @@ def score_submit(request):
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
 
     handle_scores(body_parsed, gs_response, players)
+
+    player = list(players.values())[0]
+    set_sentry_user(request, player["player_instance"])  # doing it again, because we could have created a new player
 
     final_response, response_headers = _make_score_submit_response(gs_response, players, max_results)
 
