@@ -16,6 +16,7 @@ from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.timezone import now
 from django.views import generic
 from django.views.decorators.http import require_POST
 from formset.views import FormViewMixin, IncompleteSelectResponseMixin
@@ -666,6 +667,43 @@ def login_user(request):
 
     next = request.GET.get("next") or request.POST.get("next")
     return render(request, template_name="boogie_ui/login.html", context={"next": next}, status=response_status)
+
+
+def stats(request):
+    context = {}
+
+    stats = defaultdict(dict)
+
+    players = Player.objects.filter(join_date__lt=now() - datetime.timedelta(days=30)).all()
+    for player in players:
+        days_since_registration = (now() - player.join_date).days
+        stats[f"#{player.id} {player.name}"]["display_name"] = f"#{player.id} {player.name}"
+        stats[f"#{player.id} {player.name}"]["days_since_registration"] = days_since_registration
+
+        played_days = (
+            player.scores.values("submission_day")
+            .annotate(plays=Count("submission_day"))
+            .order_by("-plays")
+            .all()
+        )
+        total_scores = player.scores.count()
+        stats[f"#{player.id} {player.name}"]["total_scores_by_days_since_registration"] = total_scores / days_since_registration
+        stats[f"#{player.id} {player.name}"]["played_days"] = played_days.count()
+        stats[f"#{player.id} {player.name}"]["played_days_by_days_since_registration"] = played_days.count() / days_since_registration
+        stats[f"#{player.id} {player.name}"]["longest_training"] = played_days[0]["plays"]
+        stats[f"#{player.id} {player.name}"]["total_scores"] = total_scores
+
+        print(stats[f"#{player.id} {player.name}"])
+
+    context["stats"] = stats
+
+    context["total_scores_by_days_since_registration"] = sorted(stats.items(), key=lambda x: x[1]["total_scores_by_days_since_registration"], reverse=True)[:10]
+    context["played_days"] = sorted(stats.items(), key=lambda x: x[1]["played_days"], reverse=True)[:10]
+    context["played_days_by_days_since_registration"] = sorted(stats.items(), key=lambda x: x[1]["played_days_by_days_since_registration"], reverse=True)[:10]
+    context["longest_training"] = sorted(stats.items(), key=lambda x: x[1]["longest_training"], reverse=True)[:10]
+
+    return render(request, template_name="boogie_ui/stats.html", context=context, status=OK)
+
 
 
 def logout_user(request):

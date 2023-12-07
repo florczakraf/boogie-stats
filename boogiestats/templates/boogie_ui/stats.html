@@ -1,0 +1,38 @@
+{% extends "boogie_ui/root.html" %}
+{% load mathfilters %}
+{% load boogiestats_tags %}
+{% block title %}
+    Songs
+{% endblock title %}
+{% block content %}
+
+    <h2>total_scores_by_days_since_registration</h2>
+    <ol>
+    {% for p, v in total_scores_by_days_since_registration %}
+        <li>{{ p }}: {{ v.total_scores_by_days_since_registration }} | {{ v }}</li>
+    {% endfor %}
+    </ol>
+    <hr>
+    <h2>played_days</h2>
+    <ol>
+    {% for p, v in played_days %}
+        <li>{{ p }}: {{ v.played_days }} | {{ v }}</li>
+    {% endfor %}
+    </ol>
+    <hr>
+    <h2>played_days_by_days_since_registration</h2>
+    <ol>
+    {% for p, v in played_days_by_days_since_registration %}
+        <li>{{ p }}: {{ v.played_days_by_days_since_registration }} | {{ v }}</li>
+    {% endfor %}
+    </ol>
+    <hr>
+    <h2>longest_training</h2>
+    <ol>
+    {% for p, v in longest_training %}
+        <li>{{ p }}: {{ v.longest_training }} | {{ v }}</li>
+    {% endfor %}
+    </ol>
+    <hr>
+
+{%  endblock %}
