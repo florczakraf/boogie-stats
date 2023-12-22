@@ -73,43 +73,13 @@
         {% endif %}
     {% endif %}
     <hr />
-    <div class="overflow-auto">
-        <div class="calendar-grid">
-            <div class="calendar-months text-center fw-bold">
-                {% for month in months %}<div>{{ month }}</div>{% endfor %}
-            </div>
-            <div class="calendar-days text-center fw-bold">
-                {% for day in days %}<div>{{ day }}</div>{% endfor %}
-            </div>
-            <div class="calendar-graph">
-                {% for _ in skip_days_range %}
-                    <div>
-                        <!-- spacer -->
-                    </div>
-                {% endfor %}
-                {% for day in calendar_days %}
-                    <a href="{% url "player_scores_by_day" player_id=player.id day=day.day %}"
-                       class="calendar-graph-box {{ day.class }}"
-                       data-bs-toggle="tooltip"
-                       title="{{ day.day }}: {{ day.plays }}">
-                        <div>
-                            <span><!--container for an optional glyph--></span>
-                        </div>
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    <div class="mt-1">
-        Less
-        <div class="calendar-legend">
-            {% for plays, class in calendar_legend %}
-                <div class="calendar-graph-box {{ class }}"
-                     data-bs-toggle="tooltip"
-                     title="{{ plays }}"></div>
-            {% endfor %}
-        </div>
-        More
+    {% include "boogie_ui/calendar.html" %}
+    <div>
+        See yearly stats:
+        {% for year in wrapped_years %}
+            <a href="{% url "wrapped" player_id=player.id year=year %}">{{ year }}</a>
+            {% if not forloop.last %}|{% endif %}
+        {% endfor %}
     </div>
     <hr />
     <a href="{% url "player" player_id=player.id %}"
