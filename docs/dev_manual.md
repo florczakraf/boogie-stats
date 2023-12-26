@@ -1,6 +1,5 @@
 ## Environment Setup
-You will need Python 3.9+ in order to run BoogieStats because there's already some syntax in the codebase that's not
-available in older versions.
+You will need Python 3.10+ in order to run BoogieStats because it's built with Django 5.
 I recommend using a [virtualenv](https://virtualenv.pypa.io/), Python's built-in `venv` or other means of separating
 Python environments when working with BoogieStats.
 You can use the snippets below to create and enter the environment.
