@@ -1,0 +1,66 @@
+{% extends "boogie_ui/root.html" %}
+{% load mathfilters %}
+{% block title %}
+    {{ player.name }} ({{ player.machine_tag }}) {{ year }} Wrapped
+{% endblock title %}
+{% block head_extras %}
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    <meta property="og:title"
+          content="{{ player.name }} ({{ player.machine_tag }}) | {{ year }} Wrapped" />
+    <meta property="og:description"
+          content="Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}" />
+{% endblock head_extras %}
+{% block content %}
+    <h1>
+        <a href="{% url "player" player_id=player.id %}">{{ player.name }} ({{ player.machine_tag }})</a> | {{ year }} Wrapped
+    </h1>
+    <div class="d-flex">
+        <div class="col">
+            <ul>
+                <li>Scores: {{ num_scores }}</li>
+                <li>Unique charts: {{ num_charts_played }}</li>
+                <li>Unique days: {{ played_days }}</li>
+                <li>Most scores: {{ most_plays.plays }} ({{ most_plays.submission_day }})</li>
+                <li>Longest streak: {{ longest_streak }} days ({{ longest_streak_start }})</li>
+                {% if most_played_song and highest_itg_score and highest_ex_score %}
+                    <li>
+                        Most played song:
+                        {% with song=most_played_song %}
+                            {% include "boogie_ui/song_link.html" %}
+                        {% endwith %}
+                        ({{ most_played_song_plays }} plays)
+                    </li>
+                    <li>
+                        Highest ITG Score:
+                        {% with song=highest_itg_score.song %}
+                            {% include "boogie_ui/song_link.html" %}
+                        {% endwith %}
+                        {% with score=highest_itg_score lb_attribute="itg_score" %}
+                            {% include "boogie_ui/score_with_judgments.html" %}
+                        {% endwith %}
+                    </li>
+                    <li>
+                        Highest EX Score:
+                        {% with song=highest_ex_score.song %}
+                            {% include "boogie_ui/song_link.html" %}
+                        {% endwith %}
+                        {% with score=highest_ex_score lb_attribute="ex_score" %}
+                            {% include "boogie_ui/score_with_judgments.html" %}
+                        {% endwith %}
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% include "boogie_ui/stars.html" %}
+    </div>
+    <hr />
+    {% include "boogie_ui/calendar.html" %}
+    <div>
+        See other years:
+        {% for year in wrapped_years %}
+            <a href="{% url "wrapped" player_id=player.id year=year %}">{{ year }}</a>
+            {% if not forloop.last %}|{% endif %}
+        {% endfor %}
+    </div>
+{% endblock content %}

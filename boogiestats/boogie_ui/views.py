@@ -235,6 +235,8 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         if hasattr(self.request.user, "player"):
             context["is_rival"] = self.request.user.player.rivals.filter(id=player_id).exists()
 
+        context["wrapped_years"] = range(player.join_date.year, today.year + 1)
+
         return context
 
     def get_queryset(self):
@@ -712,3 +714,88 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
 
     def get_queryset(self):
         return None
+
+
+class PlayerWrappedView(generic.base.TemplateView):
+    template_name = "boogie_ui/player_wrapped.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        player_id = self.kwargs["player_id"]
+        year = self.kwargs["year"]
+        player = Player.get_or_404(id=player_id)
+        context["player"] = player
+        context["year"] = year
+        scores = player.scores.filter(submission_date__year=year)
+        context["num_scores"] = scores.count()
+        context["num_charts_played"] = scores.filter(is_itg_top=True).count()
+        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+
+        end_of_year = datetime.date(year=year, month=12, day=31)
+        start_of_year = datetime.date(year=year, month=1, day=1)
+
+        context["skip_days_range"] = range(start_of_year.timetuple().tm_wday)
+
+        context["start_date"] = start_of_year
+        played_days = (
+            player.scores.values("submission_day")
+            .filter(submission_day__year=year)
+            .annotate(plays=Count("submission_day"))
+            .all()
+        )
+        context["months"] = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+        context["days"] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+        context["calendar_legend"] = tuple(
+            [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
+        )
+        calendar_days = list(
+            {"class": "min-plays-0", "plays": 0, "day": start_of_year + datetime.timedelta(days=i)}
+            for i in range((end_of_year - start_of_year).days + 1)
+        )
+        context["calendar_days"] = calendar_days
+
+        if not context["num_scores"]:
+            return context
+        most_played_song_data = scores.values("song_id").annotate(plays=Count("song_id")).order_by("-plays").first()
+        most_played_song = Song.objects.get(hash=most_played_song_data["song_id"])
+        most_played_song_plays = most_played_song_data["plays"]
+
+        previous_day = (played_days[0]["submission_day"] - start_of_year).days
+        streak = 1
+        longest_streak = 1
+        first_day = first_day_candidate = played_days[0]
+        for day in played_days:
+            day_index = (day["submission_day"] - start_of_year).days
+
+            if previous_day == day_index - 1:
+                previous_day = day_index
+                streak += 1
+                if streak > longest_streak:
+                    longest_streak = streak
+                    first_day = first_day_candidate
+            else:
+                previous_day = day_index
+                first_day_candidate = day
+                streak = 1
+
+            plays = day["plays"]
+            calendar_days[day_index]["plays"] = plays
+            calendar_days[day_index]["class"] = plays_to_class(plays)
+
+        context["played_days"] = len(played_days)
+        context["most_plays"] = max(played_days, key=lambda x: x["plays"], default={"plays": 0, "submission_day": "-"})
+        context["longest_streak"] = longest_streak
+        if first_day is not None:
+            context["longest_streak_start"] = first_day["submission_day"]
+        context["most_played_song"] = most_played_song
+        context["most_played_song_plays"] = most_played_song_plays
+        context["highest_itg_score"] = scores.order_by("-itg_score", "submission_date").first()
+        context["highest_ex_score"] = scores.order_by("-ex_score", "submission_date").first()
+        context["wrapped_years"] = range(player.join_date.year, datetime.date.today().year + 1)
+
+        return context
