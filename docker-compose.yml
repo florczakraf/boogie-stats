@@ -21,6 +21,20 @@ services:
       - "127.0.0.1:55523:55523"
     depends_on:
       - redis
+      - postgres
+    deploy:
+      restart_policy:
+        condition: any
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - type: bind
+        source: ./prod/postgres-data
+        target: /var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+      PGDATA: /var/lib/postgresql/data/pgdata
     deploy:
       restart_policy:
         condition: any

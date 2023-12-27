@@ -20,6 +20,7 @@ setuptools.setup(
         "django-prometheus >=2.3.1, <3",
         "prometheus-client == 0.18.0",
         "django-ipware >=5.0.2, <6",
+        "psycopg[binary] >=3.1.16, <4",
     ],
     extras_require={
         "dev": [
