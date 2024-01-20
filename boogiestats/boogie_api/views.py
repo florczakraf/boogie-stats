@@ -208,6 +208,9 @@ def _try_gs_get(request):
 
         # we can serve a local leaderboard instead of an error
         gs_response = {}
+    except Exception:  # catchall for incrementing metrics; reraise to let sentry catch it as an unhandled exception
+        GS_GET_REQUESTS_ERRORS_TOTAL.inc()
+        raise
 
     return gs_response
 
