@@ -208,6 +208,9 @@ def _try_gs_get(request):
 
         # we can serve a local leaderboard instead of an error
         gs_response = {}
+    except Exception:  # catchall for incrementing metrics; reraise to let sentry catch it as an unhandled exception
+        GS_GET_REQUESTS_ERRORS_TOTAL.inc()
+        raise
 
     return gs_response
 
@@ -276,12 +279,15 @@ def score_submit(request):
         ).json()
         logger.info(gs_response)
     except (requests.Timeout, requests.ConnectionError) as e:
-        GS_POST_REQUESTS_TOTAL.inc()
+        GS_POST_REQUESTS_ERRORS_TOTAL.inc()
         sentry_sdk.capture_exception(e)
         logger.error(f"Request to GrooveStats failed: {e}")
 
         # we can't ignore GS errors silently in case of score submissions (yet)
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
+    except Exception:  # catchall for incrementing metrics; reraise to let sentry catch it as an unhandled exception
+        GS_POST_REQUESTS_ERRORS_TOTAL.inc()
+        raise
 
     handle_scores(body_parsed, gs_response, players)
 
