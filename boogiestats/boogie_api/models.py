@@ -212,6 +212,9 @@ class Song(models.Model):
         self.number_of_players = annotated_song.num_players
         self.number_of_scores = annotated_song.num_scores
 
+    def __str__(self):
+        return f"{self.hash} - {self.display_name}"
+
 
 class Player(models.Model):
     objects = PlayerManager()
@@ -370,3 +373,6 @@ class Score(models.Model):
             return int(max(0, math.floor(points / total_possible * 10_000)))
         except ZeroDivisionError:
             return 0
+
+    def __str__(self):
+        return f"{self.id} - {self.submission_date} - {self.itg_score/100}% - {self.ex_score/100}% EX - {self.song.display_name} - {self.player}"

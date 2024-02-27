@@ -142,7 +142,10 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTHENTICATION_BACKENDS = ["boogiestats.boogie_api.auth_backend.GSApiKeyBackend"]
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "boogiestats.boogie_api.auth_backend.GSApiKeyBackend",
+]
 
 PROMETHEUS_METRICS_EXPORT_PORT_RANGE = range(9000, 9050)
 
