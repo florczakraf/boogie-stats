@@ -196,7 +196,7 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
 
         today = datetime.date.today()
-        a_year_ago = today.replace(year=today.year - 1)
+        a_year_ago = today - datetime.timedelta(days=365)  # today.replace(year=today.year - 1) fails for leap years
 
         context["skip_days_range"] = range(a_year_ago.timetuple().tm_wday)
 
