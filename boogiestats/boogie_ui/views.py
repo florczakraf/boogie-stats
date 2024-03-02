@@ -178,6 +178,38 @@ class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
         return scores.order_by("-submission_date").prefetch_related("song")
 
 
+def set_calendar(context, start_date, end_date, played_days):
+    calendar_days = list(
+        {"class": "min-plays-0", "plays": 0, "day": start_date + datetime.timedelta(days=i)}
+        for i in range((end_date - start_date).days + 1)
+    )
+    for day in played_days:
+        day_index = (day["submission_day"] - start_date).days
+        plays = day["plays"]
+        calendar_days[day_index]["plays"] = plays
+        calendar_days[day_index]["class"] = plays_to_class(plays)
+
+    # sometimes it looks better to repeat the month at both ends
+    num_months = 13 if start_date.day > 4 else 12
+    months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    months_iterator = itertools.cycle(months)
+    for _ in range(start_date.month - 1):
+        next(months_iterator)
+
+    context.update(
+        {
+            "start_date": start_date,
+            "skip_days_range": range(start_date.timetuple().tm_wday),
+            "calendar_days": calendar_days,
+            "months": list(next(months_iterator) for _ in range(num_months)),
+            "days": ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
+            "calendar_legend": tuple(
+                [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
+            ),
+        }
+    )
+
+
 class PlayerView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/player.html"
     context_object_name = "scores"
@@ -197,40 +229,13 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
 
         today = datetime.date.today()
         a_year_ago = today - datetime.timedelta(days=365)  # today.replace(year=today.year - 1) fails for leap years
-
-        context["skip_days_range"] = range(a_year_ago.timetuple().tm_wday)
-
-        context["start_date"] = a_year_ago
         played_days = (
             player.scores.values("submission_day")
             .filter(submission_day__gte=a_year_ago)
             .annotate(plays=Count("submission_day"))
             .all()
         )
-
-        calendar_days = list(
-            {"class": "min-plays-0", "plays": 0, "day": a_year_ago + datetime.timedelta(days=i)}
-            for i in range((today - a_year_ago).days + 1)
-        )
-        for day in played_days:
-            day_index = (day["submission_day"] - a_year_ago).days
-            plays = day["plays"]
-            calendar_days[day_index]["plays"] = plays
-            calendar_days[day_index]["class"] = plays_to_class(plays)
-
-        context["calendar_days"] = calendar_days
-
-        # sometimes it looks better to repeat the month at both ends
-        num_months = 13 if a_year_ago.day > 4 else 12
-        months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-        months_iterator = itertools.cycle(months)
-        for _ in range(today.month - 1):
-            next(months_iterator)
-        context["months"] = list(next(months_iterator) for _ in range(num_months))
-        context["days"] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-        context["calendar_legend"] = tuple(
-            [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
-        )
+        set_calendar(context, a_year_ago, today, played_days)
 
         if hasattr(self.request.user, "player"):
             context["is_rival"] = self.request.user.player.rivals.filter(id=player_id).exists()
@@ -723,25 +728,13 @@ class PlayerWrappedView(generic.base.TemplateView):
         end_of_year = datetime.date(year=year, month=12, day=31)
         start_of_year = datetime.date(year=year, month=1, day=1)
 
-        context["skip_days_range"] = range(start_of_year.timetuple().tm_wday)
-
-        context["start_date"] = start_of_year
         played_days = (
             player.scores.values("submission_day")
             .filter(submission_day__year=year)
             .annotate(plays=Count("submission_day"))
             .all()
         )
-        context["months"] = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-        context["days"] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-        context["calendar_legend"] = tuple(
-            [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
-        )
-        calendar_days = list(
-            {"class": "min-plays-0", "plays": 0, "day": start_of_year + datetime.timedelta(days=i)}
-            for i in range((end_of_year - start_of_year).days + 1)
-        )
-        context["calendar_days"] = calendar_days
+        set_calendar(context, start_of_year, end_of_year, played_days)
 
         if not context["num_scores"]:
             return context
@@ -766,10 +759,6 @@ class PlayerWrappedView(generic.base.TemplateView):
                 previous_day = day_index
                 first_day_candidate = day
                 streak = 1
-
-            plays = day["plays"]
-            calendar_days[day_index]["plays"] = plays
-            calendar_days[day_index]["class"] = plays_to_class(plays)
 
         context["played_days"] = len(played_days)
         context["most_plays"] = max(played_days, key=lambda x: x["plays"], default={"plays": 0, "submission_day": "-"})
