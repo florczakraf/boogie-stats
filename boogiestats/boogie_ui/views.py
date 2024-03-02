@@ -50,6 +50,14 @@ class LeaderboardSourceMixin:
         return context
 
 
+def set_stars(context, scores, prefix=""):
+    context[f"{prefix}one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+    context[f"{prefix}two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+    context[f"{prefix}three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+    context[f"{prefix}four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+    context[f"{prefix}five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+
+
 class IndexView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/index.html"
     context_object_name = "latest_scores"
@@ -133,11 +141,7 @@ class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
         context["player"] = player
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.values("song").distinct().count()
-        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, scores)
         context.update(
             fantastics_plus=0,
             fantastics=0,
@@ -174,6 +178,38 @@ class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
         return scores.order_by("-submission_date").prefetch_related("song")
 
 
+def set_calendar(context, start_date, end_date, played_days):
+    calendar_days = list(
+        {"class": "min-plays-0", "plays": 0, "day": start_date + datetime.timedelta(days=i)}
+        for i in range((end_date - start_date).days + 1)
+    )
+    for day in played_days:
+        day_index = (day["submission_day"] - start_date).days
+        plays = day["plays"]
+        calendar_days[day_index]["plays"] = plays
+        calendar_days[day_index]["class"] = plays_to_class(plays)
+
+    # sometimes it looks better to repeat the month at both ends
+    num_months = 13 if start_date.day > 4 else 12
+    months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    months_iterator = itertools.cycle(months)
+    for _ in range(start_date.month - 1):
+        next(months_iterator)
+
+    context.update(
+        {
+            "start_date": start_date,
+            "skip_days_range": range(start_date.timetuple().tm_wday),
+            "calendar_days": calendar_days,
+            "months": list(next(months_iterator) for _ in range(num_months)),
+            "days": ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
+            "calendar_legend": tuple(
+                [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
+            ),
+        }
+    )
+
+
 class PlayerView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/player.html"
     context_object_name = "scores"
@@ -189,48 +225,17 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         scores = player.scores
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
-        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, scores)
 
         today = datetime.date.today()
         a_year_ago = today - datetime.timedelta(days=365)  # today.replace(year=today.year - 1) fails for leap years
-
-        context["skip_days_range"] = range(a_year_ago.timetuple().tm_wday)
-
-        context["start_date"] = a_year_ago
         played_days = (
             player.scores.values("submission_day")
             .filter(submission_day__gte=a_year_ago)
             .annotate(plays=Count("submission_day"))
             .all()
         )
-
-        calendar_days = list(
-            {"class": "min-plays-0", "plays": 0, "day": a_year_ago + datetime.timedelta(days=i)}
-            for i in range((today - a_year_ago).days + 1)
-        )
-        for day in played_days:
-            day_index = (day["submission_day"] - a_year_ago).days
-            plays = day["plays"]
-            calendar_days[day_index]["plays"] = plays
-            calendar_days[day_index]["class"] = plays_to_class(plays)
-
-        context["calendar_days"] = calendar_days
-
-        # sometimes it looks better to repeat the month at both ends
-        num_months = 13 if a_year_ago.day > 4 else 12
-        months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-        months_iterator = itertools.cycle(months)
-        for _ in range(today.month - 1):
-            next(months_iterator)
-        context["months"] = list(next(months_iterator) for _ in range(num_months))
-        context["days"] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-        context["calendar_legend"] = tuple(
-            [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
-        )
+        set_calendar(context, a_year_ago, today, played_days)
 
         if hasattr(self.request.user, "player"):
             context["is_rival"] = self.request.user.player.rivals.filter(id=player_id).exists()
@@ -302,11 +307,7 @@ class PlayerStatsView(generic.base.TemplateView):
 
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
-        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, scores)
 
         return context
 
@@ -343,22 +344,14 @@ class VersusView(LeaderboardSourceMixin, generic.ListView):
         context["p1_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) > getattr(x[1], self.lb_attribute))
         )
-        context["p1_one_star"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["p1_two_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["p1_three_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["p1_four_stars"] = p1.scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["p1_five_stars"] = p1.scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, p1.scores, prefix="p1_")
 
         context["p2_num_scores"] = p2.scores.count()
         context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()
         context["p2_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) < getattr(x[1], self.lb_attribute))
         )
-        context["p2_one_star"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["p2_two_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["p2_three_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["p2_four_stars"] = p2.scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["p2_five_stars"] = p2.scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, p2.scores, prefix="p2_")
 
         context["ties"] = len(scores) - context["p1_wins"] - context["p2_wins"]
         context["common_charts"] = len(scores)
@@ -730,34 +723,18 @@ class PlayerWrappedView(generic.base.TemplateView):
         scores = player.scores.filter(submission_date__year=year)
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
-        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, scores)
 
         end_of_year = datetime.date(year=year, month=12, day=31)
         start_of_year = datetime.date(year=year, month=1, day=1)
 
-        context["skip_days_range"] = range(start_of_year.timetuple().tm_wday)
-
-        context["start_date"] = start_of_year
         played_days = (
             player.scores.values("submission_day")
             .filter(submission_day__year=year)
             .annotate(plays=Count("submission_day"))
             .all()
         )
-        context["months"] = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-        context["days"] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-        context["calendar_legend"] = tuple(
-            [("0", "min-plays-0")] + [(f"{number}+", f"min-plays-{number}") for number in CALENDAR_VALUES]
-        )
-        calendar_days = list(
-            {"class": "min-plays-0", "plays": 0, "day": start_of_year + datetime.timedelta(days=i)}
-            for i in range((end_of_year - start_of_year).days + 1)
-        )
-        context["calendar_days"] = calendar_days
+        set_calendar(context, start_of_year, end_of_year, played_days)
 
         if not context["num_scores"]:
             return context
@@ -782,10 +759,6 @@ class PlayerWrappedView(generic.base.TemplateView):
                 previous_day = day_index
                 first_day_candidate = day
                 streak = 1
-
-            plays = day["plays"]
-            calendar_days[day_index]["plays"] = plays
-            calendar_days[day_index]["class"] = plays_to_class(plays)
 
         context["played_days"] = len(played_days)
         context["most_plays"] = max(played_days, key=lambda x: x["plays"], default={"plays": 0, "submission_day": "-"})
