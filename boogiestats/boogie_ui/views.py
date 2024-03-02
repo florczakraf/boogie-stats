@@ -50,6 +50,14 @@ class LeaderboardSourceMixin:
         return context
 
 
+def set_stars(context, scores, prefix=""):
+    context[f"{prefix}one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
+    context[f"{prefix}two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
+    context[f"{prefix}three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
+    context[f"{prefix}four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
+    context[f"{prefix}five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+
+
 class IndexView(LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/index.html"
     context_object_name = "latest_scores"
@@ -133,11 +141,7 @@ class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
         context["player"] = player
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.values("song").distinct().count()
-        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, scores)
         context.update(
             fantastics_plus=0,
             fantastics=0,
@@ -189,11 +193,7 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         scores = player.scores
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
-        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, scores)
 
         today = datetime.date.today()
         a_year_ago = today - datetime.timedelta(days=365)  # today.replace(year=today.year - 1) fails for leap years
@@ -302,11 +302,7 @@ class PlayerStatsView(generic.base.TemplateView):
 
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
-        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, scores)
 
         return context
 
@@ -343,22 +339,14 @@ class VersusView(LeaderboardSourceMixin, generic.ListView):
         context["p1_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) > getattr(x[1], self.lb_attribute))
         )
-        context["p1_one_star"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["p1_two_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["p1_three_stars"] = p1.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["p1_four_stars"] = p1.scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["p1_five_stars"] = p1.scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, p1.scores, prefix="p1_")
 
         context["p2_num_scores"] = p2.scores.count()
         context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()
         context["p2_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) < getattr(x[1], self.lb_attribute))
         )
-        context["p2_one_star"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["p2_two_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["p2_three_stars"] = p2.scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["p2_four_stars"] = p2.scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["p2_five_stars"] = p2.scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, p2.scores, prefix="p2_")
 
         context["ties"] = len(scores) - context["p1_wins"] - context["p2_wins"]
         context["common_charts"] = len(scores)
@@ -730,11 +718,7 @@ class PlayerWrappedView(generic.base.TemplateView):
         scores = player.scores.filter(submission_date__year=year)
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
-        context["one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
-        context["two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
-        context["three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
-        context["four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
-        context["five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+        set_stars(context, scores)
 
         end_of_year = datetime.date(year=year, month=12, day=31)
         start_of_year = datetime.date(year=year, month=1, day=1)
