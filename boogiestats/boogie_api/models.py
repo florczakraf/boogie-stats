@@ -24,26 +24,18 @@ MAX_LEADERBOARD_ENTRIES = 50
 
 
 class LeaderboardSource(models.IntegerChoices):
-    BS_ITG = 1, "BoogieStats ITG Scores"
-    GS_ITG = 2, "GrooveStats ITG Scores"
-    BS_EX = 3, "BoogieStats EX Scores"
+    BS = 1, "BoogieStats"
+    GS = 2, "GrooveStats"
 
 
-SOURCE_FIELD_MAPPING = {
-    LeaderboardSource.BS_ITG: "itg",
-    LeaderboardSource.GS_ITG: "itg",
-    LeaderboardSource.BS_EX: "ex",
-}
-
-
-def make_leaderboard_entry(rank, score, leaderboard_source, is_rival=False, is_self=False):
-    if leaderboard_source not in (LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX):
-        raise ValueError(f"Unsupported leaderboard source: {leaderboard_source}")
+def make_leaderboard_entry(rank, score, score_type, is_rival=False, is_self=False):
+    if score_type not in ("itg", "ex"):
+        raise ValueError(f"Unsupported score type: {score_type}")
 
     return {
         "rank": rank,
         "name": score.player.name or score.player.machine_tag,  # use name if available
-        "score": score.itg_score if leaderboard_source == LeaderboardSource.BS_ITG else score.ex_score,
+        "score": getattr(score, f"{score_type}_score"),
         "date": score.submission_date.strftime("%Y-%m-%d %H:%M:%S"),
         "isSelf": is_self,
         "isRival": is_rival,
@@ -68,65 +60,57 @@ class Song(models.Model):
         self.full_clean()
         return super().save(*args, **kwargs)
 
-    def get_leaderboard(self, num_entries, player=None):
+    def get_leaderboard(self, num_entries, score_type, player=None):
         num_entries = min(MAX_LEADERBOARD_ENTRIES, num_entries)
-        lb_source = LeaderboardSource.BS_ITG
 
         scores = []
         used_score_pks = []
 
         if player:
-            lb_source = player.leaderboard_source
-            rank, score = self.get_highscore(player)
+            rank, score = self.get_highscore(player, score_type)
             if rank:
-                scores.append((score, make_leaderboard_entry(rank, score, lb_source, is_self=True)))
+                scores.append((score, make_leaderboard_entry(rank, score, score_type, is_self=True)))
                 used_score_pks.append(score.pk)
 
-            for rank, score in self.get_rival_highscores(player):
-                scores.append((score, make_leaderboard_entry(rank, score, lb_source, is_rival=True)))
+            for rank, score in self.get_rival_highscores(player, score_type):
+                scores.append((score, make_leaderboard_entry(rank, score, score_type, is_rival=True)))
                 used_score_pks.append(score.pk)
 
         remaining_scores = max(0, num_entries - len(scores))
-        prefix = SOURCE_FIELD_MAPPING[lb_source]
 
         top_scores = (
-            self.scores.filter(**{f"is_{prefix}_top": True})
+            self.scores.filter(**{f"is_{score_type}_top": True})
             .exclude(pk__in=used_score_pks)
-            .order_by(f"-{prefix}_score", "submission_date", "id")[:remaining_scores]
+            .order_by(f"-{score_type}_score", "submission_date", "id")[:remaining_scores]
         )
 
         for score in top_scores:
-            rank = Score.rank(score, lb_source)
-            scores.append((score, make_leaderboard_entry(rank, score, lb_source)))
+            rank = Score.rank(score, score_type)
+            scores.append((score, make_leaderboard_entry(rank, score, score_type)))
 
         sorted_scores = sorted(
             scores,
-            key=lambda x: (-getattr(x[0], f"{prefix}_score"), x[0].submission_date, x[0].id),
+            key=lambda x: (-getattr(x[0], f"{score_type}_score"), x[0].submission_date, x[0].id),
         )
 
         return [x[1] for x in sorted_scores]
 
-    def get_highscore(self, player) -> (int, "Score"):
-        leaderboard_source = player.leaderboard_source
-        prefix = SOURCE_FIELD_MAPPING[leaderboard_source]
+    def get_highscore(self, player, score_type) -> (int, "Score"):
         try:
-            highscore = self.scores.get(player=player, **{f"is_{prefix}_top": True})
+            highscore = self.scores.get(player=player, **{f"is_{score_type}_top": True})
         except Score.DoesNotExist:
             return None, None
 
-        return Score.rank(highscore, leaderboard_source), highscore
+        return Score.rank(highscore, score_type), highscore
 
-    def get_rival_highscores(self, player) -> [(int, "Score")]:
-        leaderboard_source = player.leaderboard_source
-        prefix = SOURCE_FIELD_MAPPING[leaderboard_source]
-
+    def get_rival_highscores(self, player, score_type) -> [(int, "Score")]:
         scores = (
-            self.scores.filter(**{f"is_{prefix}_top": True, "player__in": player.rivals.all()})
-            .order_by(f"-{prefix}_score", "submission_date", "id")[:MAX_LEADERBOARD_RIVALS]
+            self.scores.filter(**{f"is_{score_type}_top": True, "player__in": player.rivals.all()})
+            .order_by(f"-{score_type}_score", "submission_date", "id")[:MAX_LEADERBOARD_RIVALS]
             .all()
         )
 
-        return [(Score.rank(score, leaderboard_source), score) for score in scores]
+        return [(Score.rank(score, score_type), score) for score in scores]
 
     @cached_property
     def chart_info(self):
@@ -235,7 +219,7 @@ class Player(models.Model):
         verbose_name="Pull GrooveStats name and tag",
         help_text="Pull name and tag on successful GS-ranked score submission",
     )
-    leaderboard_source = models.IntegerField(choices=LeaderboardSource.choices, default=LeaderboardSource.BS_ITG)
+    leaderboard_source = models.IntegerField(choices=LeaderboardSource.choices, default=LeaderboardSource.BS)
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -332,15 +316,14 @@ class Score(models.Model):
         return super().save(*args, **kwargs)
 
     @classmethod
-    def rank(cls, score, leaderboard_source: LeaderboardSource):
-        prefix = SOURCE_FIELD_MAPPING[leaderboard_source]
+    def rank(cls, score, score_type):
         return (
             list(
                 cls.objects.filter(
                     song=score.song,
-                    **{f"is_{prefix}_top": True, f"{prefix}_score__gte": getattr(score, f"{prefix}_score")},
+                    **{f"is_{score_type}_top": True, f"{score_type}_score__gte": getattr(score, f"{score_type}_score")},
                 )
-                .order_by(f"-{prefix}_score", "submission_date", "id")
+                .order_by(f"-{score_type}_score", "submission_date", "id")
                 .values_list("id", flat=True)
             ).index(score.id)
             + 1

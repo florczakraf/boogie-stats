@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from boogiestats.boogie_api.models import Song, Player, LeaderboardSource
+from boogiestats.boogie_api.models import Song, Player
 
 
 @pytest.fixture
@@ -149,7 +149,7 @@ def tied_scores(song):
 def test_get_leaderboard_without_player_returns_top_players_itg_scores(
     song, player, rival1, rival2, rival3, top_scores
 ):
-    leaderboard = song.get_leaderboard(num_entries=2)
+    leaderboard = song.get_leaderboard(num_entries=2, score_type="itg")
 
     assert len(leaderboard) == 2
 
@@ -171,7 +171,7 @@ def test_get_leaderboard_without_player_returns_top_players_itg_scores(
 
 
 def test_get_leaderboard_with_tied_players_should_respect_dates(song, player, rival1, rival2, rival3, tied_scores):
-    leaderboard = song.get_leaderboard(num_entries=13)
+    leaderboard = song.get_leaderboard(num_entries=13, score_type="itg")
 
     assert len(leaderboard) == 13
 
@@ -189,7 +189,7 @@ def test_get_leaderboard_with_tied_players_should_respect_dates(song, player, ri
 
 
 def test_get_leaderboard_returns_up_to_num_entries(song, player, top_scores):
-    leaderboard = song.get_leaderboard(num_entries=30)
+    leaderboard = song.get_leaderboard(num_entries=30, score_type="itg")
 
     assert len(leaderboard) == 21
 
@@ -258,20 +258,18 @@ def test_get_leaderboard_when_players_have_multiple_scores(song, player):
         rate=100,
     )
 
-    leaderboard = song.get_leaderboard(num_entries=2)
+    leaderboard = song.get_leaderboard(num_entries=2, score_type="itg")
 
     assert len(leaderboard) == 1
 
     assert leaderboard[0]["score"] == 8888
 
 
-@pytest.mark.parametrize("leaderboard_source", [LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX])
+@pytest.mark.parametrize("score_type", ["itg", "ex"])
 def test_get_leaderboard_given_player_returns_leaderboard_with_their_score_and_up_to_3_rivals(
-    song, player, top_scores, rival1, rival2, rival3, rival4, leaderboard_source
+    song, player, top_scores, rival1, rival2, rival3, rival4, score_type
 ):
-    player.leaderboard_source = leaderboard_source
-    player.save()
-    leaderboard = song.get_leaderboard(num_entries=13, player=player)
+    leaderboard = song.get_leaderboard(num_entries=13, player=player, score_type=score_type)
 
     assert len(leaderboard) == 13
 
@@ -280,25 +278,25 @@ def test_get_leaderboard_given_player_returns_leaderboard_with_their_score_and_u
 
     assert leaderboard[9]["name"] == "RIV3"
     assert leaderboard[9]["rank"] == 21
-    assert leaderboard[9]["score"] == (7700 if leaderboard_source == LeaderboardSource.BS_ITG else 5830)
+    assert leaderboard[9]["score"] == (7700 if score_type == "itg" else 5830)
     assert leaderboard[9]["isRival"] is True
     assert leaderboard[9]["isSelf"] is False
 
     assert leaderboard[10]["name"] == "RIV2"
     assert leaderboard[10]["rank"] == 22
-    assert leaderboard[10]["score"] == (7588 if leaderboard_source == LeaderboardSource.BS_ITG else 5770)
+    assert leaderboard[10]["score"] == (7588 if score_type == "itg" else 5770)
     assert leaderboard[10]["isRival"] is True
     assert leaderboard[10]["isSelf"] is False
 
     assert leaderboard[11]["name"] == "RIV4"
     assert leaderboard[11]["rank"] == 23
-    assert leaderboard[11]["score"] == (7300 if leaderboard_source == LeaderboardSource.BS_ITG else 5709)
+    assert leaderboard[11]["score"] == (7300 if score_type == "itg" else 5709)
     assert leaderboard[11]["isRival"] is True
     assert leaderboard[11]["isSelf"] is False
 
     assert leaderboard[12]["name"] == "PL"
     assert leaderboard[12]["rank"] == 24
-    assert leaderboard[12]["score"] == (6442 if leaderboard_source == LeaderboardSource.BS_ITG else 4441)
+    assert leaderboard[12]["score"] == (6442 if score_type == "itg" else 4441)
     assert leaderboard[12]["isRival"] is False
     assert leaderboard[12]["isSelf"] is True
 
@@ -321,7 +319,7 @@ def test_player_cant_be_their_own_rival(song, player):
 
 
 def test_get_leaderboard_when_entries_would_duplicate(song, player, rival1, rival2, rival3):
-    leaderboard = song.get_leaderboard(num_entries=10, player=player)
+    leaderboard = song.get_leaderboard(num_entries=10, score_type="itg", player=player)
 
     assert leaderboard[0]["name"] == "RIV3"
     assert leaderboard[0]["rank"] == 1
@@ -351,7 +349,7 @@ def test_get_leaderboard_when_entries_would_duplicate(song, player, rival1, riva
 
 
 def test_get_leaderboard_top_when_player_is_provided(song, player, rival3):
-    leaderboard = song.get_leaderboard(num_entries=10, player=rival3)
+    leaderboard = song.get_leaderboard(num_entries=10, score_type="itg", player=rival3)
 
     assert leaderboard[0]["name"] == "RIV3"
     assert leaderboard[0]["rank"] == 1
@@ -367,7 +365,7 @@ def test_get_leaderboard_top_when_player_is_provided(song, player, rival3):
 
 
 def test_get_leaderboard_when_there_are_multiple_songs(song, other_song, player, rival3):
-    leaderboard = song.get_leaderboard(num_entries=10, player=rival3)
+    leaderboard = song.get_leaderboard(num_entries=10, score_type="itg", player=rival3)
 
     assert leaderboard[0]["name"] == "RIV3"
     assert leaderboard[0]["rank"] == 1
