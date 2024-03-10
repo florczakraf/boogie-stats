@@ -1,14 +1,23 @@
 {% extends "boogie_ui/root.html" %}
+{% load static %}
+{% load formsetify %}
+{% block head_extras %}
+    <link href="{% static 'formset/css/bootstrap5-extra.css' %}"
+          rel="stylesheet">
+    <link href="{% static 'formset/css/collections.css' %}" rel="stylesheet">
+    <script type="module" src="{% static 'formset/js/django-formset.js' %}"></script>
+{% endblock head_extras %}
 {% block title %}
     Edit Profile
 {% endblock title %}
 {% block content %}
     <h2>Edit Profile</h2>
-    <form method="post">
-        {% csrf_token %}
-        <table>
-            {{ form.as_table }}
-        </table>
-        <input class="btn btn-primary" type="submit" value="Update" />
-    </form>
+    <div class="w-50 p-3">
+        <django-formset endpoint="{{ request.path }}"  csrf-token="{{ csrf_token }}">
+        {% render_form form "bootstrap" field_classes="row mb-3" label_classes="col-sm-3" control_classes="col-sm-9" %}
+        <button type="button"
+                df-click="disable -> submit -> proceed"
+                class="btn btn-primary">Submit</button>
+        </django-formset>
+    </div>
 {% endblock content %}

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "mathfilters",
     "django_bootstrap_icons",
     "django_prometheus",
+    "formset",
     "boogiestats.boogie_api",
     "boogiestats.boogie_ui",
 ]
