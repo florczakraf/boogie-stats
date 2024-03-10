@@ -193,17 +193,25 @@ def _try_gs_get(request):
     GS_GET_REQUESTS_TOTAL.inc()
     headers = create_headers(request)
     try:
-        gs_response = requests.get(
+        raw_response = requests.get(
             GROOVESTATS_ENDPOINT + request.path,
             params=request.GET,
             headers=headers,
             timeout=GROOVESTATS_TIMEOUT,
-        ).json()
+        )
+        gs_response = raw_response.json()
         logger.info(gs_response)
     except (requests.Timeout, requests.ConnectionError) as e:
         GS_GET_REQUESTS_ERRORS_TOTAL.inc()
         sentry_sdk.capture_exception(e)
         logger.error(f"Request to GrooveStats failed: {e}")
+
+        # we can serve a local leaderboard instead of an error
+        gs_response = {}
+    except json.JSONDecodeError as e:
+        GS_GET_REQUESTS_ERRORS_TOTAL.inc()
+        sentry_sdk.set_context("GS", {"raw_response": raw_response})
+        sentry_sdk.capture_exception(e)
 
         # we can serve a local leaderboard instead of an error
         gs_response = {}
@@ -270,13 +278,14 @@ def score_submit(request):
 
     try:
         GS_POST_REQUESTS_TOTAL.inc()
-        gs_response = requests.post(
+        raw_response = requests.post(
             GROOVESTATS_ENDPOINT + "/score-submit.php",
             params=request.GET,
             headers=headers,
             json=body_parsed,
             timeout=GROOVESTATS_TIMEOUT,
-        ).json()
+        )
+        gs_response = raw_response.json()
         logger.info(gs_response)
     except (requests.Timeout, requests.ConnectionError) as e:
         GS_POST_REQUESTS_ERRORS_TOTAL.inc()
@@ -284,6 +293,12 @@ def score_submit(request):
         logger.error(f"Request to GrooveStats failed: {e}")
 
         # we can't ignore GS errors silently in case of score submissions (yet)
+        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
+    except json.JSONDecodeError as e:
+        GS_POST_REQUESTS_ERRORS_TOTAL.inc()
+        sentry_sdk.set_context("GS", {"raw_response": raw_response})
+        sentry_sdk.capture_exception(e)
+
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
     except Exception:  # catchall for incrementing metrics; reraise to let sentry catch it as an unhandled exception
         GS_POST_REQUESTS_ERRORS_TOTAL.inc()
