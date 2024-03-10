@@ -55,6 +55,7 @@ def test_player_scores_when_lb_source_is_bs(client, gs_api_key, requests_mock, p
             "chartHash": hash,
             "isRanked": True,
             "gsLeaderboard": [],
+            "exLeaderboard": [],
         }
     }
     assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
@@ -62,7 +63,7 @@ def test_player_scores_when_lb_source_is_bs(client, gs_api_key, requests_mock, p
 
 @pytest.mark.parametrize("player_index", [1, 2])
 def test_player_scores_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
-    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS)
 
     hash = "76957dd1f96f764d"
     ranked_song = {
@@ -75,6 +76,18 @@ def test_player_scores_when_lb_source_is_gs(client, gs_api_key, requests_mock, p
                     "name": "Ash ketchum!",
                     "score": 10000,
                     "date": "2018-02-07 19:49:20",
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "A5H!",
+                }
+            ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "foo",
+                    "score": 9800,
+                    "date": "2022-02-07 21:32:10",
                     "isSelf": False,
                     "isRival": False,
                     "isFail": False,
@@ -147,7 +160,7 @@ def song(some_player, other_player):
 
 @pytest.mark.parametrize("player_index", [1, 2])
 def test_player_leaderboards_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
-    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS)
 
     ranked_song = {
         f"player{player_index}": {
@@ -174,6 +187,28 @@ def test_player_leaderboards_when_lb_source_is_gs(client, gs_api_key, requests_m
                     "machineTag": "FOOB",
                 },
             ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "Ash ketchum!",
+                    "score": 9800,
+                    "date": "2018-02-07 19:49:20",
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "A5H!",
+                },
+                {
+                    "rank": 2,
+                    "name": "foo",
+                    "score": 9700,
+                    "date": "2014-02-07 19:49:20",
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "FOOB",
+                },
+            ],
         }
     }
     requests_mock.get(GROOVESTATS_ENDPOINT + "/player-leaderboards.php", text=json.dumps(ranked_song))
@@ -192,7 +227,7 @@ def test_player_leaderboards_when_lb_source_is_gs(client, gs_api_key, requests_m
 
 @pytest.mark.parametrize("player_index", [1, 2])
 def test_score_submit_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
-    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG)
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS)
 
     hash = "76957dd1f96f764d"
     expected_result = {
@@ -229,6 +264,18 @@ def test_score_submit_when_lb_source_is_gs(client, gs_api_key, requests_mock, pl
                     "isRival": False,
                     "isFail": False,
                     "machineTag": "DUPA",
+                },
+            ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "foo",
+                    "score": 10000,
+                    "date": "2018-02-07 19:49:20",
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "A5H!",
                 },
             ],
             "scoreDelta": 5809,
@@ -298,6 +345,28 @@ def test_score_submit_for_untracked_song_when_lb_source_is_bs_itg(client, gs_api
                     "machineTag": "tag",
                 },
             ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "Ash ketchum!",
+                    "score": 9800,
+                    "date": "2018-02-07 19:49:20",
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "A5H!",
+                },
+                {
+                    "rank": 2,
+                    "name": "name",
+                    "score": 5805,
+                    "date": "2018-02-07 19:49:20",
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "tag",
+                },
+            ],
             "scoreDelta": 5805,
             "result": "score-added",
         }
@@ -312,6 +381,10 @@ def test_score_submit_for_untracked_song_when_lb_source_is_bs_itg(client, gs_api
             f"player{player_index}": {
                 "score": 5805,
                 "comment": "50e, 42g, 8d, 11wo, 4m, C300",
+                "judgmentCounts": {
+                    "fantasticPlus": 1,
+                    "totalSteps": 1,
+                },
                 "rate": 100,
             }
         },
@@ -335,7 +408,19 @@ def test_score_submit_for_untracked_song_when_lb_source_is_bs_itg(client, gs_api
                     "rank": 1,
                     "name": player.name,
                     "score": 5805,
-                    "date": song.get_highscore(player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(player, "itg")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": player.machine_tag,
+                }
+            ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": player.name,
+                    "score": 10_000,
+                    "date": song.get_highscore(player, "ex")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": True,
                     "isRival": False,
                     "isFail": False,
@@ -371,6 +456,10 @@ def test_score_submit_with_better_score_when_lb_source_is_bs(
             f"player{player_index}": {
                 "score": 9999,
                 "comment": "50e, 42g, 8d, 11wo, 4m, C300",
+                "judgmentCounts": {
+                    "fantasticPlus": 1,
+                    "totalSteps": 1,
+                },
                 "rate": 100,
             }
         },
@@ -391,7 +480,7 @@ def test_score_submit_with_better_score_when_lb_source_is_bs(
                     "rank": 1,
                     "name": "1234",
                     "score": 9999,
-                    "date": song.get_highscore(some_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(some_player, "itg")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": True,
                     "isRival": False,
                     "isFail": False,
@@ -401,7 +490,29 @@ def test_score_submit_with_better_score_when_lb_source_is_bs(
                     "rank": 2,
                     "name": "ABCD",
                     "score": 8595,
-                    "date": song.get_highscore(other_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(other_player, "itg")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "ABCD",
+                },
+            ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "1234",
+                    "score": 10_000,
+                    "date": song.get_highscore(some_player, "ex")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "1234",
+                },
+                {
+                    "rank": 2,
+                    "name": "ABCD",
+                    "score": 0,
+                    "date": song.get_highscore(other_player, "ex")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": False,
                     "isRival": False,
                     "isFail": False,
@@ -437,6 +548,22 @@ def test_score_submit_with_worse_score_when_lb_source_is_bs(
             f"player{player_index}": {
                 "score": 1000,
                 "comment": "50e, 42g, 8d, 11wo, 4m, C300",
+                "judgmentCounts": {
+                    "decent": 0,
+                    "excellent": 0,
+                    "fantastic": 0,
+                    "fantasticPlus": 1,
+                    "great": 0,
+                    "holdsHeld": 0,
+                    "minesHit": 0,
+                    "miss": 0,
+                    "rollsHeld": 0,
+                    "totalHolds": 0,
+                    "totalMines": 0,
+                    "totalRolls": 0,
+                    "totalSteps": 1,
+                    "wayOff": 0,
+                },
                 "rate": 100,
             }
         },
@@ -457,7 +584,7 @@ def test_score_submit_with_worse_score_when_lb_source_is_bs(
                     "rank": 1,
                     "name": "ABCD",
                     "score": 8595,
-                    "date": song.get_highscore(other_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(other_player, "itg")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": False,
                     "isRival": False,
                     "isFail": False,
@@ -467,11 +594,33 @@ def test_score_submit_with_worse_score_when_lb_source_is_bs(
                     "rank": 2,
                     "name": "1234",
                     "score": 8495,
-                    "date": song.get_highscore(some_player)[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.get_highscore(some_player, "itg")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isSelf": True,
                     "isRival": False,
                     "isFail": False,
                     "machineTag": "1234",
+                },
+            ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": "1234",
+                    "score": 10_000,  # this actually improves ex, but it's not reported by GS, so we mimic that
+                    "date": song.get_highscore(some_player, "ex")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "1234",
+                },
+                {
+                    "rank": 2,
+                    "name": "ABCD",
+                    "score": 0,
+                    "date": song.get_highscore(other_player, "ex")[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": "ABCD",
                 },
             ],
             "scoreDelta": 1000 - 8495,
@@ -552,7 +701,7 @@ def test_score_submit_without_a_comment(
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS, LeaderboardSource.GS])
 def test_event_score_submit(
     client,
     some_player,
@@ -600,7 +749,7 @@ def test_event_score_submit(
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS, LeaderboardSource.GS])
 def test_event_player_scores(
     client, some_player, requests_mock, some_player_gs_api_key, player_index, event_key, lb_source
 ):
@@ -636,7 +785,7 @@ def test_event_player_scores(
 
 @pytest.mark.parametrize("event_key", ["rpg", "itl"])
 @pytest.mark.parametrize("player_index", [1, 2])
-@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS_ITG, LeaderboardSource.GS_ITG])
+@pytest.mark.parametrize("lb_source", [LeaderboardSource.BS, LeaderboardSource.GS])
 def test_event_player_leaderboards(
     client, some_player, requests_mock, some_player_gs_api_key, player_index, event_key, lb_source
 ):
@@ -944,6 +1093,10 @@ def test_score_submit_with_two_players_playing_the_same_song_when_lb_source_is_b
                 "score": 5500,
                 "comment": "foo",
                 "rate": 100,
+                "judgmentCounts": {
+                    "fantasticPlus": 1,
+                    "totalSteps": 1,
+                },
             },
             "player2": {
                 "score": 6500,
@@ -962,6 +1115,7 @@ def test_score_submit_with_two_players_playing_the_same_song_when_lb_source_is_b
     assert Score.objects.count() == 2
     assert Player.objects.count() == 2
     scores = Score.objects.all().order_by("-itg_score")
+    ex_scores = Score.objects.all().order_by("-ex_score")
 
     assert response.json() == {
         "player1": {
@@ -987,6 +1141,28 @@ def test_score_submit_with_two_players_playing_the_same_song_when_lb_source_is_b
                     "isRival": False,
                     "isFail": False,
                     "machineTag": scores[1].player.machine_tag,
+                },
+            ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": ex_scores[0].player.machine_tag,
+                    "score": 10_000,
+                    "date": ex_scores[0].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": ex_scores[0].player.machine_tag,
+                },
+                {
+                    "rank": 2,
+                    "name": ex_scores[1].player.machine_tag,
+                    "score": 0,
+                    "date": ex_scores[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": ex_scores[1].player.machine_tag,
                 },
             ],
             "scoreDelta": 5500,
@@ -1017,6 +1193,28 @@ def test_score_submit_with_two_players_playing_the_same_song_when_lb_source_is_b
                     "machineTag": scores[1].player.machine_tag,
                 },
             ],
+            "exLeaderboard": [
+                {
+                    "rank": 1,
+                    "name": ex_scores[0].player.machine_tag,
+                    "score": 10_000,
+                    "date": ex_scores[0].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": False,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": ex_scores[0].player.machine_tag,
+                },
+                {
+                    "rank": 2,
+                    "name": ex_scores[1].player.machine_tag,
+                    "score": 0,
+                    "date": ex_scores[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isSelf": True,
+                    "isRival": False,
+                    "isFail": False,
+                    "machineTag": ex_scores[1].player.machine_tag,
+                },
+            ],
             "scoreDelta": 6500,
             "result": "score-added",
         },
@@ -1029,7 +1227,7 @@ def test_score_submit_with_two_players_when_using_bs_itg_and_gs_itg_lbs(
     client, gs_api_key, some_player_gs_api_key, requests_mock
 ):
     Player.objects.create(
-        gs_api_key=some_player_gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS_ITG
+        gs_api_key=some_player_gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS
     )
 
     ranked_songs = {

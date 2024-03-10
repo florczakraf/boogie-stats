@@ -43,9 +43,8 @@ GROOVESTATS_RESPONSES = {
 GROOVESTATS_TIMEOUT = 12
 SUPPORTED_EVENTS = ("rpg", "itl")
 LB_SOURCE_MAPPING = {
-    LeaderboardSource.BS_ITG.value: "BS",
-    LeaderboardSource.GS_ITG.value: "GS",
-    LeaderboardSource.BS_EX.value: "BS-EX",
+    LeaderboardSource.BS.value: "BS",
+    LeaderboardSource.GS.value: "GS",
 }
 
 GS_GET_REQUESTS_TOTAL = Counter("boogiestats_gs_get_requests_total", "Number of GS GET requests")
@@ -117,11 +116,10 @@ def fill_event_leaderboards(final_response, gs_player, player_id):
 
 
 def handle_score_results(player, old_score, new_score):
-    lb_source = player["player_instance"].leaderboard_source
-    new_score_value = new_score.itg_score if lb_source == LeaderboardSource.BS_ITG else new_score.ex_score
+    new_score_value = new_score.itg_score
 
     if old_score:
-        old_score_value = old_score.itg_score if lb_source == LeaderboardSource.BS_ITG else old_score.ex_score
+        old_score_value = old_score.itg_score
 
         if old_score_value < new_score_value:
             player["result"] = "improved"
@@ -134,11 +132,11 @@ def handle_score_results(player, old_score, new_score):
         player["delta"] = new_score_value
 
 
-def get_local_leaderboard(player_instance, chart_hash, num_entries):
+def get_local_leaderboard(player_instance, chart_hash, num_entries, score_type):
     song = Song.objects.filter(hash=chart_hash).first()
 
     if song:
-        return song.get_leaderboard(num_entries=num_entries, player=player_instance)
+        return song.get_leaderboard(num_entries=num_entries, score_type=score_type, player=player_instance)
     return []
 
 
@@ -171,18 +169,19 @@ def _request_leaderboards(request):
 
         player_instance: Optional[Player] = player["player_instance"]
         leaderboard_source = (
-            player_instance.leaderboard_source if player_instance is not None else LeaderboardSource.BS_ITG.value
+            player_instance.leaderboard_source if player_instance is not None else LeaderboardSource.BS.value
         )
 
-        if leaderboard_source in (LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX):
+        if leaderboard_source == LeaderboardSource.BS:
             final_response[player_id] = {
                 "chartHash": chart_hash,
                 "isRanked": True,
-                "gsLeaderboard": get_local_leaderboard(player_instance, chart_hash, max_results),
+                "gsLeaderboard": get_local_leaderboard(player_instance, chart_hash, max_results, score_type="itg"),
+                "exLeaderboard": get_local_leaderboard(player_instance, chart_hash, max_results, score_type="ex"),
             }
             fill_event_leaderboards(final_response, gs_player, player_id)
 
-        elif leaderboard_source == LeaderboardSource.GS_ITG.value:
+        elif leaderboard_source == LeaderboardSource.GS.value:
             final_response[player_id] = gs_player
 
         response_headers[f"bs-leaderboard-player-{player_index}"] = LB_SOURCE_MAPPING[leaderboard_source]
@@ -234,16 +233,17 @@ def _make_score_submit_response(gs_response, players, max_results):
         player_instance: Player = player["player_instance"]
         leaderboard_source = player_instance.leaderboard_source
 
-        if leaderboard_source in (LeaderboardSource.BS_ITG, LeaderboardSource.BS_EX):
+        if leaderboard_source == LeaderboardSource.BS:
             final_response[player_id] = {
                 "chartHash": player["chartHash"],
                 "isRanked": True,
-                "gsLeaderboard": get_local_leaderboard(player_instance, player["chartHash"], max_results),
+                "gsLeaderboard": get_local_leaderboard(player_instance, player["chartHash"], max_results, "itg"),
+                "exLeaderboard": get_local_leaderboard(player_instance, player["chartHash"], max_results, "ex"),
                 "scoreDelta": player["delta"],
                 "result": player["result"],
             }
             fill_event_leaderboards(final_response, gs_player, player_id)
-        elif leaderboard_source == LeaderboardSource.GS_ITG.value:
+        elif leaderboard_source == LeaderboardSource.GS.value:
             final_response[player_id] = gs_player  # isRanked might be False /shrug
         else:
             raise ValueError(
@@ -307,6 +307,7 @@ def handle_scores(body_parsed, gs_response, players):
         gs_player = gs_response.get(player_id, {})
         is_ranked = gs_player.get("isRanked", False)
 
+        song: Song
         song, _ = Song.objects.get_or_create(hash=chart_hash)
         song.set_ranked(is_ranked)
 
@@ -314,7 +315,7 @@ def handle_scores(body_parsed, gs_response, players):
         player["player_instance"] = player_instance
         player_instance.update_name_and_tag(gs_player)
 
-        _, old_score = song.get_highscore(player_instance)
+        _, old_score = song.get_highscore(player_instance, "itg")  # GS only informs about ITG score result & delta
 
         score_submission = body_parsed[player_id]
         comment = score_submission.get("comment", "")
