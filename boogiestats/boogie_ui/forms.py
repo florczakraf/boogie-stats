@@ -1,4 +1,5 @@
 from django import forms
+from formset.widgets import DualSelector
 
 from boogiestats.boogie_api.models import Player
 
@@ -11,6 +12,11 @@ class EditPlayerForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={"placeholder": "First 32 characters of your new GS API key"}),
         help_text="Fill this when you've generated a new GS API key",
         label="New GrooveStats API key",
+    )
+    rivals = forms.models.ModelMultipleChoiceField(
+        queryset=Player.objects.all(),
+        widget=DualSelector(search_lookup=["name__icontains", "machine_tag__icontains"]),
+        required=False,
     )
 
     class Meta:

@@ -20,6 +20,7 @@ setuptools.setup(
         "django-prometheus >=2.3.1, <3",
         "prometheus-client == 0.18.0",
         "django-ipware >=5.0.2, <6",
+        "django-formset >=1.3.8, <2",
     ],
     extras_require={
         "dev": [

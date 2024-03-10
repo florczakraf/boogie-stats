@@ -18,6 +18,8 @@ from django.views import generic
 from django.views.decorators.http import require_POST
 from redis import ResponseError
 from redis.commands.search.query import Query
+from formset.views import FormViewMixin, IncompleteSelectResponseMixin
+
 
 from boogiestats.boogie_api.models import Score, Player, Song
 from boogiestats.boogie_api.utils import get_redis, set_sentry_user
@@ -483,7 +485,9 @@ class SuccessMessageExtraTagsMixin:
         return self.success_message % cleaned_data
 
 
-class EditPlayerView(LoginRequiredMixin, SuccessMessageExtraTagsMixin, generic.UpdateView):
+class EditPlayerView(
+    LoginRequiredMixin, SuccessMessageExtraTagsMixin, FormViewMixin, IncompleteSelectResponseMixin, generic.UpdateView
+):
     login_url = "/login/"
     template_name = "boogie_ui/player_update.html"
     form_class = EditPlayerForm
