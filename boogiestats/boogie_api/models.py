@@ -205,8 +205,8 @@ class Player(models.Model):
 
     user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)  # to utilize standard auth stuff
     api_key = models.CharField(max_length=64, db_index=True, unique=True)
-    machine_tag = models.CharField(max_length=4)
-    name = models.CharField(max_length=64, blank=True, null=True)
+    machine_tag = models.CharField(max_length=4, db_index=True)
+    name = models.CharField(max_length=64, db_index=True)
     rivals = models.ManyToManyField(
         "self", symmetrical=False, blank=True, help_text="Hold ctrl to select/unselect multiple"
     )
