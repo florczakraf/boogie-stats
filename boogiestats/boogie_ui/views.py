@@ -100,22 +100,35 @@ class PlayersListView(generic.ListView):
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
-        return Player.objects.order_by("id")
+        return Player.objects.filter(name__icontains=self._get_user_query()).order_by("id")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "user_query": self._get_user_query(),
+            }
+        )
+
+        return context
+
+    def _get_user_query(self):
+        return self.request.GET.get("q", "")
 
 
 class PlayersByNameListView(PlayersListView):
     def get_queryset(self):
-        return Player.objects.order_by(Lower("name"))
+        return Player.objects.filter(name__icontains=self._get_user_query()).order_by(Lower("name"))
 
 
 class PlayersByMachineTagListView(PlayersListView):
     def get_queryset(self):
-        return Player.objects.order_by(Lower("machine_tag"))
+        return Player.objects.filter(name__icontains=self._get_user_query()).order_by(Lower("machine_tag"))
 
 
 class PlayersByScoresListView(PlayersListView):
     def get_queryset(self):
-        return Player.objects.order_by("-num_scores")
+        return Player.objects.filter(name__icontains=self._get_user_query()).order_by("-num_scores")
 
 
 def plays_to_class(plays):
