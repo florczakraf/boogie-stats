@@ -4,33 +4,43 @@
 {% endblock title %}
 {% block content %}
     <h2>Players</h2>
+    <div class="pt-3 pb-3">
+        <form class="form-inline" method="get">
+            <input name="q"
+                   class="form-control mr-sm-2"
+                   type="search"
+                   placeholder="Search"
+                   aria-label="Search"
+                   {% if user_query %}value="{{ user_query }}"{% endif %} />
+        </form>
+    </div>
     {% if players %}
         {% include "boogie_ui/paginator.html" %}
         <table class="table table-striped">
             <thead class="bg-body-secondary">
                 <tr>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "players" %}">ID
+                        <a href="{% url "players" %}?{% include "boogie_ui/q_parameter.html" %}">ID
                             {% if request.resolver_match.url_name == "players" %}↓{% endif %}
                         </a>
                     </th>
                     <th scope="col" class="w-100 text-nowrap">
-                        <a href="{% url "players_by_name" %}">Name
+                        <a href="{% url "players_by_name" %}?{% include "boogie_ui/q_parameter.html" %}">Name
                             {% if request.resolver_match.url_name == "players_by_name" %}↓{% endif %}
                         </a>
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "players" %}">Joined on
+                        <a href="{% url "players" %}?{% include "boogie_ui/q_parameter.html" %}">Joined on
                             {% if request.resolver_match.url_name == "players" %}↓{% endif %}
                         </a>
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "players_by_machine_tag" %}">Machine Tag
+                        <a href="{% url "players_by_machine_tag" %}?{% include "boogie_ui/q_parameter.html" %}">Machine Tag
                             {% if request.resolver_match.url_name == "players_by_machine_tag" %}↓{% endif %}
                         </a>
                     </th>
                     <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "players_by_scores" %}">#Scores
+                        <a href="{% url "players_by_scores" %}?{% include "boogie_ui/q_parameter.html" %}">#Scores
                             {% if request.resolver_match.url_name == "players_by_scores" %}↓{% endif %}
                         </a>
                     </th>
