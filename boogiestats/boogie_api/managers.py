@@ -123,6 +123,7 @@ class ScoreManager(models.Manager):
 
     def _update_player(self, score_object, player):
         player.latest_score = score_object
+        player.num_scores += 1
         player.save()
 
 

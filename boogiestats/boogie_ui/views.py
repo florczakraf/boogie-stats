@@ -100,22 +100,22 @@ class PlayersListView(generic.ListView):
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
-        return Player.objects.all().annotate(num_scores=Count("scores")).order_by("id")
+        return Player.objects.order_by("id")
 
 
 class PlayersByNameListView(PlayersListView):
     def get_queryset(self):
-        return Player.objects.all().annotate(num_scores=Count("scores")).order_by(Lower("name"))
+        return Player.objects.order_by(Lower("name"))
 
 
 class PlayersByMachineTagListView(PlayersListView):
     def get_queryset(self):
-        return Player.objects.all().annotate(num_scores=Count("scores")).order_by(Lower("machine_tag"))
+        return Player.objects.order_by(Lower("machine_tag"))
 
 
 class PlayersByScoresListView(PlayersListView):
     def get_queryset(self):
-        return Player.objects.all().annotate(num_scores=Count("scores")).order_by("-num_scores")
+        return Player.objects.order_by("-num_scores")
 
 
 def plays_to_class(plays):
@@ -225,7 +225,6 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         context["player"] = player
         context["rivals"] = player.rivals.all()
         scores = player.scores
-        context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
         set_stars(context, scores)
 
@@ -307,7 +306,6 @@ class PlayerStatsView(generic.base.TemplateView):
         context["player"] = player
         scores = player.scores
 
-        context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
         set_stars(context, scores)
 
@@ -341,14 +339,12 @@ class VersusView(LeaderboardSourceMixin, generic.ListView):
         )
         paginator, page, score_page, is_paginated = self.paginate_queryset(scores, ENTRIES_PER_PAGE)
 
-        context["p1_num_scores"] = p1.scores.count()
         context["p1_num_charts_played"] = p1.scores.filter(is_itg_top=True).count()
         context["p1_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) > getattr(x[1], self.lb_attribute))
         )
         set_stars(context, p1.scores, prefix="p1_")
 
-        context["p2_num_scores"] = p2.scores.count()
         context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()
         context["p2_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) < getattr(x[1], self.lb_attribute))

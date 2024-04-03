@@ -586,6 +586,16 @@ def test_score_create_updates_players_latest_score(player, song):
     assert player.latest_score == score
 
 
+def test_score_create_increases_players_num_scores(player, song):
+    previous_num_scores = player.num_scores
+
+    player.scores.create(song=song, itg_score=5900, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert previous_num_scores != player.latest_score
+    assert player.num_scores == previous_num_scores + 1
+
+
 def test_score_create_updates_songs_number_of_players(player, rival1, song_without_scores):
     player.scores.create(song=song_without_scores, itg_score=5900, comment="comment", rate=100)
 

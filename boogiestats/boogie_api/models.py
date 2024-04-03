@@ -213,6 +213,7 @@ class Player(models.Model):
     latest_score = models.ForeignKey(
         "Score", null=True, blank=True, on_delete=models.deletion.SET_NULL, related_name="latest_score_for"
     )
+    num_scores = models.PositiveIntegerField(default=0, db_index=True)
     join_date = models.DateTimeField(default=now, db_index=True)
     pull_gs_name_and_tag = models.BooleanField(
         default=True,
