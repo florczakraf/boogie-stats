@@ -1,6 +1,6 @@
 {% load static %}
 {% load bootstrap_icons %}
-<nav class="navbar navbar-expand-md bg-dark-subtle">
+<nav class="navbar navbar-expand-lg bg-dark-subtle sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand p-0" href="{% url "index" %}">
             {% if BS_LOGO_PATH %}
@@ -23,40 +23,40 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <a class="nav-link" href="{% url "index" %}">Home</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <a class="nav-link" href="{% url "players" %}">Players</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <a class="nav-link" href="{% url "songs" %}">Songs</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <a class="nav-link" href="{% url "scores" %}">Scores</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <a class="nav-link" href="{% url "manual" %}">User Manual</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <a class="nav-link" href="{% url "my-profile" %}">My Profile</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <a class="nav-link" href="{% url "edit" %}">Edit Profile</a>
                 </li>
                 {% if user.is_authenticated %}
-                    <li class="nav-item">
+                    <li class="nav-item text-nowrap">
                         <a class="nav-link" href="{% url "logout" %}">Logout</a>
                     </li>
                 {% endif %}
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <a href="#"
                        class="nav-link"
                        id="darkModeSwitch"
                        data-bs-toggle="tooltip"
                        title="Switch between light and dark theme.">{% bs_icon "sun" %}/{% bs_icon "moon" %}</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item text-nowrap">
                     <div class="nav-link"
                          data-bs-toggle="tooltip"
                          title="Switch between ITG and EX leaderboards on the website. If you want to change your in-game leaderboards, go to Edit Profile.">

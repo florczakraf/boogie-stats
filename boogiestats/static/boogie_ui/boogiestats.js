@@ -1,9 +1,9 @@
 const dateOptions = {
     hour: "numeric",
     minute: "numeric",
-    weekday: "long",
+    weekday: "short",
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
     hourCycle: "h23",
 };

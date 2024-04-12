@@ -14,20 +14,22 @@
 {% block content %}
     <h2 class="mt-2">{% include "boogie_ui/song_display_name.html" %}</h2>
     <p>Pack: {{ song.chart_info.pack_name }}</p>
-    <a href="{% url "song" song_hash=song.hash %}"
-       class="btn {% if request.resolver_match.url_name in "song,song_by_date" %}btn-success{% else %}btn-secondary{% endif %}">
-        All Scores ({{ song.scores.count }})
-    </a>
-    <a href="{% url "song_highscores" song_hash=song.hash %}"
-       class="btn {% if request.resolver_match.url_name == "song_highscores" %}btn-success{% else %}btn-secondary{% endif %}">
-        Highscores ({{ num_highscores }})
-    </a>
-    {% if user.is_authenticated %}
-        <a href="{% url 'song_by_player' song_hash=song.hash player_id=user.player.id %}"
-           class="btn {% if request.resolver_match.url_name == 'song_by_player' and user.player.id == player.id %}btn-success{% else %}btn-secondary{% endif %}">
-            My scores ({{ my_scores }})
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a href="{% url "song" song_hash=song.hash %}"
+           class="btn {% if request.resolver_match.url_name in "song,song_by_date" %}btn-success{% else %}btn-secondary{% endif %}">
+            All Scores ({{ song.scores.count }})
         </a>
-    {% endif %}
+        <a href="{% url "song_highscores" song_hash=song.hash %}"
+           class="btn {% if request.resolver_match.url_name == "song_highscores" %}btn-success{% else %}btn-secondary{% endif %}">
+            Highscores ({{ num_highscores }})
+        </a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'song_by_player' song_hash=song.hash player_id=user.player.id %}"
+               class="btn {% if request.resolver_match.url_name == 'song_by_player' and user.player.id == player.id %}btn-success{% else %}btn-secondary{% endif %}">
+                My scores ({{ my_scores }})
+            </a>
+        {% endif %}
+    </div>
     <h3>
         {% if request.resolver_match.url_name == "song" %}
             All Scores
@@ -45,52 +47,54 @@
     </h3>
     {% if song.scores %}
         {% include "boogie_ui/paginator.html" %}
-        <table class="table table-striped">
-            <thead class="bg-body-secondary">
-                <tr>
-                    <th scope="col" class="w-1 text-nowrap">
-                        {% if request.resolver_match.url_name == "song_highscores" %}
-                            {{ lb_display_name }} Highscore ↓
-                        {% elif request.resolver_match.url_name in "song,song_by_date" %}
-                            <a href="{% url "song" song_hash=song.hash %}">
-                                {{ lb_display_name }} Score
-                                {% if request.resolver_match.url_name == "song" %}↓{% endif %}
-                            </a>
-                        {% else %}
-                            {{ lb_display_name }} Score ↓
-                        {% endif %}
-                    </th>
-                    <th scope="col" class="w-1 text-nowrap">Player</th>
-                    <th scope="col" class="w-100 text-nowrap">Comment</th>
-                    <th scope="col" class="w-1 text-nowrap">
-                        {% if request.resolver_match.url_name in "song,song_by_date" %}
-                            <a href="{% url "song_by_date" song_hash=song.hash %}">
-                                Submission Date
-                                {% if request.resolver_match.url_name == "song_by_date" %}↓{% endif %}
-                            </a>
-                        {% else %}
-                            Submission Date
-                        {% endif %}
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="align-middle">
-                {% for score in scores %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="bg-body-secondary">
                     <tr>
-                        <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
-                        <td class="text-nowrap">
-                            <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
-                        </td>
-                        <td class="text-nowrap">{{ score.comment }}</td>
-                        <td class="text-nowrap">
-                            {% with datetime=score.submission_date %}
-                                {% include "boogie_ui/convert_timestamp.html" %}
-                            {% endwith %}
-                        </td>
+                        <th scope="col" class="w-1 text-nowrap">
+                            {% if request.resolver_match.url_name == "song_highscores" %}
+                                {{ lb_display_name }} Highscore ↓
+                            {% elif request.resolver_match.url_name in "song,song_by_date" %}
+                                <a href="{% url "song" song_hash=song.hash %}">
+                                    {{ lb_display_name }} Score
+                                    {% if request.resolver_match.url_name == "song" %}↓{% endif %}
+                                </a>
+                            {% else %}
+                                {{ lb_display_name }} Score ↓
+                            {% endif %}
+                        </th>
+                        <th scope="col" class="w-1 text-nowrap">Player</th>
+                        <th scope="col" class="w-100 text-nowrap">Comment</th>
+                        <th scope="col" class="w-1 text-nowrap">
+                            {% if request.resolver_match.url_name in "song,song_by_date" %}
+                                <a href="{% url "song_by_date" song_hash=song.hash %}">
+                                    Submission Date
+                                    {% if request.resolver_match.url_name == "song_by_date" %}↓{% endif %}
+                                </a>
+                            {% else %}
+                                Submission Date
+                            {% endif %}
+                        </th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="align-middle">
+                    {% for score in scores %}
+                        <tr>
+                            <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
+                            </td>
+                            <td class="text-nowrap">{{ score.comment }}</td>
+                            <td class="text-nowrap">
+                                {% with datetime=score.submission_date %}
+                                    {% include "boogie_ui/convert_timestamp.html" %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% include "boogie_ui/paginator.html" %}
     {% else %}
         <p>No songs.</p>

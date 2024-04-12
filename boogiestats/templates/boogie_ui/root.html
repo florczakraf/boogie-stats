@@ -4,6 +4,7 @@
       data-bs-theme="{{ request.COOKIES.bs_theme|default:"light" }}">
     <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="keywords" content="boogiestats,stepmania,groovestats" />
         <meta name="Description"
               content="A pass-through proxy for groovestats.com that records non-ranked song scores." />
@@ -21,9 +22,9 @@
         {% block head_extras %}
         {% endblock head_extras %}
     </head>
-    <body>
+    <body class="min-vh-100 d-flex flex-column">
         {% include "boogie_ui/header.html" %}
-        <div class="container-fluid">
+        <div class="container-fluid my-2">
             {% for message in messages %}<div class="alert {{ message.tags }}" role="alert">{{ message|safe }}</div>{% endfor %}
             {% block content %}
             {% endblock content %}
