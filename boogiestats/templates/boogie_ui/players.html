@@ -4,7 +4,7 @@
 {% endblock title %}
 {% block content %}
     <h2>Players</h2>
-    <div class="pt-3 pb-3">
+    <div class="my-3">
         <form class="form-inline" method="get">
             <input name="q"
                    class="form-control mr-sm-2"
@@ -16,58 +16,60 @@
     </div>
     {% if players %}
         {% include "boogie_ui/paginator.html" %}
-        <table class="table table-striped">
-            <thead class="bg-body-secondary">
-                <tr>
-                    <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "players" %}?{% include "boogie_ui/q_parameter.html" %}">ID
-                            {% if request.resolver_match.url_name == "players" %}↓{% endif %}
-                        </a>
-                    </th>
-                    <th scope="col" class="w-100 text-nowrap">
-                        <a href="{% url "players_by_name" %}?{% include "boogie_ui/q_parameter.html" %}">Name
-                            {% if request.resolver_match.url_name == "players_by_name" %}↓{% endif %}
-                        </a>
-                    </th>
-                    <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "players" %}?{% include "boogie_ui/q_parameter.html" %}">Joined on
-                            {% if request.resolver_match.url_name == "players" %}↓{% endif %}
-                        </a>
-                    </th>
-                    <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "players_by_machine_tag" %}?{% include "boogie_ui/q_parameter.html" %}">Machine Tag
-                            {% if request.resolver_match.url_name == "players_by_machine_tag" %}↓{% endif %}
-                        </a>
-                    </th>
-                    <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "players_by_scores" %}?{% include "boogie_ui/q_parameter.html" %}">#Scores
-                            {% if request.resolver_match.url_name == "players_by_scores" %}↓{% endif %}
-                        </a>
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="align-middle">
-                {% for player in players %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="bg-body-secondary">
                     <tr>
-                        <td class="text-nowrap">
-                            <a href="{% url "player" player_id=player.id %}">{{ player.id }}</a>
-                        </td>
-                        <td class="text-nowrap">
-                            <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
-                        </td>
-                        <td class="text-nowrap">
-                            <a href="{% url "player" player_id=player.id %}">{{ player.join_date.date }}</a>
-                        </td>
-                        <td class="text-nowrap">
-                            <a href="{% url "player" player_id=player.id %}">{{ player.machine_tag }}</a>
-                        </td>
-                        <td class="text-nowrap">
-                            <a href="{% url "player" player_id=player.id %}">{{ player.num_scores }}</a>
-                        </td>
+                        <th scope="col" class="w-1 text-nowrap">
+                            <a href="{% url "players" %}?{% include "boogie_ui/q_parameter.html" %}">ID
+                                {% if request.resolver_match.url_name == "players" %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th scope="col" class="w-100 text-nowrap">
+                            <a href="{% url "players_by_name" %}?{% include "boogie_ui/q_parameter.html" %}">Name
+                                {% if request.resolver_match.url_name == "players_by_name" %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th scope="col" class="w-1 text-nowrap">
+                            <a href="{% url "players" %}?{% include "boogie_ui/q_parameter.html" %}">Joined on
+                                {% if request.resolver_match.url_name == "players" %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th scope="col" class="w-1 text-nowrap">
+                            <a href="{% url "players_by_machine_tag" %}?{% include "boogie_ui/q_parameter.html" %}">Machine Tag
+                                {% if request.resolver_match.url_name == "players_by_machine_tag" %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th scope="col" class="w-1 text-nowrap">
+                            <a href="{% url "players_by_scores" %}?{% include "boogie_ui/q_parameter.html" %}">#Scores
+                                {% if request.resolver_match.url_name == "players_by_scores" %}↓{% endif %}
+                            </a>
+                        </th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="align-middle">
+                    {% for player in players %}
+                        <tr>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=player.id %}">{{ player.id }}</a>
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=player.id %}">{{ player.join_date.date }}</a>
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=player.id %}">{{ player.machine_tag }}</a>
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=player.id %}">{{ player.num_scores }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% include "boogie_ui/paginator.html" %}
     {% else %}
         <p>No players.</p>

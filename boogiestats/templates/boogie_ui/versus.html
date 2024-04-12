@@ -7,9 +7,9 @@
     {{ p2.name }} ({{ p2.machine_tag }})
 {% endblock title %}
 {% block content %}
-    <div class="container">
+    <div class="container mb-3">
         <div class="row">
-            <div class="col text-end">
+            <div class="col text-nowrap text-end overflow-auto">
                 <div>
                     <h2>
                         <a href="{% url "player" player_id=p1.id %}">{{ p1.name }} ({{ p1.machine_tag }})</a>
@@ -33,7 +33,7 @@
                 <div>{{ p1_wins }}</div>
                 <div>{{ ties }}</div>
             </div>
-            <div class="col-2 text-center text-nowrap">
+            <div class="col col-md-2 text-nowrap text-center">
                 <div>
                     <h2>vs</h2>
                 </div>
@@ -55,7 +55,7 @@
                 <div>Wins</div>
                 <div>Ties</div>
             </div>
-            <div class="col text-start">
+            <div class="col text-nowrap text-start overflow-auto">
                 <div>
                     <h2>
                         <a href="{% url "player" player_id=p2.id %}">{{ p2.name }} ({{ p2.machine_tag }})</a>
@@ -83,46 +83,48 @@
     </div>
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
-        <table class="table table-striped">
-            <thead class="bg-body-secondary">
-                <tr>
-                    <th scope="col" class="w-100 text-nowrap">Song</th>
-                    <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "versus_by_difference" p1=p1.id p2=p2.id %}"> Difference (pp)
-                            {% if request.resolver_match.url_name == "versus_by_difference" %}↓{% endif %}
-                        </a>
-                    </th>
-                    <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "versus" p1=p1.id p2=p2.id %}">{{ p1.name }} ({{ p1.machine_tag }}) {{ lb_display_name }} score
-                            {% if request.resolver_match.url_name == "versus" %}↓{% endif %}
-                        </a>
-                    </th>
-                    <th scope="col" class="w-1 text-nowrap">
-                        <a href="{% url "versus" p1=p2.id p2=p1.id %}">{{ p2.name }} ({{ p2.machine_tag }}) {{ lb_display_name }} score</a>
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="align-middle">
-                {% for p1_score, p2_score in scores %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="bg-body-secondary">
                     <tr>
-                        <td>
-                            {% with song=p1_score.song %}
-                                {% include "boogie_ui/song_link.html" %}
-                            {% endwith %}
-                        </td>
-                        {% with p1_score_value=p1_score|attr:lb_attribute p2_score_value=p2_score|attr:lb_attribute %}
-                            <td class="text-nowrap">{{ p1_score_value|sub:p2_score_value|div:100|stringformat:".2f" }}</td>
-                            <td class="text-nowrap bg-gradient {% if p1_score_value > p2_score_value %}bg-success-subtle{% elif p1_score_value == p2_score_value %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
-                                <a href="{% url "score" pk=p1_score.id %}">{{ p1_score_value|div:100|stringformat:".2f" }}%</a>
-                            </td>
-                            <td class="text-nowrap bg-gradient {% if p1_score_value < p2_score_value %}bg-success-subtle{% elif p1_score_value == p2_score_value %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
-                                <a href="{% url "score" pk=p2_score.id %}">{{ p2_score_value|div:100|stringformat:".2f" }}%</a>
-                            </td>
-                        {% endwith %}
+                        <th scope="col" class="w-100 text-nowrap">Song</th>
+                        <th scope="col" class="w-1 text-nowrap">
+                            <a href="{% url "versus_by_difference" p1=p1.id p2=p2.id %}"> Difference (pp)
+                                {% if request.resolver_match.url_name == "versus_by_difference" %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th scope="col" class="w-1 text-nowrap">
+                            <a href="{% url "versus" p1=p1.id p2=p2.id %}">{{ p1.name }} ({{ p1.machine_tag }}) {{ lb_display_name }} score
+                                {% if request.resolver_match.url_name == "versus" %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th scope="col" class="w-1 text-nowrap">
+                            <a href="{% url "versus" p1=p2.id p2=p1.id %}">{{ p2.name }} ({{ p2.machine_tag }}) {{ lb_display_name }} score</a>
+                        </th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="align-middle">
+                    {% for p1_score, p2_score in scores %}
+                        <tr>
+                            <td class="text-nowrap">
+                                {% with song=p1_score.song %}
+                                    {% include "boogie_ui/song_link.html" %}
+                                {% endwith %}
+                            </td>
+                            {% with p1_score_value=p1_score|attr:lb_attribute p2_score_value=p2_score|attr:lb_attribute %}
+                                <td class="text-nowrap">{{ p1_score_value|sub:p2_score_value|div:100|stringformat:".2f" }}</td>
+                                <td class="text-nowrap bg-gradient {% if p1_score_value > p2_score_value %}bg-success-subtle{% elif p1_score_value == p2_score_value %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
+                                    <a href="{% url "score" pk=p1_score.id %}">{{ p1_score_value|div:100|stringformat:".2f" }}%</a>
+                                </td>
+                                <td class="text-nowrap bg-gradient {% if p1_score_value < p2_score_value %}bg-success-subtle{% elif p1_score_value == p2_score_value %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %}">
+                                    <a href="{% url "score" pk=p2_score.id %}">{{ p2_score_value|div:100|stringformat:".2f" }}%</a>
+                                </td>
+                            {% endwith %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% include "boogie_ui/paginator.html" %}
     {% else %}
         <p>No common songs.</p>

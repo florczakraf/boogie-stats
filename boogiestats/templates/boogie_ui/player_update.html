@@ -11,8 +11,8 @@
     Edit Profile
 {% endblock title %}
 {% block content %}
-    <h2>Edit Profile</h2>
-    <div class="w-50 p-3">
+    <div class="container">
+        <h2>Edit Profile</h2>
         <django-formset endpoint="{{ request.path }}"  csrf-token="{{ csrf_token }}">
         {% render_form form "bootstrap" field_classes="row mb-3" label_classes="col-sm-3" control_classes="col-sm-9" %}
         <button type="button"

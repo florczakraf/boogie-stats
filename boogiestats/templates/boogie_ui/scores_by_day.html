@@ -63,34 +63,36 @@
     <h3>{{ day }} Scores</h3>
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
-        <table class="table table-striped">
-            <thead class="bg-body-secondary">
-                <tr>
-                    <th scope="col" class="w-100 text-nowrap">Song</th>
-                    <th scope="col" class="w-1 text-nowrap">Comment</th>
-                    <th scope="col" class="w-1 text-nowrap">{{ lb_display_name }} Score</th>
-                    <th scope="col" class="w-1 text-nowrap">Submission Date ↓</th>
-                </tr>
-            </thead>
-            <tbody class="align-middle">
-                {% for score in scores %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="bg-body-secondary">
                     <tr>
-                        <td>
-                            {% with song=score.song %}
-                                {% include "boogie_ui/song_link.html" %}
-                            {% endwith %}
-                        </td>
-                        <td class="text-nowrap">{{ score.comment }}</td>
-                        <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
-                        <td class="text-nowrap">
-                            {% with datetime=score.submission_date %}
-                                {% include "boogie_ui/convert_timestamp.html" %}
-                            {% endwith %}
-                        </td>
+                        <th scope="col" class="w-100 text-nowrap">Song</th>
+                        <th scope="col" class="w-1 text-nowrap">Comment</th>
+                        <th scope="col" class="w-1 text-nowrap">{{ lb_display_name }} Score</th>
+                        <th scope="col" class="w-1 text-nowrap">Submission Date ↓</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="align-middle">
+                    {% for score in scores %}
+                        <tr>
+                            <td class="text-nowrap">
+                                {% with song=score.song %}
+                                    {% include "boogie_ui/song_link.html" %}
+                                {% endwith %}
+                            </td>
+                            <td class="text-nowrap">{{ score.comment }}</td>
+                            <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
+                            <td class="text-nowrap">
+                                {% with datetime=score.submission_date %}
+                                    {% include "boogie_ui/convert_timestamp.html" %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% include "boogie_ui/paginator.html" %}
     {% else %}
         <p>No scores.</p>

@@ -3,24 +3,21 @@
     Sign In
 {% endblock title %}
 {% block content %}
-    <h2>Sign In</h2>
-    <form action="{% url "login" %}" method="post">
-        {% csrf_token %}
-        {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
-        <table>
-            <tr>
-                <th>
-                    <label for="gs_api_key">GS API Key (first 32 characters):</label>
-                </th>
-                <td>
-                    <input type="password"
-                           id="gs_api_key"
-                           name="gs_api_key"
-                           placeholder="First 32 characters of gs-api-key"
-                           maxlength="32" />
-                </td>
-            </tr>
-        </table>
-        <input class="btn btn-primary" type="submit" value="Sign In" />
-    </form>
+    <div class="container">
+        <h2>Sign In</h2>
+        <form action="{% url "login" %}" method="post">
+            {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
+            <div class="mb-3">
+                <label class="form-label" for="gs_api_key">GS API Key (first 32 characters):</label>
+                <input class="form-control"
+                       type="password"
+                       id="gs_api_key"
+                       name="gs_api_key"
+                       placeholder="First 32 characters of gs-api-key"
+                       maxlength="32" />
+            </div>
+            <input class="btn btn-primary" type="submit" value="Sign In" />
+        </form>
+    </div>
 {% endblock content %}
