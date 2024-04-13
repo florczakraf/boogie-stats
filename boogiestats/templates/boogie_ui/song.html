@@ -9,7 +9,7 @@
     <meta property="og:title"
           content="[{{ song.chart_info.diff_number }}] {{ song.display_name }}" />
     <meta property="og:description"
-          content="Pack: {{ song.chart_info.pack_name }} | Playcount: {{ song.scores.count }} | Highscores: {{ num_highscores }}" />
+          content="Pack: {{ song.chart_info.pack_name }} | Playcount: {{ song.number_of_scores }} | Highscores: {{ song.number_of_players }}" />
 {% endblock head_extras %}
 {% block content %}
     <h2 class="mt-2">{% include "boogie_ui/song_display_name.html" %}</h2>
@@ -17,16 +17,20 @@
     <div class="d-flex flex-wrap gap-2 mb-3">
         <a href="{% url "song" song_hash=song.hash %}"
            class="btn {% if request.resolver_match.url_name in "song,song_by_date" %}btn-success{% else %}btn-secondary{% endif %}">
-            All Scores ({{ song.scores.count }})
+            All Scores ({{ song.number_of_scores }})
         </a>
         <a href="{% url "song_highscores" song_hash=song.hash %}"
            class="btn {% if request.resolver_match.url_name == "song_highscores" %}btn-success{% else %}btn-secondary{% endif %}">
-            Highscores ({{ num_highscores }})
+            Highscores ({{ song.number_of_players }})
         </a>
         {% if user.is_authenticated %}
             <a href="{% url 'song_by_player' song_hash=song.hash player_id=user.player.id %}"
                class="btn {% if request.resolver_match.url_name == 'song_by_player' and user.player.id == player.id %}btn-success{% else %}btn-secondary{% endif %}">
-                My scores ({{ my_scores }})
+                My Scores ({{ my_scores }})
+            </a>
+            <a href="{% url 'song_by_rivals' song_hash=song.hash player_id=user.player.id %}"
+               class="btn {% if request.resolver_match.url_name == 'song_by_rivals' and user.player.id == player.id %}btn-success{% else %}btn-secondary{% endif %}">
+                Rivals
             </a>
         {% endif %}
     </div>
@@ -36,16 +40,14 @@
         {% elif request.resolver_match.url_name == "song_highscores" %}
             Highscores
         {% elif request.resolver_match.url_name == "song_by_player" %}
-            {% if user.player.id == player.id %}
-                My scores
-            {% else %}
-                {{ player.name }} scores
-            {% endif %}
+            {{ player.name }}'s Scores
+        {% elif request.resolver_match.url_name == "song_by_rivals" %}
+            {{ player.name }}'s Rivals
         {% else %}
             Scores
         {% endif %}
     </h3>
-    {% if song.scores %}
+    {% if scores %}
         {% include "boogie_ui/paginator.html" %}
         <div class="table-responsive">
             <table class="table table-striped">
@@ -97,6 +99,6 @@
         </div>
         {% include "boogie_ui/paginator.html" %}
     {% else %}
-        <p>No songs.</p>
+        <p>No scores.</p>
     {% endif %}
 {% endblock content %}
