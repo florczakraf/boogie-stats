@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.views import generic
@@ -168,7 +168,7 @@ class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
             steps_hit=0,
         )
 
-        if scores.count():
+        if context["num_scores"]:
             sums = scores.aggregate(
                 fantastics_plus=Sum("fantastics_plus"),
                 fantastics=Sum("fantastics"),
@@ -238,7 +238,7 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         context["player"] = player
         context["rivals"] = player.rivals.all()
         scores = player.scores
-        context["num_charts_played"] = scores.filter(is_itg_top=True).count()
+        context["num_charts_played"] = scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         set_stars(context, scores)
 
         today = datetime.date.today()
@@ -319,7 +319,7 @@ class PlayerStatsView(generic.base.TemplateView):
         context["player"] = player
         scores = player.scores
 
-        context["num_charts_played"] = scores.filter(is_itg_top=True).count()
+        context["num_charts_played"] = scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         set_stars(context, scores)
 
         return context
@@ -352,13 +352,13 @@ class VersusView(LeaderboardSourceMixin, generic.ListView):
         )
         paginator, page, score_page, is_paginated = self.paginate_queryset(scores, ENTRIES_PER_PAGE)
 
-        context["p1_num_charts_played"] = p1.scores.filter(is_itg_top=True).count()
+        context["p1_num_charts_played"] = p1.scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         context["p1_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) > getattr(x[1], self.lb_attribute))
         )
         set_stars(context, p1.scores, prefix="p1_")
 
-        context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()
+        context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         context["p2_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) < getattr(x[1], self.lb_attribute))
         )
@@ -405,7 +405,6 @@ class SongView(LeaderboardSourceMixin, generic.ListView):
         song_hash = self.kwargs["song_hash"]
         song = Song.get_or_404(hash=song_hash)
         context["song"] = song
-        context["num_highscores"] = song.scores.filter(is_itg_top=True).count()
         if hasattr(self.request.user, "player"):
             context["my_scores"] = song.scores.filter(player=self.request.user.player).count()
 
@@ -417,8 +416,8 @@ class SongView(LeaderboardSourceMixin, generic.ListView):
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
         return (
-            Song.get_or_404(hash=song_hash)
-            .scores.order_by(f"-{self.lb_attribute}", "submission_date")
+            Score.objects.filter(song__hash=song_hash)
+            .order_by(f"-{self.lb_attribute}", "submission_date")
             .select_related("song", "player")
         )
 
@@ -427,8 +426,8 @@ class SongByDateView(SongView):
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
         return (
-            Song.get_or_404(hash=song_hash)
-            .scores.order_by("-submission_date", f"-{self.lb_attribute}")
+            Score.objects.filter(song__hash=song_hash)
+            .order_by("-submission_date", f"-{self.lb_attribute}")
             .select_related("song", "player")
         )
 
@@ -442,8 +441,8 @@ class SongHighscoresView(SongView):
     def get_queryset(self):
         song_hash = self.kwargs["song_hash"]
         return (
-            Song.get_or_404(hash=song_hash)
-            .scores.filter(**{f"is_{self.lb_source}_top": True})
+            Score.objects.filter(song__hash=song_hash)
+            .filter(**{f"is_{self.lb_source}_top": True})
             .order_by(f"-{self.lb_attribute}", "submission_date")
             .select_related("song", "player")
         )
@@ -451,11 +450,23 @@ class SongHighscoresView(SongView):
 
 class SongByPlayerView(SongView):
     def get_queryset(self):
-        player = Player.get_or_404(id=self.kwargs["player_id"])
-        song = Song.get_or_404(hash=self.kwargs["song_hash"])
+        song_hash = self.kwargs["song_hash"]
         return (
-            song.scores.filter(player=player)
+            Score.objects.filter(song__hash=song_hash, player_id=self.kwargs["player_id"])
             .order_by(f"-{self.lb_attribute}", "submission_date")
+            .select_related("song", "player")
+        )
+
+
+class SongByRivalsView(SongView):
+    def get_queryset(self):
+        player = Player.objects.get(id=self.kwargs["player_id"])
+        song_hash = self.kwargs["song_hash"]
+        return (
+            Score.objects.filter(song__hash=song_hash)
+            .filter(Q(player__in=player.rivals.all()) | Q(player=player), **{f"is_{self.lb_source}_top": True})
+            .order_by(f"-{self.lb_source}_score", "submission_date", "id")
+            .all()
             .select_related("song", "player")
         )
 
