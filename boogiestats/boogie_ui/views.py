@@ -728,9 +728,6 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
 
         songs = (
             Song.objects.filter(hash__in=hashes)
-            .annotate(
-                num_scores=Count("scores"), num_players=Count("scores__player", distinct=True)
-            )  # TODO isn't this cached already?
             .prefetch_related(
                 f"{self.lb_source}_highscore",
                 f"{self.lb_source}_highscore__player",
