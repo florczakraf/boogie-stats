@@ -30,7 +30,7 @@
             </a>
             <a href="{% url 'song_by_rivals' song_hash=song.hash player_id=user.player.id %}"
                class="btn {% if request.resolver_match.url_name == 'song_by_rivals' and user.player.id == player.id %}btn-success{% else %}btn-secondary{% endif %}">
-                Rivals
+                Rivals ({{ rival_scores }})
             </a>
         {% endif %}
     </div>

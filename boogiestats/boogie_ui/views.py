@@ -406,7 +406,13 @@ class SongView(LeaderboardSourceMixin, generic.ListView):
         song = Song.get_or_404(hash=song_hash)
         context["song"] = song
         if hasattr(self.request.user, "player"):
-            context["my_scores"] = song.scores.filter(player=self.request.user.player).count()
+            player = self.request.user.player
+            context["my_scores"] = Score.objects.filter(song__hash=song_hash, player=player).count()
+            context["rival_scores"] = Score.objects.filter(
+                Q(player__in=player.rivals.all()) | Q(player=player),
+                song__hash=song_hash,
+                **{f"is_{self.lb_source}_top": True},
+            ).count()
 
         if player_id := self.kwargs.get("player_id"):
             context["player"] = Player.get_or_404(id=player_id)
