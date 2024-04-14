@@ -52,12 +52,20 @@ class LeaderboardSourceMixin:
         return context
 
 
-def set_stars(context, scores, prefix=""):
+def set_stars_from_scores(context, scores, prefix=""):
     context[f"{prefix}one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
     context[f"{prefix}two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
     context[f"{prefix}three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
     context[f"{prefix}four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
     context[f"{prefix}five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+
+
+def set_stars_from_player(context, player, prefix=""):
+    context[f"{prefix}one_star"] = player.one_star
+    context[f"{prefix}two_stars"] = player.two_stars
+    context[f"{prefix}three_stars"] = player.three_stars
+    context[f"{prefix}four_stars"] = player.four_stars
+    context[f"{prefix}five_stars"] = player.five_stars
 
 
 class IndexView(LeaderboardSourceMixin, generic.ListView):
@@ -131,6 +139,16 @@ class PlayersByScoresListView(PlayersListView):
         return Player.objects.filter(name__icontains=self._get_user_query()).order_by("-num_scores")
 
 
+class PlayersByQuadsListView(PlayersListView):
+    def get_queryset(self):
+        return Player.objects.filter(name__icontains=self._get_user_query()).order_by("-four_stars", "id")
+
+
+class PlayersByQuintsListView(PlayersListView):
+    def get_queryset(self):
+        return Player.objects.filter(name__icontains=self._get_user_query()).order_by("-five_stars", "id")
+
+
 def plays_to_class(plays):
     class_suffix = 0
     for mapping in CALENDAR_VALUES + EXTRA_CALENDAR_VALUES:
@@ -156,7 +174,7 @@ class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
         context["player"] = player
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.values("song").distinct().count()
-        set_stars(context, scores)
+        set_stars_from_scores(context, scores)
         context.update(
             fantastics_plus=0,
             fantastics=0,
@@ -239,7 +257,7 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         context["rivals"] = player.rivals.all()
         scores = player.scores
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
-        set_stars(context, scores)
+        set_stars_from_player(context, player)
 
         today = datetime.date.today()
         a_year_ago = today - datetime.timedelta(days=365)  # today.replace(year=today.year - 1) fails for leap years
@@ -320,7 +338,7 @@ class PlayerStatsView(generic.base.TemplateView):
         scores = player.scores
 
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
-        set_stars(context, scores)
+        set_stars_from_player(context, player)
 
         return context
 
@@ -356,13 +374,13 @@ class VersusView(LeaderboardSourceMixin, generic.ListView):
         context["p1_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) > getattr(x[1], self.lb_attribute))
         )
-        set_stars(context, p1.scores, prefix="p1_")
+        set_stars_from_player(context, p1, prefix="p1_")
 
         context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         context["p2_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) < getattr(x[1], self.lb_attribute))
         )
-        set_stars(context, p2.scores, prefix="p2_")
+        set_stars_from_player(context, p2, prefix="p2_")
 
         context["ties"] = len(scores) - context["p1_wins"] - context["p2_wins"]
         context["common_charts"] = len(scores)
@@ -753,7 +771,7 @@ class PlayerWrappedView(generic.base.TemplateView):
         scores = player.scores.filter(submission_date__year=year)
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.filter(is_itg_top=True).count()
-        set_stars(context, scores)
+        set_stars_from_scores(context, scores)
 
         end_of_year = datetime.date(year=year, month=12, day=31)
         start_of_year = datetime.date(year=year, month=1, day=1)

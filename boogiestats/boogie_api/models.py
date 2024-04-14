@@ -221,6 +221,11 @@ class Player(models.Model):
         help_text="Pull name and tag on successful GS-ranked score submission",
     )
     leaderboard_source = models.IntegerField(choices=LeaderboardSource.choices, default=LeaderboardSource.BS)
+    one_star = models.PositiveIntegerField(default=0, db_index=True)
+    two_stars = models.PositiveIntegerField(default=0, db_index=True)
+    three_stars = models.PositiveIntegerField(default=0, db_index=True)
+    four_stars = models.PositiveIntegerField(default=0, db_index=True)
+    five_stars = models.PositiveIntegerField(default=0, db_index=True)
 
     def save(self, *args, **kwargs):
         self.full_clean()

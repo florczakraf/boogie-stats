@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 
+from boogiestats.boogie_api.utils import score_to_star_field
+
 if TYPE_CHECKING:
     from boogiestats.boogie_api.models import Song, Player
 
@@ -39,7 +41,7 @@ class ScoreManager(models.Manager):
         judgments: Optional = None,
     ):
         used_cmod = self._handle_used_cmod(used_cmod, comment)
-        new_is_itg_top = self._handle_is_itg_top(song, player, itg_score)
+        new_is_itg_top, previous_itg_top = self._handle_is_itg_top(song, player, itg_score)
 
         score_object = self.model(
             song=song,
@@ -58,7 +60,7 @@ class ScoreManager(models.Manager):
         score_object.save()
 
         self._update_song(score_object, song)
-        self._update_player(score_object, player)
+        self._update_player(score_object, player, previous_itg_top, new_is_itg_top, new_is_ex_top)
         song.update_search_cache()  # TODO: this *really* needs to be done async
 
         return score_object
@@ -85,7 +87,7 @@ class ScoreManager(models.Manager):
             previous_top.is_itg_top = False
             previous_top.save()
 
-        return new_is_itg_top
+        return new_is_itg_top, previous_top
 
     def _handle_is_ex_top(self, song, player, ex_score):
         new_is_ex_top = False
@@ -121,9 +123,21 @@ class ScoreManager(models.Manager):
         song.update_number_of_players_and_scores()
         song.save()
 
-    def _update_player(self, score_object, player):
+    def _update_player(self, score_object, player, previous_itg_top, itg_improved, ex_improved):
         player.latest_score = score_object
         player.num_scores += 1
+
+        if itg_improved and (increase_star_field := score_to_star_field(score_object)):
+            old_value = getattr(player, increase_star_field)
+            setattr(player, increase_star_field, old_value + 1)
+
+            if (previous_itg_top is not None) and (decrease_star_field := score_to_star_field(previous_itg_top)):
+                old_value = getattr(player, decrease_star_field)
+                setattr(player, decrease_star_field, old_value - 1)
+
+        if ex_improved and score_object.ex_score == 10_000:
+            player.five_stars += 1
+
         player.save()
 
 

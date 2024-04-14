@@ -30,6 +30,16 @@
                                 {% if request.resolver_match.url_name == "players_by_name" %}↓{% endif %}
                             </a>
                         </th>
+                        <th scope="col" class="w-100 text-nowrap">
+                            <a href="{% url "players_by_quints" %}?{% include "boogie_ui/q_parameter.html" %}">Quints
+                                {% if request.resolver_match.url_name == "players_by_quints" %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th scope="col" class="w-100 text-nowrap">
+                            <a href="{% url "players_by_quads" %}?{% include "boogie_ui/q_parameter.html" %}">Quads
+                                {% if request.resolver_match.url_name == "players_by_quads" %}↓{% endif %}
+                            </a>
+                        </th>
                         <th scope="col" class="w-1 text-nowrap">
                             <a href="{% url "players" %}?{% include "boogie_ui/q_parameter.html" %}">Joined on
                                 {% if request.resolver_match.url_name == "players" %}↓{% endif %}
@@ -55,6 +65,12 @@
                             </td>
                             <td class="text-nowrap">
                                 <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=player.id %}">{{ player.five_stars }}</a>
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=player.id %}">{{ player.four_stars }}</a>
                             </td>
                             <td class="text-nowrap">
                                 <a href="{% url "player" player_id=player.id %}">{{ player.join_date.date }}</a>

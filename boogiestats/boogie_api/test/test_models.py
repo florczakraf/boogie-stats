@@ -619,3 +619,91 @@ def test_score_create_updates_songs_number_of_scores(player, rival1, song_withou
 
     song_without_scores.refresh_from_db()
     assert song_without_scores.number_of_scores == 3
+
+
+@pytest.mark.parametrize(
+    ("itg_score", "stars_field"),
+    [
+        (9700, "one_star"),
+        (9810, "two_stars"),
+        (9950, "three_stars"),
+        (10_000, "four_stars"),
+    ],
+)
+def test_score_create_adds_players_stars(player, song_without_scores, itg_score, stars_field):
+    start_stars = getattr(player, stars_field)
+
+    player.scores.create(song=song_without_scores, itg_score=itg_score, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert getattr(player, stars_field) == start_stars + 1
+
+    # second one shouldn't increase the counter
+    player.scores.create(song=song_without_scores, itg_score=itg_score, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert getattr(player, stars_field) == start_stars + 1
+
+
+def test_score_create_decreases_player_stars(player, song_without_scores):
+    assert player.five_stars == player.four_stars == player.three_stars == player.two_stars == player.one_star == 0
+
+    # score below star thresholds
+    player.scores.create(song=song_without_scores, itg_score=7000, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert player.five_stars == player.four_stars == player.three_stars == player.two_stars == player.one_star == 0
+
+    # improved to one star
+    player.scores.create(song=song_without_scores, itg_score=9600, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert player.five_stars == player.four_stars == player.three_stars == player.two_stars == 0
+    assert player.one_star == 1
+
+    # improved to two stars
+    player.scores.create(song=song_without_scores, itg_score=9800, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert player.five_stars == player.four_stars == player.three_stars == player.one_star == 0
+    assert player.two_stars == 1
+
+    # improved to three stars
+    player.scores.create(song=song_without_scores, itg_score=9900, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert player.five_stars == player.four_stars == player.two_stars == player.one_star == 0
+    assert player.three_stars == 1
+
+    # improved to four stars
+    player.scores.create(song=song_without_scores, itg_score=10_000, comment="comment", rate=100)
+
+    player.refresh_from_db()
+    assert player.five_stars == player.three_stars == player.two_stars == player.one_star == 0
+    assert player.four_stars == 1
+
+
+def test_score_create_updates_players_quints_on_new_quints(player, song_without_scores):
+    start_quints = player.five_stars
+
+    player.scores.create(
+        song=song_without_scores,
+        itg_score=10_000,
+        judgments={"fantasticPlus": 10, "totalSteps": 10},
+        comment="comment",
+        rate=100,
+    )
+
+    player.refresh_from_db()
+    assert player.five_stars == start_quints + 1
+
+    # create second quint
+    player.scores.create(
+        song=song_without_scores,
+        itg_score=10_000,
+        judgments={"fantasticPlus": 10, "totalSteps": 10},
+        comment="comment",
+        rate=100,
+    )
+    player.refresh_from_db()
+    assert player.five_stars == start_quints + 1  # it shouldn't increase

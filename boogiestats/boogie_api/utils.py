@@ -9,7 +9,7 @@ from ipware import get_client_ip
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from boogiestats.boogie_api.models import Player
+    from boogiestats.boogie_api.models import Player, Score
 
 
 def search_enabled() -> bool:
@@ -29,3 +29,17 @@ def set_sentry_user(request: HttpRequest, player_instance: Optional["Player"] = 
         sentry_sdk.set_user(
             {"id": player_instance.id, "username": player_instance.name, "ip_address": get_client_ip(request)[0]}
         )
+
+
+def score_to_star_field(score: "Score"):
+    value = score.itg_score
+    if 9600 <= value < 9800:
+        return "one_star"
+    elif 9800 <= value < 9900:
+        return "two_stars"
+    elif 9900 <= value < 10_000:
+        return "three_stars"
+    elif value == 10_000:
+        return "four_stars"
+
+    return None
