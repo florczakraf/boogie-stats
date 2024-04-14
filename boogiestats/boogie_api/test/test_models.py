@@ -707,3 +707,30 @@ def test_score_create_updates_players_quints_on_new_quints(player, song_without_
     )
     player.refresh_from_db()
     assert player.five_stars == start_quints + 1  # it shouldn't increase
+
+
+def test_score_create_updates_players_num_songs(player, song_without_scores):
+    start_num_songs = player.num_songs
+
+    player.scores.create(
+        song=song_without_scores,
+        itg_score=10_000,
+        judgments={"fantasticPlus": 10, "totalSteps": 10},
+        comment="comment",
+        rate=100,
+    )
+
+    player.refresh_from_db()
+    assert player.num_songs == start_num_songs + 1
+
+    # submitting another one doesn't increase the counter any further
+    player.scores.create(
+        song=song_without_scores,
+        itg_score=10_000,
+        judgments={"fantasticPlus": 10, "totalSteps": 10},
+        comment="comment",
+        rate=100,
+    )
+
+    player.refresh_from_db()
+    assert player.num_songs == start_num_songs + 1

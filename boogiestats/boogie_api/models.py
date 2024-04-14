@@ -226,6 +226,7 @@ class Player(models.Model):
     three_stars = models.PositiveIntegerField(default=0, db_index=True)
     four_stars = models.PositiveIntegerField(default=0, db_index=True)
     five_stars = models.PositiveIntegerField(default=0, db_index=True)
+    num_songs = models.PositiveIntegerField(default=0, db_index=True)
 
     def save(self, *args, **kwargs):
         self.full_clean()

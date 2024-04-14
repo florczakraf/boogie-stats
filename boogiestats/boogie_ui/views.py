@@ -149,6 +149,11 @@ class PlayersByQuintsListView(PlayersListView):
         return Player.objects.filter(name__icontains=self._get_user_query()).order_by("-five_stars", "id")
 
 
+class PlayersBySongsListView(PlayersListView):
+    def get_queryset(self):
+        return Player.objects.filter(name__icontains=self._get_user_query()).order_by("-num_songs", "id")
+
+
 def plays_to_class(plays):
     class_suffix = 0
     for mapping in CALENDAR_VALUES + EXTRA_CALENDAR_VALUES:
@@ -255,8 +260,6 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         player = Player.get_or_404(id=player_id)
         context["player"] = player
         context["rivals"] = player.rivals.all()
-        scores = player.scores
-        context["num_charts_played"] = scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         set_stars_from_player(context, player)
 
         today = datetime.date.today()
@@ -278,9 +281,8 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
 
     def get_queryset(self):
         player_id = self.kwargs["player_id"]
-        player = Player.get_or_404(id=player_id)
 
-        return player.scores.order_by("-submission_date").prefetch_related("song")
+        return Score.objects.filter(player__id=player_id).order_by("-id").prefetch_related("song")
 
 
 class PlayerHighscoresView(PlayerView):
@@ -335,9 +337,6 @@ class PlayerStatsView(generic.base.TemplateView):
         player_id = self.kwargs["player_id"]
         player = Player.get_or_404(id=player_id)
         context["player"] = player
-        scores = player.scores
-
-        context["num_charts_played"] = scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         set_stars_from_player(context, player)
 
         return context
@@ -370,13 +369,11 @@ class VersusView(LeaderboardSourceMixin, generic.ListView):
         )
         paginator, page, score_page, is_paginated = self.paginate_queryset(scores, ENTRIES_PER_PAGE)
 
-        context["p1_num_charts_played"] = p1.scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         context["p1_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) > getattr(x[1], self.lb_attribute))
         )
         set_stars_from_player(context, p1, prefix="p1_")
 
-        context["p2_num_charts_played"] = p2.scores.filter(is_itg_top=True).count()  # TODO could be cached in Player
         context["p2_wins"] = sum(
             (1 for x in scores if getattr(x[0], self.lb_attribute) < getattr(x[1], self.lb_attribute))
         )
@@ -731,7 +728,9 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
 
         songs = (
             Song.objects.filter(hash__in=hashes)
-            .annotate(num_scores=Count("scores"), num_players=Count("scores__player", distinct=True))
+            .annotate(
+                num_scores=Count("scores"), num_players=Count("scores__player", distinct=True)
+            )  # TODO isn't this cached already?
             .prefetch_related(
                 f"{self.lb_source}_highscore",
                 f"{self.lb_source}_highscore__player",

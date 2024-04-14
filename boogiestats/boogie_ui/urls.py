@@ -10,6 +10,7 @@ urlpatterns = [
     path("players_by_scores/", views.PlayersByScoresListView.as_view(), name="players_by_scores"),
     path("players_by_quads/", views.PlayersByQuadsListView.as_view(), name="players_by_quads"),
     path("players_by_quints/", views.PlayersByQuintsListView.as_view(), name="players_by_quints"),
+    path("players_by_songs/", views.PlayersBySongsListView.as_view(), name="players_by_songs"),
     path("players/<int:player_id>/", views.PlayerView.as_view(), name="player"),
     path("players/<int:player_id>/most_played", views.PlayerMostPlayedView.as_view(), name="player_most_played"),
     path("players/<int:player_id>/highscores", views.PlayerHighscoresView.as_view(), name="player_highscores"),

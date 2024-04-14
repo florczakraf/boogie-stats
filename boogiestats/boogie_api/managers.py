@@ -138,6 +138,9 @@ class ScoreManager(models.Manager):
         if ex_improved and score_object.ex_score == 10_000:
             player.five_stars += 1
 
+        if previous_itg_top is None:
+            player.num_songs += 1
+
         player.save()
 
 

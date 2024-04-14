@@ -55,6 +55,11 @@
                                 {% if request.resolver_match.url_name == "players_by_scores" %}↓{% endif %}
                             </a>
                         </th>
+                        <th scope="col" class="w-1 text-nowrap">
+                            <a href="{% url "players_by_songs" %}?{% include "boogie_ui/q_parameter.html" %}">#Songs
+                                {% if request.resolver_match.url_name == "players_by_songs" %}↓{% endif %}
+                            </a>
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="align-middle">
@@ -80,6 +85,9 @@
                             </td>
                             <td class="text-nowrap">
                                 <a href="{% url "player" player_id=player.id %}">{{ player.num_scores }}</a>
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{% url "player" player_id=player.id %}">{{ player.num_songs }}</a>
                             </td>
                         </tr>
                     {% endfor %}
