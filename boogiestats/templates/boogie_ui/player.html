@@ -9,7 +9,7 @@
     <meta property="og:title"
           content="{{ player.name }} ({{ player.machine_tag }})" />
     <meta property="og:description"
-          content="Joined on: {{ player.join_date.date }} | Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}" />
+          content="Joined on: {{ player.join_date.date }} | Scores: {{ player.num_scores }} | Charts played: {{ player.num_songs }}" />
 {% endblock head_extras %}
 {% block content %}
     <h1>
@@ -37,7 +37,7 @@
             <ul>
                 <li>Joined on: {{ player.join_date.date }}</li>
                 <li>Scores: {{ player.num_scores }}</li>
-                <li>Charts played: {{ num_charts_played }}</li>
+                <li>Charts played: {{ player.num_songs }}</li>
             </ul>
         </div>
         {% include "boogie_ui/stars.html" %}
