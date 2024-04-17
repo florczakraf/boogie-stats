@@ -732,7 +732,7 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
                 f"{self.lb_source}_highscore",
                 f"{self.lb_source}_highscore__player",
             )
-            .order_by("-num_scores", f"-{self.lb_source}_highscore__{self.lb_source}_score")
+            .order_by("-number_of_scores", f"-{self.lb_source}_highscore__{self.lb_source}_score")
         )
 
         paginator, page, _, is_paginated = self.paginate_queryset(range(n_results), ENTRIES_PER_PAGE)
