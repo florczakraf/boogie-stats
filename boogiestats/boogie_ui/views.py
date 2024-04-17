@@ -14,6 +14,7 @@ from django.shortcuts import render, redirect
 from django.db.models import Count, Sum, Q
 from django.template.response import TemplateResponse
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import generic
 from django.views.decorators.http import require_POST
 from redis import ResponseError
@@ -590,7 +591,12 @@ def login_user(request):
         if user is not None:
             login(request, user)
             messages.success(request, "Signed-in successfully.", extra_tags="alert-success")
-            return HttpResponseRedirect(request.POST.get("next") or "/")
+            next = "/"
+            candidate = request.POST.get("next")
+            if candidate and url_has_allowed_host_and_scheme(candidate, allowed_hosts=None):
+                next = candidate
+
+            return HttpResponseRedirect(next)
         else:
             messages.error(
                 request,
