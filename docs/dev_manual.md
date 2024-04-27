@@ -1,28 +1,23 @@
 ## Environment Setup
 You will need Python 3.10+ in order to run BoogieStats because it's built with Django 5.
-I recommend using a [virtualenv](https://virtualenv.pypa.io/), Python's built-in `venv` or other means of separating
-Python environments when working with BoogieStats.
-You can use the snippets below to create and enter the environment.
+This project uses [Poetry](https://python-poetry.org/docs/) for managing the environment.
+It handles virtual environment creation and package installation.
+Follow their docs to learn how to install it.
 
-You will need to run one of these commands only once:
+Once you have Poetry, call:
 ```
-$ virtualenv path/to/new/venv  # for virtualenv
-$ python -m venv path/to/new/venv  # for venv
+$ poetry install
 ```
+to install all runtime and development requirements, as well as the project itself in [editable mode](https://pip.pypa.io/en/stable/topics/local-project-installs/).
 
 Run this command every time you want to enter the environment:
 ```
-$ . path/to/new/venv/bin/activate
+$ poetry shell
 ```
+In contrast to a standard virtualenv, Poetry spawns an augmented subshell instead of sourcing environment to the current one.
+In order to leave it, simply call `exit` or press `ctrl-d`.
 
-Next step is to install all the requirements and the application itself (in the editable mode).
-You can do it by running:
-```
-$ pip install -e .[dev]
-```
-while you are in the root of the repository.
-
-Once you have the package and requirements installed, create a development settings file with the following contents:
+Let's create a development settings file with the following contents:
 ```
 from boogiestats.boogiestats.settings import *  # noqa
 
@@ -118,7 +113,8 @@ $ django-admin migrate
 
 ## Useful Commands Summary
 ```
-$ pip install -e .[dev]
+$ poetry install
+$ poetry shell
 $ pytest
 $ black .
 $ flake8
