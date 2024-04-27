@@ -104,3 +104,20 @@ jobs:
       - name: Check pending migrations
         run: |
           poetry run django-admin makemigrations --check
+
+  poetry-lock:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: boogiestats.boogiestats.settings
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          pip install poetry
+      - name: Check poetry lock
+        run: |
+          poetry check --no-interaction
