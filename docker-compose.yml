@@ -5,7 +5,6 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    entrypoint: /app/docker/entrypoint.sh
     volumes:
       - type: bind
         source: ./prod/boogiestats-data
