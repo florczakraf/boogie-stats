@@ -17,11 +17,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install .[dev]
+          pip install poetry
+          poetry install
       - name: Test with pytest
         run: |
-          pytest -sv
+          poetry run pytest -sv
 
   black:
     runs-on: ubuntu-latest
@@ -33,11 +33,11 @@ jobs:
           python-version: "3.10"
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install .[dev]
+          pip install poetry
+          poetry install
       - name: Check formatting
         run: |
-          black --check --diff .
+          poetry run black --check --diff .
 
   flake8:
     runs-on: ubuntu-latest
@@ -49,11 +49,11 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install .[dev]
+          pip install poetry
+          poetry install
       - name: Run flake8
         run: |
-          flake8
+          poetry run flake8
 
   djlint:
     runs-on: ubuntu-latest
@@ -65,11 +65,11 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install .[dev]
+          pip install poetry
+          poetry install
       - name: Run djlint
         run: |
-          djlint --profile django --check --lint .
+          poetry run djlint --profile django --check --lint .
 
   bandit:
     runs-on: ubuntu-latest
@@ -81,11 +81,11 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install .[dev]
+          pip install poetry
+          poetry install
       - name: Run bandit
         run: |
-          bandit --configfile bandit.yml -r boogiestats/
+          poetry run bandit --configfile bandit.yml -r boogiestats/
 
   pending-migrations:
     runs-on: ubuntu-latest
@@ -99,8 +99,8 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install .[dev]
+          pip install poetry
+          poetry install
       - name: Check pending migrations
         run: |
-          django-admin makemigrations --check
+          poetry run django-admin makemigrations --check
