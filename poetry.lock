@@ -350,13 +350,13 @@ prometheus-client = ">=0.7"
 
 [[package]]
 name = "djlint"
-version = "1.23.3"
+version = "1.34.1"
 description = "HTML Template Linter and Formatter"
 optional = false
 python-versions = ">=3.8.0,<4.0.0"
 files = [
-    {file = "djlint-1.23.3-py3-none-any.whl", hash = "sha256:68cdd6047cd8c45ca17c82782b70d9cb2bd5282c6a863fe1e1e63e697265ec85"},
-    {file = "djlint-1.23.3.tar.gz", hash = "sha256:165033e5237e432c86fc90e0a3c59aeb7079df4284bdb054f84214af344899d8"},
+    {file = "djlint-1.34.1-py3-none-any.whl", hash = "sha256:96ff1c464fb6f061130ebc88663a2ea524d7ec51f4b56221a2b3f0320a3cfce8"},
+    {file = "djlint-1.34.1.tar.gz", hash = "sha256:db93fa008d19eaadb0454edf1704931d14469d48508daba2df9941111f408346"},
 ]
 
 [package.dependencies]
@@ -366,7 +366,8 @@ cssbeautifier = ">=1.14.4,<2.0.0"
 html-tag-names = ">=0.1.2,<0.2.0"
 html-void-elements = ">=0.1.0,<0.2.0"
 jsbeautifier = ">=1.14.4,<2.0.0"
-pathspec = ">=0.11.0,<0.12.0"
+json5 = ">=0.9.11,<0.10.0"
+pathspec = ">=0.12.0,<0.13.0"
 PyYAML = ">=6.0,<7.0"
 regex = ">=2023.0.0,<2024.0.0"
 tomli = {version = ">=2.0.1,<3.0.0", markers = "python_version < \"3.11\""}
@@ -492,6 +493,17 @@ editorconfig = ">=0.12.2"
 six = ">=1.13.0"
 
 [[package]]
+name = "json5"
+version = "0.9.25"
+description = "A Python implementation of the JSON5 data format."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "json5-0.9.25-py3-none-any.whl", hash = "sha256:34ed7d834b1341a86987ed52f3f76cd8ee184394906b6e22a1e0deb9ab294e8f"},
+    {file = "json5-0.9.25.tar.gz", hash = "sha256:548e41b9be043f9426776f05df8635a00fe06104ea51ed24b67f908856e151ae"},
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
@@ -561,13 +573,13 @@ files = [
 
 [[package]]
 name = "pathspec"
-version = "0.11.2"
+version = "0.12.1"
 description = "Utility library for gitignore style pattern matching of file paths."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pathspec-0.11.2-py3-none-any.whl", hash = "sha256:1d6ed233af05e679efb96b1851550ea95bbb64b7c490b0f5aa52996c11e92a20"},
-    {file = "pathspec-0.11.2.tar.gz", hash = "sha256:e0d8d0ac2f12da61956eb2306b69f9469b42f4deb0f3cb6ed47b9cce9996ced3"},
+    {file = "pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08"},
+    {file = "pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712"},
 ]
 
 [[package]]
@@ -1113,4 +1125,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "cfcaa19a1bfe240ad68b908b07e5235d1eb2170f65afaaf93dda61cb035e2e1f"
+content-hash = "ccc681698f5f6be2a9c6cd4fdb83a1a7a3ff402b7fd0de2a62b6cd38c11297a7"
