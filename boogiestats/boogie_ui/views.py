@@ -217,6 +217,13 @@ class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
         return scores.order_by("-submission_date").prefetch_related("song")
 
 
+class PlayerScoresTodayView(generic.RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse(
+            "player_scores_by_day", kwargs={"player_id": self.kwargs["player_id"], "day": datetime.date.today()}
+        )
+
+
 def set_calendar(context, start_date, end_date, played_days):
     calendar_days = list(
         {"class": "min-plays-0", "plays": 0, "day": start_date + datetime.timedelta(days=i)}
