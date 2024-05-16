@@ -40,7 +40,7 @@ GROOVESTATS_RESPONSES = {
         "error": "Couldn't contact GrooveStats API.",
     },
 }
-GROOVESTATS_TIMEOUT = 12
+GROOVESTATS_TIMEOUT = (4, 6)  # (connect, read) timeout
 SUPPORTED_EVENTS = ("rpg", "itl")
 LB_SOURCE_MAPPING = {
     LeaderboardSource.BS.value: "BS",
@@ -201,16 +201,16 @@ def _try_gs_get(request):
         )
         gs_response = raw_response.json()
         logger.info(gs_response)
-    except (requests.Timeout, requests.ConnectionError) as e:
+    except (requests.Timeout, requests.ConnectionError):
         GS_GET_REQUESTS_ERRORS_TOTAL.inc()
-        sentry_sdk.capture_exception(e)
-        logger.error(f"Request to GrooveStats failed: {e}")
+        # We don't forward these events to sentry because of repeating floods.
+        # Grafana or other monitoring can be used instead.
 
         # we can serve a local leaderboard instead of an error
         gs_response = {}
     except json.JSONDecodeError as e:
         GS_GET_REQUESTS_ERRORS_TOTAL.inc()
-        sentry_sdk.set_context("GS", {"raw_response": raw_response})
+        sentry_sdk.set_context("GS", {"raw_response": raw_response.content, "status": raw_response.status_code})
         sentry_sdk.capture_exception(e)
 
         # we can serve a local leaderboard instead of an error
@@ -296,7 +296,7 @@ def score_submit(request):
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
     except json.JSONDecodeError as e:
         GS_POST_REQUESTS_ERRORS_TOTAL.inc()
-        sentry_sdk.set_context("GS", {"raw_response": raw_response})
+        sentry_sdk.set_context("GS", {"raw_response": raw_response.content, "status": raw_response.status_code})
         sentry_sdk.capture_exception(e)
 
         return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
