@@ -3,10 +3,13 @@ from unittest.mock import Mock
 
 import pytest
 import requests_mock as requests_mock_lib
+from django.conf import settings
 
 from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.models import Song, Player, Score, LeaderboardSource
-from boogiestats.boogie_api.views import GROOVESTATS_ENDPOINT, GROOVESTATS_RESPONSES, create_headers, LB_SOURCE_MAPPING
+from boogiestats.boogie_api.views import GROOVESTATS_RESPONSES, create_headers, LB_SOURCE_MAPPING
+
+GROOVESTATS_ENDPOINT = settings.BS_UPSTREAM_API_ENDPOINT
 
 
 @pytest.fixture(autouse=True)
@@ -1394,3 +1397,37 @@ def test_pulling_gs_name_and_tag_with_missing_attributes(
     else:
         assert player.name == "1234"
         assert player.machine_tag == "DUPA"
+
+
+def test_custom_upstream_api_endpoint_is_taken_from_settings(
+    client, some_player, some_player_gs_api_key, requests_mock, monkeypatch
+):
+    monkeypatch.setattr(settings, "BS_UPSTREAM_API_ENDPOINT", "https://example.com")
+    hash = "76957dd1f96f764d"
+    expected_result = {
+        "player1": {
+            "chartHash": hash,
+            "isRanked": False,
+            "gsLeaderboard": [],
+            "scoreDelta": 5809,
+            "result": "score-added",
+        }
+    }
+    requests_mock.post("https://example.com/score-submit.php", text=json.dumps(expected_result))
+    kwargs = {
+        "HTTP_x_api_key_player_1": some_player_gs_api_key,
+    }
+    client.post(
+        f"/score-submit.php?chartHashP1={hash}&maxLeaderboardResults=3",
+        data={
+            "player1": {
+                "score": 5805,
+                "comment": "50e, 42g, 8d, 11wo, 4m, C300",
+                "rate": 100,
+            }
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert requests_mock.called_once

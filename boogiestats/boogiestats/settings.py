@@ -166,3 +166,6 @@ BS_REDIS_PORT: Optional[int] = None
 # Use BS_EXTRA_Q_AND_A to set any extra instance-specific questions and answers to appear in the Q&A section.
 # It's a dictionary in Question -> Answer format. The question will also appear in the Table of Contents in the User Manual.
 BS_EXTRA_Q_AND_A: Dict[str, str] = {}
+
+# Upstream API endpoint, useful for chaining multiple BS instances
+BS_UPSTREAM_API_ENDPOINT = "https://api.groovestats.com"
