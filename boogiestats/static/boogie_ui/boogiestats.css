@@ -35,6 +35,11 @@ form label {
   background-color: #2691c5;
 }
 
+/* WA for the database entries that are nor normalized to common diff names https://github.com/florczakraf/boogie-stats/issues/186 */
+.diff-expert {
+  background-color: #2691c5;
+}
+
 .diff-box {
   color: white;
 }
