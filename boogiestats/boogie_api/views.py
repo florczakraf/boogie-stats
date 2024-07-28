@@ -7,6 +7,7 @@ from typing import Optional
 
 import requests
 import sentry_sdk
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from prometheus_client import Counter
@@ -16,7 +17,6 @@ from boogiestats.boogie_api.models import Player, Song, LeaderboardSource
 from boogiestats.boogie_api.utils import set_sentry_user
 
 logger = logging.getLogger("django.server.boogiestats")
-GROOVESTATS_ENDPOINT = "https://api.groovestats.com"  # TODO take from settings?
 GROOVESTATS_RESPONSES = {
     "PLAYERS_VALIDATION_ERROR": {
         "message": "Something went wrong.",
@@ -194,7 +194,7 @@ def _try_gs_get(request):
     headers = create_headers(request)
     try:
         raw_response = requests.get(
-            GROOVESTATS_ENDPOINT + request.path,
+            settings.BS_UPSTREAM_API_ENDPOINT + request.path,
             params=request.GET,
             headers=headers,
             timeout=GROOVESTATS_TIMEOUT,
@@ -279,7 +279,7 @@ def score_submit(request):
     try:
         GS_POST_REQUESTS_TOTAL.inc()
         raw_response = requests.post(
-            GROOVESTATS_ENDPOINT + "/score-submit.php",
+            settings.BS_UPSTREAM_API_ENDPOINT + "/score-submit.php",
             params=request.GET,
             headers=headers,
             json=body_parsed,
