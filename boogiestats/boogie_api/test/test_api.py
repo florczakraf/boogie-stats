@@ -6,8 +6,12 @@ import requests_mock as requests_mock_lib
 from django.conf import settings
 
 from boogiestats import __version__ as boogiestats_version
-from boogiestats.boogie_api.models import Song, Player, Score, LeaderboardSource
-from boogiestats.boogie_api.views import GROOVESTATS_RESPONSES, create_headers, LB_SOURCE_MAPPING
+from boogiestats.boogie_api.models import LeaderboardSource, Player, Score, Song
+from boogiestats.boogie_api.views import (
+    GROOVESTATS_RESPONSES,
+    LB_SOURCE_MAPPING,
+    create_headers,
+)
 
 GROOVESTATS_ENDPOINT = settings.BS_UPSTREAM_API_ENDPOINT
 

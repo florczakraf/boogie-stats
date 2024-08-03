@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,7 +8,7 @@ from django.db import models, transaction
 from boogiestats.boogie_api.utils import score_to_star_field
 
 if TYPE_CHECKING:
-    from boogiestats.boogie_api.models import Song, Player
+    from boogiestats.boogie_api.models import Player, Song
 
 JUDGMENTS_MAP = {
     "miss": "misses",

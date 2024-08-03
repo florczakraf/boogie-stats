@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from prometheus_client import Counter
 
 from boogiestats import __version__ as boogiestats_version
-from boogiestats.boogie_api.models import Player, Song, LeaderboardSource
+from boogiestats.boogie_api.models import LeaderboardSource, Player, Song
 from boogiestats.boogie_api.utils import set_sentry_user
 
 logger = logging.getLogger("django.server.boogiestats")

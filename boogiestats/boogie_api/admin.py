@@ -1,5 +1,6 @@
 from django.contrib import admin
-from boogiestats.boogie_api.models import Score, Player, Song
+
+from boogiestats.boogie_api.models import Player, Score, Song
 
 
 class PlayerAdmin(admin.ModelAdmin):

@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
