@@ -41,6 +41,12 @@ repos:
         language: system
         files: '.*\.html$'
 
+      - id: check pending django migrations
+        name: check pending django migrations
+        entry: ./dev/check-pending-migrations.sh
+        language: system
+        files: 'boogiestats/.*\.py$'
+
       - id: check-added-large-files
         name: check-added-large-files
         entry: check-added-large-files
