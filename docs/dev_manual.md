@@ -9,6 +9,7 @@ Once you have Poetry, call:
 $ poetry install
 ```
 to install all runtime and development requirements, as well as the project itself in [editable mode](https://pip.pypa.io/en/stable/topics/local-project-installs/).
+It has to be executed every time dependencies have changed in the repository.
 
 Run this command every time you want to enter the environment:
 ```
@@ -83,15 +84,10 @@ $ pytest
 If you need more information about pytest, just consult their docs.
 
 ## Coding Standards
-BoogieStats enforce multiple standards when it comes to code style and quality. As long as the following commands exit
-with 0 status, it's OK. If you need more info, consult the respective tool's docs.
-```
-$ black .  # reformats python code
-$ flake8  # lints the python code
-$ djlint --profile django --reformat .  # reformats django templates
-$ djlint --profile django --check --lint .  # lints django templates (sometimes you have to do manual fixes because the one above can't fix everything)
-$ bandit --configfile bandit.yml -r boogiestats/  # lints the python code for security issues
-```
+BoogieStats enforce multiple standards when it comes to code style and quality. They have been packed into
+[pre-commit](https://pre-commit.com/) hooks for easy and consistent usage for developers and CI pipeline.
+You can configure pre-commit to run all the required checks when you make a commit (`pre-commit install`).
+To run checks on all the files manually, simply run: `pre-commit run -a`.
 
 ## Modifying Models
 Until now, all [models](https://docs.djangoproject.com/en/stable/topics/db/models/) changes could be achieved using normal
@@ -116,11 +112,15 @@ $ django-admin migrate
 $ poetry install
 $ poetry shell
 $ pytest
+$ pre-commit run -a
+$ pre-commit install
 $ black .
 $ flake8
 $ djlint --profile django --reformat .
 $ djlint --profile django --check --lint .
 $ bandit --configfile bandit.yml -r boogiestats/
+$ isort .
+$ ./dev/check-pending-migrations.sh
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin runserver 8000
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin migrate
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev dev/populate-db.py
