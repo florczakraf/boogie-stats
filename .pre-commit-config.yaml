@@ -1,4 +1,4 @@
-exclude: '.git|.tox|venv|.venv'
+exclude: '.git/|.tox/|venv/|.venv/'
 default_stages: [commit]
 fail_fast: true
 
@@ -104,7 +104,7 @@ repos:
         name: check-yaml
         entry: check-yaml
         language: system
-        files: '.*\.(yml|yaml)$'
+        types: [yaml]
 
       - id: detect-private-key
         name: detect-private-key
