@@ -1,0 +1,117 @@
+exclude: '.git|.tox|venv|.venv'
+default_stages: [commit]
+fail_fast: true
+
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: black
+        language: system
+        files: '.*\.py$'
+
+      - id: flake8
+        name: flake8
+        entry: flake8
+        language: system
+        files: '.*\.py$'
+
+      - id: bandit
+        name: bandit
+        entry: bandit --configfile bandit.yml
+        language: system
+        files: 'boogiestats/.*\.py$'
+
+      - id: djlint reformat
+        name: djlint reformat
+        entry: djlint --profile django --reformat
+        language: system
+        files: '.*\.html$'
+
+      - id: djlint check
+        name: djlint check
+        entry: djlint --profile django --check --lint
+        language: system
+        files: '.*\.html$'
+
+      - id: check-added-large-files
+        name: check-added-large-files
+        entry: check-added-large-files
+        args: [ '--maxkb=512' ]
+        language: system
+
+      - id: check-ast
+        name: check-ast
+        entry: check-ast
+        language: system
+        files: '.*\.py$'
+
+      - id: check-case-conflict
+        name: check-case-conflict
+        entry: check-case-conflict
+        language: system
+
+      - id: check-docstring-first
+        name: check-docstring-first
+        entry: check-docstring-first
+        language: system
+        files: '.*\.py$'
+
+      - id: check-json
+        name: check-json
+        entry: check-json
+        language: system
+        files: '.*\.json$'
+
+      - id: check-merge-conflict
+        name: check-merge-conflict
+        entry: check-merge-conflict
+        language: system
+
+      - id: check-toml
+        name: check-toml
+        entry: check-toml
+        language: system
+        files: '.*\.toml$'
+
+      - id: check-xml
+        name: check-xml
+        entry: check-xml
+        language: system
+        files: '.*\.xml$'
+
+      - id: check-yaml
+        name: check-yaml
+        entry: check-yaml
+        language: system
+        files: '.*\.(yml|yaml)$'
+
+      - id: detect-private-key
+        name: detect-private-key
+        entry: detect-private-key
+        language: system
+
+      - id: end-of-file-fixer
+        name: end-of-file-fixer
+        entry: end-of-file-fixer
+        language: system
+        types: [ text ]
+
+      - id: trailing-whitespace-fixer
+        name: trailing-whitespace-fixer
+        entry: trailing-whitespace-fixer
+        language: system
+        types: [ text ]
+
+      - id: debug-statements
+        name: debug-statements
+        entry: debug-statement-hook
+        language: system
+        files: '.*\.py$'
+
+      - id: check-executables-have-shebangs
+        name: check-executables-have-shebangs
+        entry: check-executables-have-shebangs
+        language: system
+        types: [text, executable]
