@@ -47,6 +47,13 @@ repos:
         language: system
         files: 'boogiestats/.*\.py$'
 
+      - id: check poetry lock file
+        name: check poetry lock file
+        entry: poetry check --no-interaction
+        language: system
+        pass_filenames: false
+        files: '^pyproject\.toml$'
+
       - id: check-added-large-files
         name: check-added-large-files
         entry: check-added-large-files
