@@ -23,89 +23,7 @@ jobs:
         run: |
           poetry run pytest -sv
 
-  black:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-      - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry install
-      - name: Check formatting
-        run: |
-          poetry run black --check --diff .
-
-  flake8:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry install
-      - name: Run flake8
-        run: |
-          poetry run flake8
-
-  djlint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry install
-      - name: Run djlint
-        run: |
-          poetry run djlint --profile django --check --lint .
-
-  bandit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry install
-      - name: Run bandit
-        run: |
-          poetry run bandit --configfile bandit.yml -r boogiestats/
-
-  pending-migrations:
-    runs-on: ubuntu-latest
-    env:
-      DJANGO_SETTINGS_MODULE: boogiestats.boogiestats.settings
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry install
-      - name: Check pending migrations
-        run: |
-          poetry run django-admin makemigrations --check
-
-  poetry-lock:
+  pre-commit-checks:
     runs-on: ubuntu-latest
     env:
       DJANGO_SETTINGS_MODULE: boogiestats.boogiestats.settings
@@ -118,6 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install poetry
-      - name: Check poetry lock
+          poetry install
+      - name: pre-commit checks
         run: |
-          poetry check --no-interaction
+          poetry run pre-commit run -a

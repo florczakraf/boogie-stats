@@ -1,6 +1,6 @@
 import datetime
 import itertools
-from http.client import UNAUTHORIZED, OK
+from http.client import OK, UNAUTHORIZED
 
 import sentry_sdk
 from django.conf import settings
@@ -8,21 +8,20 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, redirect
-from django.db.models import Count, Sum, Q
+from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import generic
 from django.views.decorators.http import require_POST
+from formset.views import FormViewMixin, IncompleteSelectResponseMixin
 from redis import ResponseError
 from redis.commands.search.query import Query
-from formset.views import FormViewMixin, IncompleteSelectResponseMixin
 
-
-from boogiestats.boogie_api.models import Score, Player, Song
+from boogiestats.boogie_api.models import Player, Score, Song
 from boogiestats.boogie_api.utils import get_redis, set_sentry_user
 from boogiestats.boogie_ui.forms import EditPlayerForm
 from boogiestats.boogiestats.exceptions import Managed404Error

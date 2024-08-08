@@ -11,11 +11,11 @@ from django.core.validators import MaxValueValidator
 from django.db import models
 from django.db.models import Count
 from django.db.models.signals import m2m_changed
-from django.utils.timezone import now
 from django.utils.functional import cached_property
+from django.utils.timezone import now
 from redis import Redis
 
-from boogiestats.boogie_api.managers import ScoreManager, PlayerManager
+from boogiestats.boogie_api.managers import PlayerManager, ScoreManager
 from boogiestats.boogie_api.utils import get_redis
 from boogiestats.boogiestats.exceptions import Managed404Error
 

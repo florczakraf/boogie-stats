@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from django.conf import settings
 
-from boogiestats.boogie_api.models import Song, Score, Player
+from boogiestats.boogie_api.models import Player, Score, Song
 
 if settings.BS_CHART_DB_PATH:
 

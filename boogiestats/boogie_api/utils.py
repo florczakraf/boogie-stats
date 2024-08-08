@@ -1,12 +1,10 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import redis
 import sentry_sdk
 from django.conf import settings
 from django.http import HttpRequest
 from ipware import get_client_ip
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from boogiestats.boogie_api.models import Player, Score
