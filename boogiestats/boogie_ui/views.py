@@ -94,12 +94,12 @@ class ScoreListView(LeaderboardSourceMixin, generic.ListView):
     paginate_by = ENTRIES_PER_PAGE
 
     def get_queryset(self):
-        return Score.objects.order_by("-submission_date").select_related("song", "player")
+        return Score.objects.order_by("-submission_date").prefetch_related("song", "player")
 
 
 class HighscoreListView(ScoreListView):
     def get_queryset(self):
-        return Score.objects.order_by(f"-{self.lb_attribute}", "submission_date").select_related("song", "player")
+        return Score.objects.order_by(f"-{self.lb_attribute}", "submission_date").prefetch_related("song", "player")
 
 
 class PlayersListView(generic.ListView):
