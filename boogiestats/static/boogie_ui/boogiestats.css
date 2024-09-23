@@ -271,3 +271,7 @@ form label {
 pre {
   color: var(--bs-code-color);
 }
+
+.grayscale {
+  filter: grayscale(1);
+}
