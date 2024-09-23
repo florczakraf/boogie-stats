@@ -10,7 +10,7 @@ services:
         source: ./prod/boogiestats-data
         target: /data
 #      - type: bind
-#        source: /path/to/stepmania-chart-db/db
+#        source: /path/to/stepmania-chart-db/db_v2
 #        target: /chart-db
 #        read_only: true
     environment:
