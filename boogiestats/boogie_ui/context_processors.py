@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from boogiestats.boogie_api.utils import search_enabled
+from boogiestats.boogie_api.utils import redis_enabled
 
 
 def logo(request):
@@ -8,4 +8,4 @@ def logo(request):
 
 
 def search(request):
-    return {"BS_SEARCH_ENABLED": search_enabled()}
+    return {"BS_SEARCH_ENABLED": redis_enabled()}

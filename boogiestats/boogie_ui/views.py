@@ -735,7 +735,7 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
         processed_query = self._process_query(user_query)
 
         q = (
-            Query(processed_query)
+            Query(f"{processed_query} @num_plays:[1 inf]")
             .paging((int(self.request.GET.get("page", 1)) - 1) * ENTRIES_PER_PAGE, ENTRIES_PER_PAGE)
             .sort_by("num_plays", asc=False)
         )
@@ -759,7 +759,7 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
 
         hashes = []
         for result in results:
-            song_hash = result.id.removeprefix("song:")
+            song_hash = result.id.removeprefix("chart:")
             hashes.append(song_hash)
 
         songs = (

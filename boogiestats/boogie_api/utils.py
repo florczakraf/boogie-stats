@@ -10,12 +10,12 @@ if TYPE_CHECKING:
     from boogiestats.boogie_api.models import Player, Score
 
 
-def search_enabled() -> bool:
+def redis_enabled() -> bool:
     return settings.BS_REDIS_HOST and settings.BS_REDIS_PORT
 
 
 def get_redis() -> Optional[redis.Redis]:
-    if search_enabled():
+    if redis_enabled():
         return redis.Redis(host=settings.BS_REDIS_HOST, port=settings.BS_REDIS_PORT)
 
 

@@ -1,13 +1,13 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
 {% block title %}
-    [{{ song.chart_info.diff_number }}] {{ song.display_name }}
+    [{% firstof song.chart_info.diff_number "?" %}] {{ song.display_name }}
 {% endblock title %}
 {% block head_extras %}
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     <meta property="og:title"
-          content="[{{ song.chart_info.diff_number }}] {{ song.display_name }}" />
+          content="[{% firstof song.chart_info.diff_number "?" %}] {{ song.display_name }}" />
     <meta property="og:description"
           content="Pack: {{ song.chart_info.pack_name }} | Playcount: {{ song.number_of_scores }} | Highscores: {{ song.number_of_players }}" />
 {% endblock head_extras %}
