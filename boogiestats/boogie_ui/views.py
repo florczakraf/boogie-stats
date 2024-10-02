@@ -450,7 +450,7 @@ class SongView(LeaderboardSourceMixin, generic.ListView):
         context["packs"] = ", ".join(sorted([x.decode() for x in packs]))
         diffs = sorted(
             [{k.decode(): v.decode() for k, v in diff.items()} for diff in diffs],
-            key=lambda x: (STEPS_TYPE_ORDER[x["steps_type"]], int(x["diff_number"])),
+            key=lambda x: (STEPS_TYPE_ORDER[x["steps_type"]], int(x["diff_number"]), x["diff"]),
         )
         diffs_playcounts = {
             song.hash: song.number_of_scores
