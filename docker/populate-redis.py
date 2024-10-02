@@ -21,7 +21,7 @@ def setup_index(r):
         NumericField("num_plays", sortable=True),
     )
     try:
-        r.ft("idx:song").create_index(schema, definition=IndexDefinition(prefix=["song:"], index_type=IndexType.HASH))
+        r.ft("idx:song").create_index(schema, definition=IndexDefinition(prefix=["chart:"], index_type=IndexType.HASH))
     except ResponseError as e:
         if "Index already exists" not in str(e):
             raise

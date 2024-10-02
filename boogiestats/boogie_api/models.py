@@ -1,10 +1,7 @@
-import json
 import math
 from hashlib import sha256
-from pathlib import Path
 from typing import Optional
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
@@ -115,17 +112,17 @@ class Song(models.Model):
     @cached_property
     def chart_info(self):
         """Chart info based on an external (optional) chart database"""
-        if settings.BS_CHART_DB_PATH is not None:
-            path = Path(settings.BS_CHART_DB_PATH) / self.hash[:2] / f"{self.hash[2:]}.json"
-            if path.exists():
-                return json.loads(path.read_bytes().decode("utf8", errors="replace"))  # some charts have weird bytes
+        r = get_redis()
+
+        if r is not None:
+            return {k.decode(): v.decode() for k, v in r.hgetall(f"chart:{self.hash}").items()}
         return None
 
     @property
     def display_name(self):
         final_name = self.hash
 
-        if info := self.chart_info:
+        if (info := self.chart_info) and info.get("title"):
             artist = info["artisttranslit"] or info["artist"]
             title = info["titletranslit"] or info["title"]
 
@@ -163,29 +160,8 @@ class Song(models.Model):
         if not r:
             return False
 
-        chart_info = self.chart_info
-
-        if chart_info is not None:
-            chart_info["num_plays"] = self.scores.count()
-
-            fields = (
-                "title",
-                "titletranslit",
-                "subtitle",
-                "subtitletranslit",
-                "artist",
-                "artisttranslit",
-                "diff",
-                "diff_number",
-                "steps_type",
-                "pack_name",
-                "num_plays",
-            )
-
-            r.hset(f"song:{self.hash}", mapping={k: v for k, v in chart_info.items() if k in fields})
-            return True
-
-        return False
+        r.hset(f"chart:{self.hash}", mapping={"num_plays": self.number_of_scores})
+        return True
 
     def update_number_of_players_and_scores(self):
         annotated_song = (

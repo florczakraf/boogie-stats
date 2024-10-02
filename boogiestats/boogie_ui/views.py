@@ -1,5 +1,6 @@
 import datetime
 import itertools
+from collections import defaultdict
 from http.client import OK, UNAUTHORIZED
 
 import sentry_sdk
@@ -29,6 +30,9 @@ from boogiestats.boogiestats.exceptions import Managed404Error
 ENTRIES_PER_PAGE = 30
 CALENDAR_VALUES = (1, 10, 15, 20, 25, 30, 35, 40, 50, 60)
 EXTRA_CALENDAR_VALUES = (100,)
+STEPS_TYPE_MAPPING = {"dance-single": "Singles", "dance-double": "Doubles"}
+STEPS_TYPE_ORDER = defaultdict(default_factory=lambda: 999)
+STEPS_TYPE_ORDER.update({"dance-single": 0, "dance-double": 1})
 
 
 class LeaderboardSourceMixin:
@@ -439,6 +443,26 @@ class SongView(LeaderboardSourceMixin, generic.ListView):
         if player_id := self.kwargs.get("player_id"):
             context["player"] = Player.get_or_404(id=player_id)
 
+        r = get_redis()
+        diffs_hashes = r.smembers(f"diffs:{song_hash}")
+        diffs = [r.hgetall(x) for x in diffs_hashes]
+        packs = r.smembers(f"packs:{song_hash}")
+        context["packs"] = ", ".join(sorted([x.decode() for x in packs]))
+        diffs = sorted(
+            [{k.decode(): v.decode() for k, v in diff.items()} for diff in diffs],
+            key=lambda x: (STEPS_TYPE_ORDER[x["steps_type"]], int(x["diff_number"]), x["diff"]),
+        )
+        diffs_playcounts = {
+            song.hash: song.number_of_scores
+            for song in Song.objects.filter(hash__in=[x.decode().split(":")[1] for x in diffs_hashes])
+        }
+        diffs_split = defaultdict(list)
+        for diff in diffs:
+            steps_type_name = STEPS_TYPE_MAPPING.get(diff["steps_type"], diff["steps_type"])
+            diff["number_of_scores"] = diffs_playcounts.get(diff["hash"], 0)
+            diffs_split[steps_type_name].append(diff)
+        context["diffs_split"] = dict(diffs_split)
+
         return context
 
     def get_queryset(self):
@@ -711,7 +735,7 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
         processed_query = self._process_query(user_query)
 
         q = (
-            Query(processed_query)
+            Query(f"{processed_query} @num_plays:[1 inf]")
             .paging((int(self.request.GET.get("page", 1)) - 1) * ENTRIES_PER_PAGE, ENTRIES_PER_PAGE)
             .sort_by("num_plays", asc=False)
         )
@@ -735,7 +759,7 @@ class SearchView(LeaderboardSourceMixin, generic.ListView):
 
         hashes = []
         for result in results:
-            song_hash = result.id.removeprefix("song:")
+            song_hash = result.id.removeprefix("chart:")
             hashes.append(song_hash)
 
         songs = (

@@ -6,10 +6,9 @@
                 <div>?</div>
             </div>
         {% else %}
-            <div title="{{ song.chart_info.diff }}"
-                 class="common-box diff-box diff-{{ song.chart_info.diff|lower }}">
-                <div>{{ song.chart_info.diff_number }}</div>
-            </div>
+            {% with chart_info=song.chart_info %}
+                {% include "boogie_ui/diff_box.html" %}
+            {% endwith %}
         {% endif %}
         {% if song.gs_ranked %}
             <div title="GrooveStats ranked song. This is only the local leaderboard for this song."
