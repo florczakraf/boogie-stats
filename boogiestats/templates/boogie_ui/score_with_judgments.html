@@ -2,7 +2,7 @@
 {% load boogiestats_tags %}
 {% if score.has_judgments %}
     {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
-        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="ITG Score: {{ score.itg_score|div:100|stringformat:".2f" }}
+        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="ITG Score: {{ score.itg_score|div:100|stringformat:".2f" }}%
             <br />
             EX Score: {{ score.ex_score|div:100|stringformat:".2f" }}%
             <br />
