@@ -35,7 +35,6 @@ urlpatterns = [
     path("songs/<str:song_hash>/highscores", views.SongHighscoresView.as_view(), name="song_highscores"),
     path("scores/", views.ScoreListView.as_view(), name="scores"),
     path("scores/<int:pk>/", views.ScoreView.as_view(), name="score"),
-    path("scores/highscores", views.HighscoreListView.as_view(), name="highscores"),
     path("edit/", views.EditPlayerView.as_view(), name="edit"),
     path("login/", views.login_user, name="login"),
     path("logout/", views.logout_user, name="logout"),
