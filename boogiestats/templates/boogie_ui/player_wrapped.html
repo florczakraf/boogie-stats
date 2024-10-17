@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load bootstrap_icons %}
 {% block title %}
     {{ player.name }} ({{ player.machine_tag }}) {{ year }} Wrapped
 {% endblock title %}
@@ -52,7 +53,15 @@
                 {% endif %}
             </ul>
         </div>
-        {% include "boogie_ui/stars.html" %}
+        <div class="col">
+            {% include "boogie_ui/stars.html" %}
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-toggle="tooltip"
+                    title="Wrapped stars include all submitted scores that match the criteria, not only the top ones for each chart.">
+                {% bs_icon "question-circle" %}
+            </button>
+        </div>
     </div>
     <hr />
     {% include "boogie_ui/calendar.html" %}
