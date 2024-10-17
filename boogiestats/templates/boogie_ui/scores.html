@@ -10,17 +10,9 @@
             <table class="table table-striped">
                 <thead class="bg-body-secondary">
                     <tr>
-                        <th scope="col" class="w-1 text-nowrap">
-                            <a href="{% url "scores" %}">Submission Date
-                                {% if request.resolver_match.url_name == "scores" %}↓{% endif %}
-                            </a>
-                        </th>
+                        <th scope="col" class="w-1 text-nowrap">Submission Date ↓</th>
                         <th scope="col" class="w-100 text-nowrap">Song</th>
-                        <th scope="col" class="w-1 text-nowrap">
-                            <a href="{% url "highscores" %}">{{ lb_display_name }} Score
-                                {% if request.resolver_match.url_name == "highscores" %}↓{% endif %}
-                            </a>
-                        </th>
+                        <th scope="col" class="w-1 text-nowrap">{{ lb_display_name }} Score</th>
                         <th scope="col" class="w-1 text-nowrap">Player</th>
                     </tr>
                 </thead>
