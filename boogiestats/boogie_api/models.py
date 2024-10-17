@@ -1,10 +1,7 @@
-import json
 import math
 from hashlib import sha256
-from pathlib import Path
 from typing import Optional
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
@@ -16,7 +13,7 @@ from django.utils.timezone import now
 from redis import Redis
 
 from boogiestats.boogie_api.managers import PlayerManager, ScoreManager
-from boogiestats.boogie_api.utils import get_redis
+from boogiestats.boogie_api.utils import get_chart_info, get_redis
 from boogiestats.boogiestats.exceptions import Managed404Error
 
 MAX_LEADERBOARD_RIVALS = 3
@@ -114,12 +111,7 @@ class Song(models.Model):
 
     @cached_property
     def chart_info(self):
-        """Chart info based on an external (optional) chart database"""
-        if settings.BS_CHART_DB_PATH is not None:
-            path = Path(settings.BS_CHART_DB_PATH) / self.hash[:2] / f"{self.hash[2:]}.json"
-            if path.exists():
-                return json.loads(path.read_bytes().decode("utf8", errors="replace"))  # some charts have weird bytes
-        return None
+        return get_chart_info(self.hash)
 
     @property
     def display_name(self):
@@ -163,10 +155,8 @@ class Song(models.Model):
         if not r:
             return False
 
-        chart_info = self.chart_info
-
-        if chart_info is not None:
-            chart_info["num_plays"] = self.scores.count()
+        if chart_info := self.chart_info:
+            chart_info["num_plays"] = self.number_of_scores
 
             fields = (
                 "title",

@@ -1,3 +1,5 @@
+import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import redis
@@ -40,4 +42,13 @@ def score_to_star_field(score: "Score"):
     elif value == 10_000:
         return "four_stars"
 
+    return None
+
+
+def get_chart_info(hash_v3: str) -> dict | None:
+    """Chart info based on an external (optional) chart database"""
+    if settings.BS_CHART_DB_PATH is not None:
+        path = Path(settings.BS_CHART_DB_PATH) / "charts" / hash_v3[:2] / f"{hash_v3[2:]}.json"
+        if path.exists():
+            return json.loads(path.read_text())
     return None
