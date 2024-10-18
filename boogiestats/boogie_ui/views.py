@@ -326,7 +326,9 @@ class PlayerMostPlayedView(PlayerView):
 
         songs = [song["song"] for song in songs_by_plays_page]
         songs_plays = {song["song"]: song["num_scores"] for song in songs_by_plays_page}
-        scores = player.scores.filter(is_itg_top=True, song__hash__in=songs).prefetch_related("song")
+        scores = player.scores.filter(**{f"is_{self.lb_source}_top": True, "song__hash__in": songs}).prefetch_related(
+            "song"
+        )
 
         scores = sorted(scores, key=lambda x: songs.index(x.song.hash))
         for score in scores:
