@@ -275,3 +275,9 @@ pre {
 .grayscale {
   filter: grayscale(1);
 }
+
+.btn-compare {
+  --bs-btn-padding-y: 0.1rem;
+  --bs-btn-padding-x: .25rem;
+  shape-rendering: crispEdges;
+}
