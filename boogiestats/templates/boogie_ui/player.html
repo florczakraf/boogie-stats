@@ -1,4 +1,5 @@
 {% extends "boogie_ui/root.html" %}
+{% load bootstrap_icons %}
 {% load mathfilters %}
 {% block title %}
     {{ player.name }} ({{ player.machine_tag }})
@@ -49,16 +50,24 @@
                 <ul>
                     {% for rival in rivals|slice:":3" %}
                         <li>
-                            <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
-                            <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
+                            <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a>
+                            <a class="btn btn-sm btn-outline-secondary btn-compare"
+                               role="button"
+                               data-bs-toggle="tooltip"
+                               title="Compare profiles"
+                               href="{% url "versus" p1=player.id p2=rival.id %}">{% bs_icon "plus-slash-minus" %}</a>
                         </li>
                     {% endfor %}
                     {% if rivals|length > 3 %}
                         <div class="collapse multi-collapse" id="moreRivals">
                             {% for rival in rivals|slice:"3:" %}
                                 <li>
-                                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
-                                    <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
+                                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a>
+                                    <a class="btn btn-sm btn-outline-secondary btn-compare"
+                                       role="button"
+                                       data-bs-toggle="tooltip"
+                                       title="Compare profiles"
+                                       href="{% url "versus" p1=player.id p2=rival.id %}">{% bs_icon "plus-slash-minus" %}</a>
                                 </li>
                             {% endfor %}
                         </div>
@@ -81,16 +90,24 @@
                 <ul>
                     {% for rival in rival_of|slice:":3" %}
                         <li>
-                            <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
-                            <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
+                            <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a>
+                            <a class="btn btn-sm btn-outline-secondary btn-compare"
+                               role="button"
+                               data-bs-toggle="tooltip"
+                               title="Compare profiles"
+                               href="{% url "versus" p1=player.id p2=rival.id %}">{% bs_icon "plus-slash-minus" %}</a>
                         </li>
                     {% endfor %}
                     {% if rival_of|length > 3 %}
                         <div class="collapse multi-collapse2" id="moreRivalOf">
                             {% for rival in rival_of|slice:"3:" %}
                                 <li>
-                                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
-                                    <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
+                                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a>
+                                    <a class="btn btn-sm btn-outline-secondary btn-compare"
+                                       role="button"
+                                       data-bs-toggle="tooltip"
+                                       title="Compare profiles"
+                                       href="{% url "versus" p1=player.id p2=rival.id %}">{% bs_icon "plus-slash-minus" %}</a>
                                 </li>
                             {% endfor %}
                         </div>
