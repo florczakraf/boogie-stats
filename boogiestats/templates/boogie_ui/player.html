@@ -42,36 +42,72 @@
         </div>
         {% include "boogie_ui/stars.html" %}
     </div>
-    {% if rivals %}
-        <h3>Rivals ({{ rivals|length }})</h3>
-        <ul>
-            {% for rival in rivals|slice:":3" %}
-                <li>
-                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
-                    <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
-                </li>
-            {% endfor %}
-            {% if rivals|length > 3 %}
-                <div class="collapse multi-collapse" id="moreRivals">
-                    {% for rival in rivals|slice:"3:" %}
+    <div class="d-flex">
+        {% if rivals %}
+            <div class="col">
+                <h3>Rivals ({{ rivals|length }})</h3>
+                <ul>
+                    {% for rival in rivals|slice:":3" %}
                         <li>
                             <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
                             <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
                         </li>
                     {% endfor %}
-                </div>
-            {% endif %}
-        </ul>
-        {% if rivals|length > 3 %}
-            <a class="btn btn-primary collapse multi-collapse show"
-               id="moreRivalsButton"
-               data-bs-toggle="collapse"
-               data-bs-target=".multi-collapse"
-               role="button"
-               aria-expanded="false"
-               aria-controls="moreRivals moreRivalsButton">Show {{ rivals|length|sub:3 }} More Rivals</a>
+                    {% if rivals|length > 3 %}
+                        <div class="collapse multi-collapse" id="moreRivals">
+                            {% for rival in rivals|slice:"3:" %}
+                                <li>
+                                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
+                                    <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
+                                </li>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </ul>
+                {% if rivals|length > 3 %}
+                    <a class="btn btn-primary collapse multi-collapse show"
+                       id="moreRivalsButton"
+                       data-bs-toggle="collapse"
+                       data-bs-target=".multi-collapse"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="moreRivals moreRivalsButton">Show {{ rivals|length|sub:3 }} More</a>
+                {% endif %}
+            </div>
         {% endif %}
-    {% endif %}
+        {% if rival_of %}
+            <div class="col">
+                <h3>Rival of ({{ rival_of|length }})</h3>
+                <ul>
+                    {% for rival in rival_of|slice:":3" %}
+                        <li>
+                            <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
+                            <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
+                        </li>
+                    {% endfor %}
+                    {% if rival_of|length > 3 %}
+                        <div class="collapse multi-collapse2" id="moreRivalOf">
+                            {% for rival in rival_of|slice:"3:" %}
+                                <li>
+                                    <a href="{% url "player" player_id=rival.id %}">{{ rival.name }} ({{ rival.machine_tag }})</a> -
+                                    <a href="{% url "versus" p1=player.id p2=rival.id %}">compare scores</a>
+                                </li>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </ul>
+                {% if rival_of|length > 3 %}
+                    <a class="btn btn-primary collapse multi-collapse2 show"
+                       id="moreRivalOfButton"
+                       data-bs-toggle="collapse"
+                       data-bs-target=".multi-collapse2"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="moreRivalOf moreRivalOfButton">Show {{ rival_of|length|sub:3 }} More</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
     <hr />
     {% include "boogie_ui/calendar.html" %}
     <div>

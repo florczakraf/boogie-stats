@@ -275,6 +275,7 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
         player = Player.get_or_404(id=player_id)
         context["player"] = player
         context["rivals"] = player.rivals.all()
+        context["rival_of"] = Player.objects.filter(rivals=player_id).order_by("id")
         set_stars_from_player(context, player)
 
         today = datetime.date.today()
