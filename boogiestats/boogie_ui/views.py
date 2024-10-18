@@ -56,12 +56,21 @@ class LeaderboardSourceMixin:
         return context
 
 
-def set_stars_from_scores(context, scores, prefix=""):
+def set_stars_from_top_scores(context, scores, prefix=""):
     context[f"{prefix}one_star"] = scores.filter(is_itg_top=True, itg_score__gte=9600, itg_score__lt=9800).count()
     context[f"{prefix}two_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9800, itg_score__lt=9900).count()
     context[f"{prefix}three_stars"] = scores.filter(is_itg_top=True, itg_score__gte=9900, itg_score__lt=10000).count()
     context[f"{prefix}four_stars"] = scores.filter(is_itg_top=True, itg_score=10000).count()
     context[f"{prefix}five_stars"] = scores.filter(is_ex_top=True, ex_score=10000).count()
+
+
+def set_stars_from_all_scores(context, scores, prefix=""):
+    context[f"{prefix}one_star"] = scores.filter(itg_score__gte=9600, itg_score__lt=9800).count()
+    context[f"{prefix}two_stars"] = scores.filter(itg_score__gte=9800, itg_score__lt=9900).count()
+    context[f"{prefix}three_stars"] = scores.filter(itg_score__gte=9900, itg_score__lt=10000).count()
+    # empirically `gte` is faster than equality for calculating four stars from all given scores
+    context[f"{prefix}four_stars"] = scores.filter(itg_score__gte=10000).count()
+    context[f"{prefix}five_stars"] = scores.filter(ex_score=10000).count()
 
 
 def set_stars_from_player(context, player, prefix=""):
@@ -178,7 +187,7 @@ class PlayerScoresByDayView(LeaderboardSourceMixin, generic.ListView):
         context["player"] = player
         context["num_scores"] = scores.count()
         context["num_charts_played"] = scores.values("song").distinct().count()
-        set_stars_from_scores(context, scores)
+        set_stars_from_top_scores(context, scores)
         context.update(
             fantastics_plus=0,
             fantastics=0,
@@ -793,8 +802,8 @@ class PlayerWrappedView(generic.base.TemplateView):
         context["year"] = year
         scores = player.scores.filter(submission_date__year=year)
         context["num_scores"] = scores.count()
-        context["num_charts_played"] = scores.filter(is_itg_top=True).count()
-        set_stars_from_scores(context, scores)
+        context["num_charts_played"] = scores.values("song").distinct().count()
+        set_stars_from_all_scores(context, scores)
 
         end_of_year = datetime.date(year=year, month=12, day=31)
         start_of_year = datetime.date(year=year, month=1, day=1)
