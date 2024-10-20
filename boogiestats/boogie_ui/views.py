@@ -30,8 +30,8 @@ from boogiestats.boogiestats.exceptions import Managed404Error
 ENTRIES_PER_PAGE = 30
 CALENDAR_VALUES = (1, 10, 15, 20, 25, 30, 35, 40, 50, 60)
 EXTRA_CALENDAR_VALUES = (100,)
-STEPS_TYPE_MAPPING = {"dance-single": "Singles", "dance-double": "Doubles"}
-STEPS_TYPE_ORDER = defaultdict(default_factory=lambda: 999)
+STEPS_TYPE_MAPPING = {"dance-single": "Singles", "dance-double": "Doubles", "dance-couple": "Couples"}
+STEPS_TYPE_ORDER = defaultdict(lambda: 999)
 STEPS_TYPE_ORDER.update({"dance-single": 0, "dance-double": 1})
 
 
