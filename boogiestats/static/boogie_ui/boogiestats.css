@@ -281,3 +281,18 @@ pre {
   --bs-btn-padding-x: .25rem;
   shape-rendering: crispEdges;
 }
+
+.horizontal-spacer::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+  margin-bottom: 10px;
+}
+
+.social-button {
+  width: 33px;
+  height: 33px;
+  fill: currentColor;
+}

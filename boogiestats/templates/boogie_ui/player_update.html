@@ -14,7 +14,7 @@
     <div class="container">
         <h2>Edit Profile</h2>
         <django-formset endpoint="{{ request.path }}"  csrf-token="{{ csrf_token }}">
-        {% render_form form "bootstrap" field_classes="row mb-3" label_classes="col-sm-3" control_classes="col-sm-9" %}
+        {{ form }}
         <button type="button"
                 df-click="disable -> submit -> proceed"
                 class="btn btn-primary">Submit</button>
