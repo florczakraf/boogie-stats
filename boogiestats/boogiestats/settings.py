@@ -151,6 +151,8 @@ AUTHENTICATION_BACKENDS = [
 
 PROMETHEUS_METRICS_EXPORT_PORT_RANGE = range(9000, 9050)
 
+BS_ICONS_CUSTOM_PATH = "custom-icons"
+
 # Path to chart database in a compatible format, as defined in https://github.com/florczakraf/stepmania-chart-db-generator
 # When provided, UI will try to utilize it to display information about charts.
 # When it's set to None, the charts will only be identified by their hashes.

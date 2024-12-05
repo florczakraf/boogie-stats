@@ -33,6 +33,16 @@ EXTRA_CALENDAR_VALUES = (100,)
 STEPS_TYPE_MAPPING = {"dance-single": "Singles", "dance-double": "Doubles", "dance-couple": "Couples"}
 STEPS_TYPE_ORDER = defaultdict(lambda: 999)
 STEPS_TYPE_ORDER.update({"dance-single": 0, "dance-double": 1})
+SOCIAL_LINKS = {
+    "twitch_handle": "https://twitch.tv/{handle}",
+    "youtube_handle": "https://www.youtube.com/@{handle}",
+    "twitter_x_handle": "https://x.com/{handle}",
+}
+CUSTOM_SOCIAL_LINKS = {
+    "bokutachi_handle": "https://boku.tachi.ac/u/{handle}",
+    "kamaitachi_handle": "https://kamai.tachi.ac/u/{handle}",
+    "bluesky_handle": "https://bsky.app/profile/{handle}",
+}
 
 
 class LeaderboardSourceMixin:
@@ -293,7 +303,20 @@ class PlayerView(LeaderboardSourceMixin, generic.ListView):
 
         context["wrapped_years"] = range(player.join_date.year, today.year + 1)
 
+        context["social_links"] = self._get_social_links(player, SOCIAL_LINKS)
+        context["custom_social_links"] = self._get_social_links(player, CUSTOM_SOCIAL_LINKS)
+
         return context
+
+    def _get_social_links(self, player, mapper):
+        return {
+            handle.removesuffix("_handle").replace("_", "-"): (
+                getattr(player, handle),
+                link_template.format(handle=getattr(player, handle)),
+            )
+            for handle, link_template in mapper.items()
+            if getattr(player, handle)
+        }
 
     def get_queryset(self):
         player_id = self.kwargs["player_id"]

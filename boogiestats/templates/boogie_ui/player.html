@@ -39,6 +39,29 @@
                 <li>Joined on: {{ player.join_date.date }}</li>
                 <li>Scores: {{ player.num_scores }}</li>
                 <li>Charts played: {{ player.num_songs }}</li>
+                {% if player.discord_handle %}
+                    <li>{% bs_icon "discord" %} @{{ player.discord_handle }}</li>
+                {% endif %}
+                {% if social_links or custom_social_links %}
+                    <li>
+                        {% for icon, handle_link in social_links.items %}
+                            <a class="btn btn-sm btn-outline-secondary social-button"
+                               data-bs-toggle="tooltip"
+                               title="{{ icon }}: @{{ handle_link.0 }}"
+                               role="button"
+                               href="{{ handle_link.1 }}"
+                               target="_blank">{% bs_icon icon %}</a>
+                        {% endfor %}
+                        {% for icon, handle_link in custom_social_links.items %}
+                            <a class="btn btn-sm btn-outline-secondary social-button grayscale"
+                               data-bs-toggle="tooltip"
+                               title="{{ icon }}: @{{ handle_link.0 }}"
+                               role="button"
+                               href="{{ handle_link.1 }}"
+                               target="_blank">{% custom_icon icon %}</a>
+                        {% endfor %}
+                    </li>
+                {% endif %}
             </ul>
         </div>
         {% include "boogie_ui/stars.html" %}

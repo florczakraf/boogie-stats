@@ -4,7 +4,7 @@ from typing import Optional
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, MinLengthValidator, RegexValidator
 from django.db import models
 from django.db.models import Count
 from django.db.models.signals import m2m_changed
@@ -217,6 +217,58 @@ class Player(models.Model):
     four_stars = models.PositiveIntegerField(default=0, db_index=True)
     five_stars = models.PositiveIntegerField(default=0, db_index=True)
     num_songs = models.PositiveIntegerField(default=0, db_index=True)
+
+    alnum_validator = RegexValidator(
+        r"^[0-9a-zA-Z_\-\.]+$", "Only alphanumeric characters, underscores, dashes and periods are allowed."
+    )
+    # based on https://help.twitch.tv/s/article/creating-an-account-with-twitch
+    twitch_handle = models.CharField(
+        max_length=25, validators=[MinLengthValidator(4), alnum_validator], default="", blank=True
+    )
+
+    # based on https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#usernames-and-nicknames
+    discord_handle = models.CharField(
+        max_length=32, validators=[MinLengthValidator(2), alnum_validator], default="", blank=True
+    )
+
+    # based on https://help.x.com/en/managing-your-account/x-username-rules
+    twitter_x_handle = models.CharField(
+        max_length=15,
+        validators=[MinLengthValidator(4), alnum_validator],
+        default="",
+        blank=True,
+        verbose_name="Twitter/X handle",
+    )
+
+    # based on https://support.google.com/youtube/answer/11585688
+    youtube_handle = models.CharField(
+        max_length=30,
+        validators=[MinLengthValidator(1), alnum_validator],
+        default="",
+        blank=True,
+    )
+
+    # based on https://github.com/zkrising/Tachi/blob/main/server/src/server/router/api/v1/auth/router.ts#L56
+    bokutachi_handle = models.CharField(
+        max_length=20,
+        validators=[MinLengthValidator(3), alnum_validator],
+        default="",
+        blank=True,
+    )
+    kamaitachi_handle = models.CharField(
+        max_length=20,
+        validators=[MinLengthValidator(3), alnum_validator],
+        default="",
+        blank=True,
+    )
+
+    # based on https://atproto.com/specs/handle
+    bluesky_handle = models.CharField(
+        max_length=253,
+        validators=[MinLengthValidator(3), alnum_validator],
+        default="",
+        blank=True,
+    )
 
     def save(self, *args, **kwargs):
         self.full_clean()

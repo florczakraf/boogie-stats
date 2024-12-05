@@ -1,16 +1,18 @@
 from django import forms
+from formset.renderers.bootstrap import FormRenderer
+from formset.utils import FormMixin
 from formset.widgets import DualSelector
 
 from boogiestats.boogie_api.models import Player
 
 
-class EditPlayerForm(forms.ModelForm):
+class EditPlayerForm(FormMixin, forms.ModelForm):
     gs_api_key = forms.CharField(
         min_length=32,
         max_length=32,
         required=False,
         widget=forms.PasswordInput(attrs={"placeholder": "First 32 characters of your new GS API key"}),
-        help_text="Fill this when you've generated a new GS API key",
+        help_text="Warning: Fill this *only* when you've generated a new GS API key",
         label="New GrooveStats API key",
     )
     rivals = forms.models.ModelMultipleChoiceField(
@@ -19,9 +21,35 @@ class EditPlayerForm(forms.ModelForm):
         required=False,
     )
 
+    field_css_classes = "row mb-3"
+    field_with_spacer_css_classes = f"{field_css_classes} horizontal-spacer"
+    default_renderer = FormRenderer(
+        label_css_classes="col-sm-3 fw-bold",
+        control_css_classes="col-sm-9",
+        field_css_classes={
+            "*": field_css_classes,
+            "twitch_handle": field_with_spacer_css_classes,
+            "gs_api_key": field_with_spacer_css_classes,
+        },
+    )
+
     class Meta:
         model = Player
-        fields = ["machine_tag", "name", "pull_gs_name_and_tag", "leaderboard_source", "rivals", "gs_api_key"]
+        fields = [
+            "machine_tag",
+            "name",
+            "pull_gs_name_and_tag",
+            "leaderboard_source",
+            "rivals",
+            "twitch_handle",
+            "discord_handle",
+            "youtube_handle",
+            "twitter_x_handle",
+            "bokutachi_handle",
+            "kamaitachi_handle",
+            "bluesky_handle",
+            "gs_api_key",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
