@@ -2,7 +2,9 @@ import math
 from hashlib import sha256
 from typing import Optional
 
+import requests
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinLengthValidator, RegexValidator
 from django.db import models
@@ -18,6 +20,7 @@ from boogiestats.boogiestats.exceptions import Managed404Error
 
 MAX_LEADERBOARD_RIVALS = 3
 MAX_LEADERBOARD_ENTRIES = 50
+LIVE_CACHE_TIMEOUT_SECONDS = 15 * 60
 
 
 class LeaderboardSource(models.IntegerChoices):
@@ -315,6 +318,30 @@ class Player(models.Model):
                 self.machine_tag = machine_tag
 
             self.save()
+
+    @cached_property
+    def _twitch_live_cache_key(self):
+        return f"twitch-live-{self.pk}"
+
+    def is_live_cached(self):
+        return cache.get(self._twitch_live_cache_key)
+
+    def is_live(self):
+        if not self.twitch_handle:
+            return False
+
+        if (cached := self.is_live_cached()) is not None:
+            return cached
+
+        url = f"https://www.twitch.tv/{self.twitch_handle}"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            status = "isLiveBroadcast" in response.text
+            cache.set(self._twitch_live_cache_key, status, LIVE_CACHE_TIMEOUT_SECONDS)
+            return status
+
+        cache.set(self._twitch_live_cache_key, False, 60)  # back off for some time on errors
+        return False
 
 
 def validate_rivals(sender, **kwargs):
