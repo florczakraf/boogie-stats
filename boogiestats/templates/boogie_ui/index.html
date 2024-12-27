@@ -32,7 +32,10 @@
                             </td>
                             <td class="text-nowrap">{% include "boogie_ui/score_with_judgments.html" %}</td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }}</a>
+                                {% with player=score.player %}
+                                    <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
+                                    {% include "boogie_ui/twitch_live_badge.html" %}
+                                {% endwith %}
                             </td>
                         </tr>
                     {% endfor %}
@@ -74,6 +77,7 @@
                             </td>
                             <td class="text-nowrap">
                                 <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
+                                {% include "boogie_ui/twitch_live_badge.html" %}
                             </td>
                         </tr>
                     {% endfor %}
