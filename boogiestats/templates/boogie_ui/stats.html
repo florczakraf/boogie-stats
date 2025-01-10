@@ -6,6 +6,20 @@
 {% endblock title %}
 {% block content %}
 
+    <h2>total_scores_2024</h2>
+    <ol>
+    {% for p, v in total_scores_2024 %}
+        <li>{{ p }}: {{ v.total_scores_2024 }} | {{ v }}</li>
+    {% endfor %}
+    </ol>
+    <hr>
+    <h2>unique_charts_2024</h2>
+    <ol>
+    {% for p, v in unique_charts_2024 %}
+        <li>{{ p }}: {{ v.unique_charts_2024 }} | {{ v }}</li>
+    {% endfor %}
+    </ol>
+    <hr>
     <h2>total_scores_by_days_since_registration</h2>
     <ol>
     {% for p, v in total_scores_by_days_since_registration %}

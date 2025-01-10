@@ -692,11 +692,16 @@ def stats(request):
         stats[f"#{player.id} {player.name}"]["played_days_by_days_since_registration"] = played_days.count() / days_since_registration
         stats[f"#{player.id} {player.name}"]["longest_training"] = played_days[0]["plays"]
         stats[f"#{player.id} {player.name}"]["total_scores"] = total_scores
+        year_scores = player.scores.filter(submission_day__year=2024)
+        stats[f"#{player.id} {player.name}"]["total_scores_2024"] = year_scores.count()
+        stats[f"#{player.id} {player.name}"]["unique_charts_2024"] = year_scores.values("song__hash").distinct().count()
 
         print(stats[f"#{player.id} {player.name}"])
 
     context["stats"] = stats
 
+    context["total_scores_2024"] = sorted(stats.items(), key=lambda x: x[1]["total_scores_2024"], reverse=True)[:10]
+    context["unique_charts_2024"] = sorted(stats.items(), key=lambda x: x[1]["unique_charts_2024"], reverse=True)[:10]
     context["total_scores_by_days_since_registration"] = sorted(stats.items(), key=lambda x: x[1]["total_scores_by_days_since_registration"], reverse=True)[:10]
     context["played_days"] = sorted(stats.items(), key=lambda x: x[1]["played_days"], reverse=True)[:10]
     context["played_days_by_days_since_registration"] = sorted(stats.items(), key=lambda x: x[1]["played_days_by_days_since_registration"], reverse=True)[:10]
