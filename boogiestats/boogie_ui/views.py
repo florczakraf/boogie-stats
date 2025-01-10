@@ -841,6 +841,17 @@ class PlayerWrappedView(generic.base.TemplateView):
             .all()
         )
         set_calendar(context, start_of_year, end_of_year, played_days)
+        context.update(
+            fantastics_plus=0,
+            fantastics=0,
+            excellents=0,
+            greats=0,
+            decents=0,
+            way_offs=0,
+            misses=0,
+            steps_hit=0,
+        )
+        context["wrapped_years"] = range(player.join_date.year, datetime.date.today().year + 1)
 
         if not context["num_scores"]:
             return context
@@ -875,6 +886,17 @@ class PlayerWrappedView(generic.base.TemplateView):
         context["most_played_song_plays"] = most_played_song_plays
         context["highest_itg_score"] = scores.order_by("-itg_score", "submission_date").first()
         context["highest_ex_score"] = scores.order_by("-ex_score", "submission_date").first()
-        context["wrapped_years"] = range(player.join_date.year, datetime.date.today().year + 1)
+
+        sums = scores.aggregate(
+            fantastics_plus=Sum("fantastics_plus"),
+            fantastics=Sum("fantastics"),
+            excellents=Sum("excellents"),
+            greats=Sum("greats"),
+            decents=Sum("decents"),
+            way_offs=Sum("way_offs"),
+            misses=Sum("misses"),
+        )
+        context["steps_hit"] = sum(sums.values()) - sums["misses"]
+        context.update(sums)
 
         return context

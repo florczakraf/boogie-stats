@@ -24,6 +24,7 @@
                 <li>Unique days: {{ played_days }}</li>
                 <li>Most scores: {{ most_plays.plays }} ({{ most_plays.submission_day }})</li>
                 <li>Longest streak: {{ longest_streak }} days ({{ longest_streak_start }})</li>
+                <li>Steps hit: {{ steps_hit }}</li>
                 {% if most_played_song and highest_itg_score and highest_ex_score %}
                     <li>
                         Most played song:
@@ -63,6 +64,34 @@
             </button>
         </div>
     </div>
+    {% with both_fantastics=fantastics|add:fantastics_plus %}
+        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics+: {{ fantastics_plus }} ({% widthratio fantastics_plus total_steps 100 %}%)
+            <br />
+            Fantastics: {{ fantastics }} ({% widthratio fantastics total_steps 100 %}%)
+            <br />
+            Excellents: {{ excellents }} ({% widthratio excellents total_steps 100 %}%)
+            <br />
+            Greats: {{ greats }} ({% widthratio greats total_steps 100 %}%)
+            <br />
+            Decents: {{ decents }} ({% widthratio decents total_steps 100 %}%)
+            <br />
+            Way-offs: {{ way_offs }} ({% widthratio way_offs total_steps 100 %}%)
+            <br />
+            Misses: {{ misses }} ({% widthratio misses total_steps 100 %}%)
+            <br />
+            ">
+            <div class="big-score-box"
+                 style="grid-template-columns: {{ fantastics_plus }}fr {{ fantastics }}fr {{ excellents }}fr {{ greats }}fr {{ decents }}fr {{ way_offs }}fr {{ misses }}fr">
+                <div class="fantastic"></div>
+                <div class="fantastic_white"></div>
+                <div class="excellent"></div>
+                <div class="great"></div>
+                <div class="decent"></div>
+                <div class="wayoff"></div>
+                <div class="miss"></div>
+            </div>
+        </div>
+    {% endwith %}
     <hr />
     {% include "boogie_ui/calendar.html" %}
     <div>
