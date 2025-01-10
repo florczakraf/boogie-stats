@@ -850,6 +850,7 @@ class PlayerWrappedView(generic.base.TemplateView):
             way_offs=0,
             misses=0,
             steps_hit=0,
+            total_steps=0,
         )
         context["wrapped_years"] = range(player.join_date.year, datetime.date.today().year + 1)
 
@@ -896,7 +897,9 @@ class PlayerWrappedView(generic.base.TemplateView):
             way_offs=Sum("way_offs"),
             misses=Sum("misses"),
         )
-        context["steps_hit"] = sum(sums.values()) - sums["misses"]
+        context["total_steps"] = sum(sums.values())
+        context["steps_hit"] = context["total_steps"] - sums["misses"]
+
         context.update(sums)
 
         return context
