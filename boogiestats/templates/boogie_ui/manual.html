@@ -77,9 +77,9 @@
         </li>
         <li>Start the game, create a profile (if you haven't migrated a profile) and set it to a desired player slot.</li>
         <li>
-            Set <code>Enable GrooveStats</code> to <code>Yes</code> in the <code>GrooveStats Options</code> inside the <code>Game Options</code> submenu of <code>Options</code>.
+            Set <code>Enable GrooveStats</code> to <code>Yes</code> in the <code>GrooveStats Options</code> submenu of <code>Options</code>.
         </li>
-        <li>Turn off the game (it's important, because Stepmania overwrites config files).</li>
+        <li>Turn off the game first (it's important, because the game overwrites config files on exit).</li>
         <li>
             Go to <a href="https://groovestats.com/" target="_blank">GrooveStats</a> website and <code>Sign Up</code>.
             Then log in and go to the <a href="https://groovestats.com/index.php?page=register&action=update"
@@ -87,7 +87,7 @@
         </li>
         <li>
             Configure GrooveStats in your game profile by creating/editing a <code>GrooveStats.ini</code> file inside your profile's directory.
-            If you need help locating your profile, see <a href="#locating-game-settings">Locating Game Settings section</a>.
+            If you need help locating your profile, see <a href="#locating-game-settings">Locating Game Settings section</a> of this manual.
             The file must have the following contents:
             <pre>
 <code>
@@ -110,7 +110,7 @@ IsPadPlayer=1
     </p>
     <p>
         First you need to allow ITGmania to make network requests to BoogieStats address.
-        Make sure to turn your game off before modifying the configuration.
+        <b>Make sure to turn your game off before modifying the configuration.</b>
         Locate your <code>Preferences.ini</code> file in the <a href="#locating-game-settings">configuration directory</a>.
         Find the line that starts with <code>HttpAllowHosts=</code> and append <code>,{{ boogiestats_allow_host }}</code>.
         Make sure that there are <b>no extra spaces or protocol</b>, just the address after a comma.
@@ -126,18 +126,18 @@ HttpAllowHosts=*.groovestats.com,{{ boogiestats_allow_host }}
 </code></pre>
     <p>
         Now pick the theme-specific instructions that apply to you.
-        If you start with a fresh ITGmania installation and don't know what to choose, zmod offers the best BoogieStats user experience at the moment.
+        If you start with a fresh ITGmania installation and don't know what to choose, <code>zmod</code> offers the best BoogieStats user experience at the moment.
     </p>
     <h4 id="zmod-sl">
         Zarzob's Simply Love Fork (zmod) <a class="text-muted small" href="#zmod-sl">#</a>
     </h4>
     <p>
-        Zarzob's fork of Simply Love, commonly referred to as zmod, has an extended support for BoogieStats.
+        Zarzob's fork of Simply Love, commonly referred to as <code>zmod</code>, has an extended support for BoogieStats.
         You can download it from the <a href="https://github.com/zarzob/Simply-Love-SM5" target="_blank">project's GitHub page</a>.
     </p>
     <p>
-        If you run already have a recent version of zmod, just
-        set <code>Use BoogieStats</code> to <code>Yes</code> in the <code>GrooveStats Options</code> inside the <code>Game Options</code> submenu of <code>Options</code>.
+        If you run already have a recent version of <code>zmod</code>, just
+        set <code>Use BoogieStats</code> to <code>Yes</code> in the <code>Zmod Options</code> submenu of <code>Options</code>.
     </p>
     <h4 id="stock-sl">
         Stock Simply Love <a class="text-muted small" href="#stock-sl">#</a>
@@ -167,7 +167,7 @@ local url_prefix = "{{ boogiestats_url_prefix }}"
     </h4>
     <p>
         When you completed all required configuration you can just start playing. All songs will now appear as "ranked" in game.
-        If you use zmod theme, the leaderboards will display the source of scores (either GS or BS).
+        If you use <code>zmod</code> theme, the leaderboards will display the source of scores (either GS or BS).
     </p>
     <p>
         After you play and <b>pass</b> any song and your score is not disqualified locally by the game, your
@@ -197,7 +197,7 @@ local url_prefix = "{{ boogiestats_url_prefix }}"
     <h3 id="locating-game-settings">
         Locating Game Settings <a class="text-muted small" href="#locating-game-settings">#</a>
     </h3>
-    Stepmania keeps configuration and player profiles inside a directory that depends on type of installation and your system.
+    ITGmania keeps configuration and player profiles inside a directory that depends on type of installation and your system.
     Remember to <b>only modify the configuration when the game is not running</b>, otherwise it will be overwritten.
     <h4 id="portable-installations">
         Portable Installations <a class="text-muted small" href="#portable-installations">#</a>
