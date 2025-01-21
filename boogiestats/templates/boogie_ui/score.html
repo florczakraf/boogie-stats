@@ -19,73 +19,62 @@
     <h3 class="text-center">ITG Score: {{ score.itg_score|div:100|stringformat:".2f" }}%</h3>
     {% if score.has_judgments %}
         <h3 class="text-center">EX Score: {{ score.ex_score|div:100|stringformat:".2f" }}%</h3>
-        <div class="text-center d-flex flex-column justify-content-evenly" data-bs-toggle="tooltip" data-bs-html="true" title="Fantastics+: {{ score.fantastics_plus }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%)
-            <br />
-            Fantastics: {{ score.fantastics }} ({% widthratio score.fantastics score.total_steps 100 %}%)
-            <br />
-            Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%)
-            <br />
-            Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%)
-            <br />
-            Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%)
-            <br />
-            Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%)
-            <br />
-            Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%)
-            <br />
-            ">
-            <div class="big-score-box"
-                 style="grid-template-columns: {{ score.fantastics_plus }}fr {{ score.fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
-                <div class="fantastic"></div>
-                <div class="fantastic_white"></div>
-                <div class="excellent"></div>
-                <div class="great"></div>
-                <div class="decent"></div>
-                <div class="wayoff"></div>
-                <div class="miss"></div>
-            </div>
+        <div class="text-center d-flex flex-column justify-content-evenly"
+             data-bs-toggle="tooltip"
+             data-bs-html="true"
+             title="Fantastics+: {{ score.fantastics_plus }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%) <br /> Fantastics: {{ score.fantastics }} ({% widthratio score.fantastics score.total_steps 100 %}%) <br /> Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%) <br /> Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%) <br /> Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%) <br /> Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%) <br /> Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%) <br /> ">
+        <div class="big-score-box"
+             style="grid-template-columns: {{ score.fantastics_plus }}fr {{ score.fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
+            <div class="fantastic"></div>
+            <div class="fantastic_white"></div>
+            <div class="excellent"></div>
+            <div class="great"></div>
+            <div class="decent"></div>
+            <div class="wayoff"></div>
+            <div class="miss"></div>
         </div>
-    {% endif %}
-    <div class="d-flex">
-        <div class="col">
-            <ul>
-                <li>
-                    Player: <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }} ({{ score.player.machine_tag }})</a>
-                </li>
-                <li>Comment: {{ score.comment }}</li>
-                <li>C-MOD: {{ score.used_cmod }}</li>
-                <li>Rate: {{ score.rate|div:100 }}</li>
-                <li>
-                    Submission Date:
-                    {% with datetime=score.submission_date %}
-                        {% include "boogie_ui/convert_timestamp.html" %}
-                    {% endwith %}
-                </li>
-            </ul>
-        </div>
-        {% if score.has_judgments %}
-            {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
-                <div class="col">
-                    <ul>
-                        <li>
-                            Fantastics: {{ both_fantastics }} ({{ score.fantastics_plus }} + {{ score.fantastics }}) — {% widthratio both_fantastics score.total_steps 100 %}%
-                        </li>
-                        <li>Excellents: {{ score.excellents }} — {% widthratio score.excellents score.total_steps 100 %}%</li>
-                        <li>Greats: {{ score.greats }} — {% widthratio score.greats score.total_steps 100 %}%</li>
-                        <li>Decents: {{ score.decents }} — {% widthratio score.decents score.total_steps 100 %}%</li>
-                        <li>Way-offs: {{ score.way_offs }} — {% widthratio score.way_offs score.total_steps 100 %}%</li>
-                        <li>Misses: {{ score.misses }} — {% widthratio score.misses score.total_steps 100 %}%</li>
-                    </ul>
-                </div>
-                <div class="col">
-                    <ul>
-                        <li>Total Steps: {{ score.total_steps }}</li>
-                        <li>Mines: {{ score.total_mines|sub:score.mines_hit }}/{{ score.total_mines }}</li>
-                        <li>Holds: {{ score.holds_held }}/{{ score.total_holds }}</li>
-                        <li>Rolls: {{ score.rolls_held }}/{{ score.total_rolls }}</li>
-                    </ul>
-                </div>
-            {% endwith %}
-        {% endif %}
     </div>
+{% endif %}
+<div class="d-flex">
+    <div class="col">
+        <ul>
+            <li>
+                Player: <a href="{% url "player" player_id=score.player.id %}">{{ score.player.name }} ({{ score.player.machine_tag }})</a>
+            </li>
+            <li>Comment: {{ score.comment }}</li>
+            <li>C-MOD: {{ score.used_cmod }}</li>
+            <li>Rate: {{ score.rate|div:100 }}</li>
+            <li>
+                Submission Date:
+                {% with datetime=score.submission_date %}
+                    {% include "boogie_ui/convert_timestamp.html" %}
+                {% endwith %}
+            </li>
+        </ul>
+    </div>
+    {% if score.has_judgments %}
+        {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
+            <div class="col">
+                <ul>
+                    <li>
+                        Fantastics: {{ both_fantastics }} ({{ score.fantastics_plus }} + {{ score.fantastics }}) — {% widthratio both_fantastics score.total_steps 100 %}%
+                    </li>
+                    <li>Excellents: {{ score.excellents }} — {% widthratio score.excellents score.total_steps 100 %}%</li>
+                    <li>Greats: {{ score.greats }} — {% widthratio score.greats score.total_steps 100 %}%</li>
+                    <li>Decents: {{ score.decents }} — {% widthratio score.decents score.total_steps 100 %}%</li>
+                    <li>Way-offs: {{ score.way_offs }} — {% widthratio score.way_offs score.total_steps 100 %}%</li>
+                    <li>Misses: {{ score.misses }} — {% widthratio score.misses score.total_steps 100 %}%</li>
+                </ul>
+            </div>
+            <div class="col">
+                <ul>
+                    <li>Total Steps: {{ score.total_steps }}</li>
+                    <li>Mines: {{ score.total_mines|sub:score.mines_hit }}/{{ score.total_mines }}</li>
+                    <li>Holds: {{ score.holds_held }}/{{ score.total_holds }}</li>
+                    <li>Rolls: {{ score.rolls_held }}/{{ score.total_rolls }}</li>
+                </ul>
+            </div>
+        {% endwith %}
+    {% endif %}
+</div>
 {% endblock content %}
