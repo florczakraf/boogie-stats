@@ -12,17 +12,17 @@ license = "AGPLv3"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "Django (~=5.1.5)",
-    "requests (~=2.32.3)",
-    "gunicorn (~=23.0.0)",
-    "django-mathfilters (~=1.0.0)",
-    "redis (~=5.2.0)",
-    "sentry-sdk  (~=2.0.0)",
+    "Django (~=5.1)",
+    "requests (~=2.32)",
+    "gunicorn (~=23.0)",
+    "django-mathfilters (~=1.0)",
+    "redis (~=5.2)",
+    "sentry-sdk (~=2.22)",
     "django-bootstrap-icons (==0.9.0)",
-    "django-prometheus (~=2.3.1)",
-    "prometheus-client (~=0.21.1)",
-    "django-ipware (~=7.0.1)",
-    "django-formset (~=1.6.0)",
+    "django-prometheus (~=2.3)",
+    "prometheus-client (~=0.21)",
+    "django-ipware (~=7.0)",
+    "django-formset (~=1.6)",
 ]
 
 [tool.poetry]
