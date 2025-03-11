@@ -2,7 +2,7 @@ FROM python:3.11
 
 ENV POETRY_HOME=/opt/poetry
 RUN python3 -m venv "$POETRY_HOME" \
-    && "$POETRY_HOME/bin/pip" install poetry==1.8.2 \
+    && "$POETRY_HOME/bin/pip" install poetry==2.1.1 \
     && ln -s "$POETRY_HOME/bin/poetry" /usr/local/bin/poetry
 
 WORKDIR /app
