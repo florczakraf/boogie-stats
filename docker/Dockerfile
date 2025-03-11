@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.13-slim
 
 ENV POETRY_HOME=/opt/poetry
 RUN python3 -m venv "$POETRY_HOME" \
