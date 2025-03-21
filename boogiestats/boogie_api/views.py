@@ -13,7 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 from prometheus_client import Counter
 
 from boogiestats import __version__ as boogiestats_version
-from boogiestats.boogie_api.models import LeaderboardSource, Player, Song
+from boogiestats.boogie_api.choices import GSIntegration, GSStatus, LeaderboardSource
+from boogiestats.boogie_api.models import Player, Song
 from boogiestats.boogie_api.utils import set_sentry_user
 
 logger = logging.getLogger("django.server.boogiestats")
@@ -241,7 +242,7 @@ def _make_score_submit_response(gs_response, players, max_results):
         player_instance: Player = player["player_instance"]
         leaderboard_source = player_instance.leaderboard_source
 
-        if leaderboard_source == LeaderboardSource.BS:
+        if leaderboard_source == LeaderboardSource.BS or not gs_player:
             final_response[player_id] = {
                 "chartHash": player["chartHash"],
                 "isRanked": True,
@@ -263,18 +264,9 @@ def _make_score_submit_response(gs_response, players, max_results):
     return final_response, response_headers
 
 
-@csrf_exempt
-def score_submit(request):
+def _post_gs(request, body_parsed, require_gs):
     headers = create_headers(request)
-
-    try:
-        players = parse_players(request)
-        body_parsed = json.loads(request.body)
-    except (ValueError, json.JSONDecodeError) as e:
-        sentry_sdk.capture_exception(e)
-        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
-
-    max_results = int(request.GET.get("maxLeaderboardResults", 1))
+    gs_response = {}
 
     try:
         GS_POST_REQUESTS_TOTAL.inc()
@@ -287,22 +279,50 @@ def score_submit(request):
         )
         gs_response = raw_response.json()
         logger.info(gs_response)
-    except (requests.Timeout, requests.ConnectionError) as e:
+    except (requests.Timeout, requests.ConnectionError):
         GS_POST_REQUESTS_ERRORS_TOTAL.inc()
-        sentry_sdk.capture_exception(e)
-        logger.error(f"Request to GrooveStats failed: {e}")
 
-        # we can't ignore GS errors silently in case of score submissions (yet)
-        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
+        if require_gs:
+            return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
+
     except json.JSONDecodeError as e:
         GS_POST_REQUESTS_ERRORS_TOTAL.inc()
         sentry_sdk.set_context("GS", {"raw_response": raw_response.content, "status": raw_response.status_code})
         sentry_sdk.capture_exception(e)
 
-        return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
+        if require_gs:
+            return JsonResponse(GROOVESTATS_RESPONSES["GROOVESTATS_DEAD"], status=504)
+
     except Exception:  # catchall for incrementing metrics; reraise to let sentry catch it as an unhandled exception
         GS_POST_REQUESTS_ERRORS_TOTAL.inc()
         raise
+
+    return gs_response
+
+
+@csrf_exempt
+def score_submit(request):
+    try:
+        players = parse_players(request)
+        body_parsed = json.loads(request.body)
+    except (ValueError, json.JSONDecodeError) as e:
+        sentry_sdk.capture_exception(e)
+        return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
+
+    max_results = int(request.GET.get("maxLeaderboardResults", 1))
+
+    player_instances = [p["player_instance"] for p in players.values()]
+    # if player doesn't exist we need to call GS to verify the key for the first time
+    gs_integrations = [p and p.gs_integration or GSIntegration.REQUIRE for p in player_instances]
+    should_attempt_gs = any(g != GSIntegration.SKIP for g in gs_integrations)
+    require_gs = any(g == GSIntegration.REQUIRE for g in gs_integrations)
+
+    gs_response = {}
+    if should_attempt_gs:
+        gs_response = _post_gs(request, body_parsed, require_gs)
+
+    if isinstance(gs_response, JsonResponse):
+        return gs_response
 
     handle_scores(body_parsed, gs_response, players)
 
@@ -337,6 +357,8 @@ def handle_scores(body_parsed, gs_response, players):
         used_cmod = score_submission.get("usedCmod", None)
         judgments = score_submission.get("judgmentCounts", None)
 
+        can_skip = player_instance.gs_integration == GSIntegration.SKIP
+        gs_status = GSStatus.OK if gs_player else (GSStatus.SKIPPED if can_skip else GSStatus.ERROR)
         new_score = player_instance.scores.create(
             song=song,
             itg_score=score_submission["score"],
@@ -344,6 +366,7 @@ def handle_scores(body_parsed, gs_response, players):
             rate=score_submission.get("rate", 100),
             used_cmod=used_cmod,
             judgments=judgments,
+            gs_status=gs_status,
         )
 
         handle_score_results(player, old_score, new_score)

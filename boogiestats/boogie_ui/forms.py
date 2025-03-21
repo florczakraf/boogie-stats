@@ -38,8 +38,9 @@ class EditPlayerForm(FormMixin, forms.ModelForm):
         fields = [
             "machine_tag",
             "name",
-            "pull_gs_name_and_tag",
+            "gs_integration",
             "leaderboard_source",
+            "pull_gs_name_and_tag",
             "rivals",
             "twitch_handle",
             "discord_handle",
