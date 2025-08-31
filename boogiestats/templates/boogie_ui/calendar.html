@@ -13,7 +13,7 @@
                 </div>
             {% endfor %}
             {% for day in calendar_days %}
-                <a href="{% url "player_scores_by_day" player_id=player.id day=day.day %}"
+                <a {% if day.plays > 0 %}href="{% url "player_scores_by_day" player_id=player.id day=day.day %}"{% endif %}
                    class="calendar-graph-box {{ day.class }}"
                    data-bs-toggle="tooltip"
                    title="{{ day.day }}: {{ day.plays }}">
