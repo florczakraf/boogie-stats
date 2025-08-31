@@ -383,7 +383,8 @@ class PlayerStatsView(generic.base.TemplateView):
         return context
 
 
-class VersusView(LeaderboardSourceMixin, generic.ListView):
+class VersusView(LoginRequiredMixin, LeaderboardSourceMixin, generic.ListView):
+    login_url = "/login/"
     template_name = "boogie_ui/versus.html"
 
     def sort_key(self, x):
