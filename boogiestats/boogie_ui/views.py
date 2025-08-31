@@ -45,6 +45,17 @@ CUSTOM_SOCIAL_LINKS = {
 }
 
 
+class RequireAuthForPaginationMixin:
+    PAGES_FOR_ANONYMOUS = 3
+
+    def dispatch(self, request, *args, **kwargs):
+        page_num = int(request.GET.get("page", 1))
+        if page_num > self.PAGES_FOR_ANONYMOUS and not request.user.is_authenticated:
+            return redirect(f"{reverse('login')}?next={request.path}?page={page_num}")
+
+        return super().dispatch(request, *args, **kwargs)
+
+
 class LeaderboardSourceMixin:
     @property
     def lb_source(self):
@@ -111,7 +122,7 @@ class IndexView(LeaderboardSourceMixin, generic.ListView):
         return context
 
 
-class ScoreListView(LeaderboardSourceMixin, generic.ListView):
+class ScoreListView(RequireAuthForPaginationMixin, LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/scores.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -273,7 +284,7 @@ def set_calendar(context, start_date, end_date, played_days):
     )
 
 
-class PlayerView(LeaderboardSourceMixin, generic.ListView):
+class PlayerView(RequireAuthForPaginationMixin, LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/player.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -451,7 +462,7 @@ class VersusByDifferenceView(VersusView):
         return getattr(x[0], self.lb_attribute) - getattr(x[1], self.lb_attribute)
 
 
-class SongView(LeaderboardSourceMixin, generic.ListView):
+class SongView(RequireAuthForPaginationMixin, LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/song.html"
     context_object_name = "scores"
     paginate_by = ENTRIES_PER_PAGE
@@ -550,7 +561,7 @@ class SongByRivalsView(SongView):
         )
 
 
-class SongsListView(LeaderboardSourceMixin, generic.ListView):
+class SongsListView(RequireAuthForPaginationMixin, LeaderboardSourceMixin, generic.ListView):
     template_name = "boogie_ui/songs.html"
     context_object_name = "songs"
     paginate_by = ENTRIES_PER_PAGE
