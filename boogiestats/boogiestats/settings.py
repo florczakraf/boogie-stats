@@ -171,3 +171,10 @@ BS_EXTRA_Q_AND_A: Dict[str, str] = {}
 
 # Upstream API endpoint, useful for chaining multiple BS instances
 BS_UPSTREAM_API_ENDPOINT = "https://api.groovestats.com"
+
+# Number formatting values
+
+USE_L10N = True
+USE_THOUSAND_SEPERATOR = True
+THOUSAND_SEPERATOR = "\xa0"
+NUMBER_GROUPING = 3

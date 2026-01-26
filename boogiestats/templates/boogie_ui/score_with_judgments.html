@@ -1,11 +1,12 @@
 {% load mathfilters %}
+{% load l10n %}
 {% load boogiestats_tags %}
 {% if score.has_judgments %}
     {% with both_fantastics=score.fantastics|add:score.fantastics_plus %}
         <div class="text-center d-flex flex-column justify-content-evenly"
              data-bs-toggle="tooltip"
              data-bs-html="true"
-             title="ITG Score: {{ score.itg_score|div:100|stringformat:".2f" }}% <br /> EX Score: {{ score.ex_score|div:100|stringformat:".2f" }}% <br /> Both Fantastics: {{ both_fantastics }} ({% widthratio both_fantastics score.total_steps 100 %}%) <br /> Fantastics+: {{ score.fantastics_plus }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%) <br /> Fantastics: {{ score.fantastics }} ({% widthratio score.fantastics score.total_steps 100 %}%) <br /> Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%) <br /> Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%) <br /> Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%) <br /> Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%) <br /> Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%) <br /> ">
+             title="ITG Score: {{ score.itg_score|div:100|stringformat:".2f" }}% <br /> EX Score: {{ score.ex_score|div:100|stringformat:".2f" }}% <br /> Both Fantastics: {{ both_fantastics|localize }} ({% widthratio both_fantastics score.total_steps 100 %}%) <br /> Fantastics+: {{ score.fantastics_plus|localize }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%) <br /> Fantastics: {{ score.fantastics|localize }} ({% widthratio score.fantastics score.total_steps 100 %}%) <br /> Excellents: {{ score.excellents|localize }} ({% widthratio score.excellents score.total_steps 100 %}%) <br /> Greats: {{ score.greats|localize }} ({% widthratio score.greats score.total_steps 100 %}%) <br /> Decents: {{ score.decents|localize }} ({% widthratio score.decents score.total_steps 100 %}%) <br /> Way-offs: {{ score.way_offs|localize }} ({% widthratio score.way_offs score.total_steps 100 %}%) <br /> Misses: {{ score.misses|localize }} ({% widthratio score.misses score.total_steps 100 %}%) <br /> ">
         <a href="{% url "score" pk=score.id %}">
             <div>{{ score|attr:lb_attribute|div:100|stringformat:".2f" }}%</div>
         </a>

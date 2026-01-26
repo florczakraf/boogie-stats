@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load l10n %}
 {% load tz %}
 {% block title %}
     Home
@@ -90,13 +91,13 @@
     <h2>Instance Stats</h2>
     <ul>
         <li>
-            <a href="{% url "songs" %}">Songs: {{ n_songs }}</a>
+            <a href="{% url "songs" %}">Songs: {{ n_songs|localize }}</a>
         </li>
         <li>
-            <a href="{% url "scores" %}">Scores: {{ n_scores }}</a>
+            <a href="{% url "scores" %}">Scores: {{ n_scores|localize }}</a>
         </li>
         <li>
-            <a href="{% url "players" %}">Players: {{ n_players }}</a>
+            <a href="{% url "players" %}">Players: {{ n_players|localize }}</a>
         </li>
     </ul>
 {% endblock content %}

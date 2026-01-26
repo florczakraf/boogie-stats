@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load l10n %}
 {% load boogiestats_tags %}
 {% block title %}
     {{ p1.name }} ({{ p1.machine_tag }})
@@ -16,22 +17,22 @@
                     </h2>
                 </div>
                 <div>{{ p1.join_date.date }}</div>
-                <div>{{ p1.num_scores }}</div>
-                <div>{{ p1.num_songs }}</div>
+                <div>{{ p1.num_scores|localize }}</div>
+                <div>{{ p1.num_songs|localize }}</div>
                 <div>
                     <hr />
                 </div>
-                <div>{{ p1_five_stars }}</div>
-                <div>{{ p1_four_stars }}</div>
-                <div>{{ p1_three_stars }}</div>
-                <div>{{ p1_two_stars }}</div>
-                <div>{{ p1_one_star }}</div>
+                <div>{{ p1_five_stars|localize }}</div>
+                <div>{{ p1_four_stars|localize }}</div>
+                <div>{{ p1_three_stars|localize }}</div>
+                <div>{{ p1_two_stars|localize }}</div>
+                <div>{{ p1_one_star|localize }}</div>
                 <div>
                     <hr />
                 </div>
-                <div>{{ common_charts }}</div>
-                <div>{{ p1_wins }}</div>
-                <div>{{ ties }}</div>
+                <div>{{ common_charts|localize }}</div>
+                <div>{{ p1_wins|localize }}</div>
+                <div>{{ ties|localize }}</div>
             </div>
             <div class="col col-md-2 text-nowrap text-center">
                 <div>
@@ -62,22 +63,22 @@
                     </h2>
                 </div>
                 <div>{{ p2.join_date.date }}</div>
-                <div>{{ p2.num_scores }}</div>
-                <div>{{ p2.num_songs }}</div>
+                <div>{{ p2.num_scores|localize }}</div>
+                <div>{{ p2.num_songs|localize }}</div>
                 <div>
                     <hr />
                 </div>
-                <div>{{ p2_five_stars }}</div>
-                <div>{{ p2_four_stars }}</div>
-                <div>{{ p2_three_stars }}</div>
-                <div>{{ p2_two_stars }}</div>
-                <div>{{ p2_one_star }}</div>
+                <div>{{ p2_five_stars|localize }}</div>
+                <div>{{ p2_four_stars|localize }}</div>
+                <div>{{ p2_three_stars|localize }}</div>
+                <div>{{ p2_two_stars|localize }}</div>
+                <div>{{ p2_one_star|localize }}</div>
                 <div>
                     <hr />
                 </div>
-                <div>{{ common_charts }}</div>
-                <div>{{ p2_wins }}</div>
-                <div>{{ ties }}</div>
+                <div>{{ common_charts|localize }}</div>
+                <div>{{ p2_wins|localize }}</div>
+                <div>{{ ties|localize }}</div>
             </div>
         </div>
     </div>

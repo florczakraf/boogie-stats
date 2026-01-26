@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load l10n %}
 {% load boogiestats_tags %}
 {% block title %}
     Songs
@@ -30,8 +31,8 @@
                     {% for song in songs %}
                         <tr>
                             <td class="text-nowrap">{% include "boogie_ui/song_link.html" %}</td>
-                            <td class="text-nowrap">{{ song.number_of_scores }}</td>
-                            <td class="text-nowrap">{{ song.number_of_players }}</td>
+                            <td class="text-nowrap">{{ song.number_of_scores|localize }}</td>
+                            <td class="text-nowrap">{{ song.number_of_players|localize }}</td>
                             <td class="text-nowrap">
                                 {% if song|attr:highscore_attribute %}
                                     {% with highscore=song|attr:highscore_attribute %}

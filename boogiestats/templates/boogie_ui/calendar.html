@@ -1,3 +1,4 @@
+{% load l10n %}
 <div class="overflow-auto">
     <div class="calendar-grid">
         <div class="calendar-months text-center fw-bold">
@@ -16,7 +17,7 @@
                 <a {% if day.plays > 0 %}href="{% url "player_scores_by_day" player_id=player.id day=day.day %}"{% endif %}
                    class="calendar-graph-box {{ day.class }}"
                    data-bs-toggle="tooltip"
-                   title="{{ day.day }}: {{ day.plays }}">
+                   title="{{ day.day }}: {{ day.plays|localize }}">
                     <div>
                         <span><!--container for an optional glyph--></span>
                     </div>

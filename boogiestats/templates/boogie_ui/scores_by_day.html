@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load l10n %}
 {% block title %}
     {{ player.name }} ({{ player.machine_tag }}) on {{ day }}
 {% endblock title %}
@@ -9,7 +10,7 @@
     <meta property="og:title"
           content="{{ player.name }} ({{ player.machine_tag }}) on {{ day }}" />
     <meta property="og:description"
-          content="Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}" />
+          content="Scores: {{ num_scores|localize }} | Charts played: {{ num_charts_played|localize }}" />
 {% endblock head_extras %}
 {% block content %}
     <h1>
@@ -18,15 +19,15 @@
     <div class="d-flex">
         <div class="col">
             <ul>
-                <li>Scores: {{ num_scores }}</li>
-                <li>Charts played: {{ num_charts_played }}</li>
-                <li>Total steps hit: {{ steps_hit }}</li>
-                <li>Fantastics: {{ fantastics|add:fantastics_plus }} ({{ fantastics_plus }} + {{ fantastics }})</li>
-                <li>Excellents: {{ excellents }}</li>
-                <li>Greats: {{ greats }}</li>
-                <li>Decents: {{ decents }}</li>
-                <li>Way-offs: {{ way_offs }}</li>
-                <li>Misses: {{ misses }}</li>
+                <li>Scores: {{ num_scores|localize }}</li>
+                <li>Charts played: {{ num_charts_played|localize }}</li>
+                <li>Total steps hit: {{ steps_hit|localize }}</li>
+                <li>Fantastics: {{ fantastics|add:fantastics_plus|localize }} ({{ fantastics_plus|localize }} + {{ fantastics|localize }})</li>
+                <li>Excellents: {{ excellents|localize }}</li>
+                <li>Greats: {{ greats|localize }}</li>
+                <li>Decents: {{ decents|localize }}</li>
+                <li>Way-offs: {{ way_offs|localize }}</li>
+                <li>Misses: {{ misses|localize }}</li>
             </ul>
         </div>
         {% include "boogie_ui/stars.html" %}
@@ -35,7 +36,7 @@
         <div class="text-center d-flex flex-column justify-content-evenly"
              data-bs-toggle="tooltip"
              data-bs-html="true"
-             title="Fantastics+: {{ fantastics_plus }} ({% widthratio fantastics_plus total_steps 100 %}%) <br /> Fantastics: {{ fantastics }} ({% widthratio fantastics total_steps 100 %}%) <br /> Excellents: {{ excellents }} ({% widthratio excellents total_steps 100 %}%) <br /> Greats: {{ greats }} ({% widthratio greats total_steps 100 %}%) <br /> Decents: {{ decents }} ({% widthratio decents total_steps 100 %}%) <br /> Way-offs: {{ way_offs }} ({% widthratio way_offs total_steps 100 %}%) <br /> Misses: {{ misses }} ({% widthratio misses total_steps 100 %}%) <br /> ">
+             title="Fantastics+: {{ fantastics_plus|localize }} ({% widthratio fantastics_plus total_steps 100 %}%) <br /> Fantastics: {{ fantastics|localize }} ({% widthratio fantastics total_steps 100 %}%) <br /> Excellents: {{ excellents|localize }} ({% widthratio excellents total_steps 100 %}%) <br /> Greats: {{ greats|localize }} ({% widthratio greats total_steps 100 %}%) <br /> Decents: {{ decents|localize }} ({% widthratio decents total_steps 100 %}%) <br /> Way-offs: {{ way_offs|localize }} ({% widthratio way_offs total_steps 100 %}%) <br /> Misses: {{ misses|localize }} ({% widthratio misses total_steps 100 %}%) <br /> ">
         <div class="big-score-box"
              style="grid-template-columns: {{ fantastics_plus }}fr {{ fantastics }}fr {{ excellents }}fr {{ greats }}fr {{ decents }}fr {{ way_offs }}fr {{ misses }}fr">
             <div class="fantastic"></div>

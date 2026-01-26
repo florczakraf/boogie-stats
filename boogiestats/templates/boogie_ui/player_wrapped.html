@@ -1,5 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
+{% load l10n %}
 {% load bootstrap_icons %}
 {% block title %}
     {{ player.name }} ({{ player.machine_tag }}) {{ year }} Wrapped
@@ -10,7 +11,7 @@
     <meta property="og:title"
           content="{{ player.name }} ({{ player.machine_tag }}) | {{ year }} Wrapped" />
     <meta property="og:description"
-          content="Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}" />
+          content="Scores: {{ num_scores|localize }} | Charts played: {{ num_charts_played|localize }}" />
 {% endblock head_extras %}
 {% block content %}
     <h1>
@@ -19,19 +20,19 @@
     <div class="d-flex">
         <div class="col">
             <ul>
-                <li>Scores: {{ num_scores }}</li>
-                <li>Unique charts: {{ num_charts_played }}</li>
-                <li>Unique days: {{ played_days }}</li>
-                <li>Most scores: {{ most_plays.plays }} ({{ most_plays.submission_day }})</li>
-                <li>Longest streak: {{ longest_streak }} days ({{ longest_streak_start }})</li>
-                <li>Steps hit: {{ steps_hit }}</li>
+                <li>Scores: {{ num_scores|localize }}</li>
+                <li>Unique charts: {{ num_charts_played|localize }}</li>
+                <li>Unique days: {{ played_days|localize }}</li>
+                <li>Most scores: {{ most_plays.plays|localize }} ({{ most_plays.submission_day }})</li>
+                <li>Longest streak: {{ longest_streak|localize }} days ({{ longest_streak_start }})</li>
+                <li>Steps hit: {{ steps_hit|localize }}</li>
                 {% if most_played_song and highest_itg_score and highest_ex_score %}
                     <li>
                         Most played song:
                         {% with song=most_played_song %}
                             {% include "boogie_ui/song_link.html" %}
                         {% endwith %}
-                        ({{ most_played_song_plays }} plays)
+                        ({{ most_played_song_plays|localize }} plays)
                     </li>
                     <li>
                         Highest ITG Score:
@@ -68,7 +69,7 @@
         <div class="text-center d-flex flex-column justify-content-evenly"
              data-bs-toggle="tooltip"
              data-bs-html="true"
-             title="Fantastics+: {{ fantastics_plus }} ({% widthratio fantastics_plus total_steps 100 %}%) <br /> Fantastics: {{ fantastics }} ({% widthratio fantastics total_steps 100 %}%) <br /> Excellents: {{ excellents }} ({% widthratio excellents total_steps 100 %}%) <br /> Greats: {{ greats }} ({% widthratio greats total_steps 100 %}%) <br /> Decents: {{ decents }} ({% widthratio decents total_steps 100 %}%) <br /> Way-offs: {{ way_offs }} ({% widthratio way_offs total_steps 100 %}%) <br /> Misses: {{ misses }} ({% widthratio misses total_steps 100 %}%) <br /> ">
+             title="Fantastics+: {{ fantastics_plus|localize }} ({% widthratio fantastics_plus total_steps 100 %}%) <br /> Fantastics: {{ fantastics|localize }} ({% widthratio fantastics total_steps 100 %}%) <br /> Excellents: {{ excellents|localize }} ({% widthratio excellents total_steps 100 %}%) <br /> Greats: {{ greats|localize }} ({% widthratio greats total_steps 100 %}%) <br /> Decents: {{ decents|localize }} ({% widthratio decents total_steps 100 %}%) <br /> Way-offs: {{ way_offs|localize }} ({% widthratio way_offs total_steps 100 %}%) <br /> Misses: {{ misses|localize }} ({% widthratio misses total_steps 100 %}%) <br /> ">
         <div class="big-score-box"
              style="grid-template-columns: {{ fantastics_plus }}fr {{ fantastics }}fr {{ excellents }}fr {{ greats }}fr {{ decents }}fr {{ way_offs }}fr {{ misses }}fr">
             <div class="fantastic"></div>

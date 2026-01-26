@@ -1,6 +1,7 @@
 {% extends "boogie_ui/root.html" %}
 {% load bootstrap_icons %}
 {% load mathfilters %}
+{% load l10n %}
 {% block title %}
     {{ player.name }} ({{ player.machine_tag }})
 {% endblock title %}
@@ -10,7 +11,7 @@
     <meta property="og:title"
           content="{{ player.name }} ({{ player.machine_tag }})" />
     <meta property="og:description"
-          content="Joined on: {{ player.join_date.date }} | Scores: {{ player.num_scores }} | Charts played: {{ player.num_songs }}" />
+          content="Joined on: {{ player.join_date.date }} | Scores: {{ player.num_scores|localize }} | Charts played: {{ player.num_songs|localize }}" />
 {% endblock head_extras %}
 {% block content %}
     <h1>
@@ -37,8 +38,8 @@
         <div class="col">
             <ul>
                 <li>Joined on: {{ player.join_date.date }}</li>
-                <li>Scores: {{ player.num_scores }}</li>
-                <li>Charts played: {{ player.num_songs }}</li>
+                <li>Scores: {{ player.num_scores|localize }}</li>
+                <li>Charts played: {{ player.num_songs|localize }}</li>
                 {% if player.discord_handle %}
                     <li>{% bs_icon "discord" %} @{{ player.discord_handle }}</li>
                 {% endif %}
@@ -199,7 +200,7 @@
                     {% for score in scores %}
                         <tr>
                             {% if request.resolver_match.url_name == "player_most_played" %}
-                                <td class="text-nowrap">{{ score.num_scores }}</td>
+                                <td class="text-nowrap">{{ score.num_scores|localize }}</td>
                             {% endif %}
                             <td class="text-nowrap">
                                 {% with song=score.song %}

@@ -1,9 +1,10 @@
+{% load l10n %}
 <div class="col">
     <ul class="list-unstyled">
-        <li>★★★★★: {{ five_stars }}</li>
-        <li>★★★★: {{ four_stars }}</li>
-        <li>★★★: {{ three_stars }}</li>
-        <li>★★: {{ two_stars }}</li>
-        <li>★: {{ one_star }}</li>
+        <li>★★★★★: {{ five_stars|localize }}</li>
+        <li>★★★★: {{ four_stars|localize }}</li>
+        <li>★★★: {{ three_stars|localize }}</li>
+        <li>★★: {{ two_stars|localize }}</li>
+        <li>★: {{ one_star|localize }}</li>
     </ul>
 </div>

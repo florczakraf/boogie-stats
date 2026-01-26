@@ -1,4 +1,5 @@
 {% extends "boogie_ui/root.html" %}
+{% load l10n %}
 {% block title %}
     Players
 {% endblock title %}
@@ -72,10 +73,10 @@
                                 <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=player.id %}">{{ player.five_stars }}</a>
+                                <a href="{% url "player" player_id=player.id %}">{{ player.five_stars|localize }}</a>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=player.id %}">{{ player.four_stars }}</a>
+                                <a href="{% url "player" player_id=player.id %}">{{ player.four_stars|localize }}</a>
                             </td>
                             <td class="text-nowrap">
                                 <a href="{% url "player" player_id=player.id %}">{{ player.join_date.date }}</a>
@@ -84,10 +85,10 @@
                                 <a href="{% url "player" player_id=player.id %}">{{ player.machine_tag }}</a>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=player.id %}">{{ player.num_scores }}</a>
+                                <a href="{% url "player" player_id=player.id %}">{{ player.num_scores|localize }}</a>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=player.id %}">{{ player.num_songs }}</a>
+                                <a href="{% url "player" player_id=player.id %}">{{ player.num_songs|localize }}</a>
                             </td>
                         </tr>
                     {% endfor %}
