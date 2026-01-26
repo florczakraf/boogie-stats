@@ -11,7 +11,7 @@
     <meta property="og:title"
           content="{{ player.name }} ({{ player.machine_tag }})" />
     <meta property="og:description"
-          content="Joined on: {{ player.join_date.date }} | Scores: {{ player.num_scores|localize }} | Charts played: {{ player.num_songs|localize }}" />
+          content="Joined on: {{ player.join_date.date }} | Scores: {{ player.num_scores }} | Charts played: {{ player.num_songs }}" />
 {% endblock head_extras %}
 {% block content %}
     <h1>
@@ -38,8 +38,8 @@
         <div class="col">
             <ul>
                 <li>Joined on: {{ player.join_date.date }}</li>
-                <li>Scores: {{ player.num_scores|localize }}</li>
-                <li>Charts played: {{ player.num_songs|localize }}</li>
+                <li>Scores: {{ player.num_scores }}</li>
+                <li>Charts played: {{ player.num_songs }}</li>
                 {% if player.discord_handle %}
                     <li>{% bs_icon "discord" %} @{{ player.discord_handle }}</li>
                 {% endif %}
@@ -154,7 +154,7 @@
     <div>
         See yearly stats:
         {% for year in wrapped_years %}
-            <a href="{% url "wrapped" player_id=player.id year=year %}">{{ year }}</a>
+            <a href="{% url "wrapped" player_id=player.id year=year %}">{{ year|unlocalize }}</a>
             {% if not forloop.last %}|{% endif %}
         {% endfor %}
     </div>
@@ -200,7 +200,7 @@
                     {% for score in scores %}
                         <tr>
                             {% if request.resolver_match.url_name == "player_most_played" %}
-                                <td class="text-nowrap">{{ score.num_scores|localize }}</td>
+                                <td class="text-nowrap">{{ score.num_scores }}</td>
                             {% endif %}
                             <td class="text-nowrap">
                                 {% with song=score.song %}

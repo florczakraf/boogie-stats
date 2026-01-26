@@ -9,7 +9,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     <meta property="og:title"
-          content="{{ score.itg_score|div:100|stringformat:".2f" }}% ITG / {{ score.ex_score|div:100|stringformat:".2f" }}% EX [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}" />
+          content="{{ score.itg_score|div:100|stringformat:".2f" }}% ITG / {{ score.ex_score|div:100|stringformat:".2f" }}% EX [{{ score.song.chart_info.diff_number|unlocalize }}] {{ score.song.display_name }}" />
     <meta property="og:description"
           content="By: {{ score.player.name }} ({{ score.player.machine_tag }}) | Date: {{ score.submission_date }}" />
 {% endblock head_extras %}
@@ -23,9 +23,9 @@
         <div class="text-center d-flex flex-column justify-content-evenly"
              data-bs-toggle="tooltip"
              data-bs-html="true"
-             title="Fantastics+: {{ score.fantastics_plus|localize }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%) <br /> Fantastics: {{ score.fantastics|localize }} ({% widthratio score.fantastics score.total_steps 100 %}%) <br /> Excellents: {{ score.excellents|localize }} ({% widthratio score.excellents score.total_steps 100 %}%) <br /> Greats: {{ score.greats|localize }} ({% widthratio score.greats score.total_steps 100 %}%) <br /> Decents: {{ score.decents|localize }} ({% widthratio score.decents score.total_steps 100 %}%) <br /> Way-offs: {{ score.way_offs|localize }} ({% widthratio score.way_offs score.total_steps 100 %}%) <br /> Misses: {{ score.misses|localize }} ({% widthratio score.misses score.total_steps 100 %}%) <br /> ">
+             title="Fantastics+: {{ score.fantastics_plus }} ({% widthratio score.fantastics_plus score.total_steps 100 %}%) <br /> Fantastics: {{ score.fantastics }} ({% widthratio score.fantastics score.total_steps 100 %}%) <br /> Excellents: {{ score.excellents }} ({% widthratio score.excellents score.total_steps 100 %}%) <br /> Greats: {{ score.greats }} ({% widthratio score.greats score.total_steps 100 %}%) <br /> Decents: {{ score.decents }} ({% widthratio score.decents score.total_steps 100 %}%) <br /> Way-offs: {{ score.way_offs }} ({% widthratio score.way_offs score.total_steps 100 %}%) <br /> Misses: {{ score.misses }} ({% widthratio score.misses score.total_steps 100 %}%) <br /> ">
         <div class="big-score-box"
-             style="grid-template-columns: {{ score.fantastics_plus }}fr {{ score.fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
+             style="grid-template-columns: {{ score.fantastics_plus|unlocalize }}fr {{ score.fantastics|unlocalize }}fr {{ score.excellents|unlocalize }}fr {{ score.greats|unlocalize }}fr {{ score.decents|unlocalize }}fr {{ score.way_offs|unlocalize }}fr {{ score.misses|unlocalize }}fr">
             <div class="fantastic"></div>
             <div class="fantastic_white"></div>
             <div class="excellent"></div>
@@ -58,21 +58,21 @@
             <div class="col">
                 <ul>
                     <li>
-                        Fantastics: {{ both_fantastics|localize }} ({{ score.fantastics_plus|localize }} + {{ score.fantastics|localize }}) — {% widthratio both_fantastics score.total_steps 100 %}%
+                        Fantastics: {{ both_fantastics }} ({{ score.fantastics_plus }} + {{ score.fantastics }}) — {% widthratio both_fantastics score.total_steps 100 %}%
                     </li>
-                    <li>Excellents: {{ score.excellents|localize }} — {% widthratio score.excellents score.total_steps 100 %}%</li>
-                    <li>Greats: {{ score.greats|localize }} — {% widthratio score.greats score.total_steps 100 %}%</li>
-                    <li>Decents: {{ score.decents|localize }} — {% widthratio score.decents score.total_steps 100 %}%</li>
-                    <li>Way-offs: {{ score.way_offs|localize }} — {% widthratio score.way_offs score.total_steps 100 %}%</li>
-                    <li>Misses: {{ score.misses|localize }} — {% widthratio score.misses score.total_steps 100 %}%</li>
+                    <li>Excellents: {{ score.excellents }} — {% widthratio score.excellents score.total_steps 100 %}%</li>
+                    <li>Greats: {{ score.greats }} — {% widthratio score.greats score.total_steps 100 %}%</li>
+                    <li>Decents: {{ score.decents }} — {% widthratio score.decents score.total_steps 100 %}%</li>
+                    <li>Way-offs: {{ score.way_offs }} — {% widthratio score.way_offs score.total_steps 100 %}%</li>
+                    <li>Misses: {{ score.misses }} — {% widthratio score.misses score.total_steps 100 %}%</li>
                 </ul>
             </div>
             <div class="col">
                 <ul>
-                    <li>Total Steps: {{ score.total_steps|localize }}</li>
-                    <li>Mines: {{ score.total_mines|sub:score.mines_hit }}/{{ score.total_mines|localize }}</li>
-                    <li>Holds: {{ score.holds_held|localize }}/{{ score.total_holds|localize }}</li>
-                    <li>Rolls: {{ score.rolls_held|localize }}/{{ score.total_rolls|localize }}</li>
+                    <li>Total Steps: {{ score.total_steps }}</li>
+                    <li>Mines: {{ score.total_mines|sub:score.mines_hit }}/{{ score.total_mines }}</li>
+                    <li>Holds: {{ score.holds_held }}/{{ score.total_holds }}</li>
+                    <li>Rolls: {{ score.rolls_held }}/{{ score.total_rolls }}</li>
                 </ul>
             </div>
         {% endwith %}

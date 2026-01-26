@@ -73,10 +73,10 @@
                                 <a href="{% url "player" player_id=player.id %}">{{ player.name }}</a>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=player.id %}">{{ player.five_stars|localize }}</a>
+                                <a href="{% url "player" player_id=player.id %}">{{ player.five_stars }}</a>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=player.id %}">{{ player.four_stars|localize }}</a>
+                                <a href="{% url "player" player_id=player.id %}">{{ player.four_stars }}</a>
                             </td>
                             <td class="text-nowrap">
                                 <a href="{% url "player" player_id=player.id %}">{{ player.join_date.date }}</a>
@@ -85,10 +85,10 @@
                                 <a href="{% url "player" player_id=player.id %}">{{ player.machine_tag }}</a>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=player.id %}">{{ player.num_scores|localize }}</a>
+                                <a href="{% url "player" player_id=player.id %}">{{ player.num_scores }}</a>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url "player" player_id=player.id %}">{{ player.num_songs|localize }}</a>
+                                <a href="{% url "player" player_id=player.id %}">{{ player.num_songs }}</a>
                             </td>
                         </tr>
                     {% endfor %}
