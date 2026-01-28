@@ -1,7 +1,7 @@
 {% if player.twitch_handle %}
     <span class="{% if player.is_live_cached != True %}visually-hidden{% endif %}">
         <a class="badge text-bg-danger"
-           href="https://www.twitch.tv/{{ player.twitch_handle }}"
+           href="https://www.twitch.tv/{{ player.twitch_handle|unlocalize }}"
            target="_blank">live</a>
         {% if player.is_live_cached == None %}
             <span class="visually-hidden check-live-status">{{ player.id }}</span>
