@@ -37,7 +37,7 @@
              data-bs-html="true"
              title="Fantastics+: {{ fantastics_plus }} ({% widthratio fantastics_plus total_steps 100 %}%) <br /> Fantastics: {{ fantastics }} ({% widthratio fantastics total_steps 100 %}%) <br /> Excellents: {{ excellents }} ({% widthratio excellents total_steps 100 %}%) <br /> Greats: {{ greats }} ({% widthratio greats total_steps 100 %}%) <br /> Decents: {{ decents }} ({% widthratio decents total_steps 100 %}%) <br /> Way-offs: {{ way_offs }} ({% widthratio way_offs total_steps 100 %}%) <br /> Misses: {{ misses }} ({% widthratio misses total_steps 100 %}%) <br /> ">
         <div class="big-score-box"
-             style="grid-template-columns: {{ fantastics_plus }}fr {{ fantastics }}fr {{ excellents }}fr {{ greats }}fr {{ decents }}fr {{ way_offs }}fr {{ misses }}fr">
+             style="grid-template-columns: {{ fantastics_plus|unlocalize }}fr {{ fantastics|unlocalize }}fr {{ excellents|unlocalize }}fr {{ greats|unlocalize }}fr {{ decents|unlocalize }}fr {{ way_offs|unlocalize }}fr {{ misses|unlocalize }}fr">
             <div class="fantastic"></div>
             <div class="fantastic_white"></div>
             <div class="excellent"></div>

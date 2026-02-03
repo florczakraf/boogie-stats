@@ -76,6 +76,9 @@ TEMPLATES = [
                 "boogiestats.boogie_ui.context_processors.logo",
                 "boogiestats.boogie_ui.context_processors.search",
             ],
+            "builtins": [
+                "django.templatetags.l10n",
+            ],
         },
     },
 ]
@@ -171,3 +174,6 @@ BS_EXTRA_Q_AND_A: Dict[str, str] = {}
 
 # Upstream API endpoint, useful for chaining multiple BS instances
 BS_UPSTREAM_API_ENDPOINT = "https://api.groovestats.com"
+
+# Number formatting values
+USE_THOUSAND_SEPARATOR = True

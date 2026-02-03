@@ -2,19 +2,19 @@
 {% load mathfilters %}
 {% load bootstrap_icons %}
 {% block title %}
-    {{ player.name }} ({{ player.machine_tag }}) {{ year }} Wrapped
+    {{ player.name }} ({{ player.machine_tag }}) {{ year|unlocalize }} Wrapped
 {% endblock title %}
 {% block head_extras %}
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     <meta property="og:title"
-          content="{{ player.name }} ({{ player.machine_tag }}) | {{ year }} Wrapped" />
+          content="{{ player.name }} ({{ player.machine_tag }}) | {{ year|unlocalize }} Wrapped" />
     <meta property="og:description"
           content="Scores: {{ num_scores }} | Charts played: {{ num_charts_played }}" />
 {% endblock head_extras %}
 {% block content %}
     <h1>
-        <a href="{% url "player" player_id=player.id %}">{{ player.name }} ({{ player.machine_tag }})</a> | {{ year }} Wrapped
+        <a href="{% url "player" player_id=player.id %}">{{ player.name }} ({{ player.machine_tag }})</a> | {{ year|unlocalize }} Wrapped
     </h1>
     <div class="d-flex">
         <div class="col">
@@ -70,7 +70,7 @@
              data-bs-html="true"
              title="Fantastics+: {{ fantastics_plus }} ({% widthratio fantastics_plus total_steps 100 %}%) <br /> Fantastics: {{ fantastics }} ({% widthratio fantastics total_steps 100 %}%) <br /> Excellents: {{ excellents }} ({% widthratio excellents total_steps 100 %}%) <br /> Greats: {{ greats }} ({% widthratio greats total_steps 100 %}%) <br /> Decents: {{ decents }} ({% widthratio decents total_steps 100 %}%) <br /> Way-offs: {{ way_offs }} ({% widthratio way_offs total_steps 100 %}%) <br /> Misses: {{ misses }} ({% widthratio misses total_steps 100 %}%) <br /> ">
         <div class="big-score-box"
-             style="grid-template-columns: {{ fantastics_plus }}fr {{ fantastics }}fr {{ excellents }}fr {{ greats }}fr {{ decents }}fr {{ way_offs }}fr {{ misses }}fr">
+             style="grid-template-columns: {{ fantastics_plus|unlocalize }}fr {{ fantastics|unlocalize }}fr {{ excellents|unlocalize }}fr {{ greats|unlocalize }}fr {{ decents|unlocalize }}fr {{ way_offs|unlocalize }}fr {{ misses|unlocalize }}fr">
             <div class="fantastic"></div>
             <div class="fantastic_white"></div>
             <div class="excellent"></div>
@@ -86,7 +86,7 @@
 <div>
     See other years:
     {% for year in wrapped_years %}
-        <a href="{% url "wrapped" player_id=player.id year=year %}">{{ year }}</a>
+        <a href="{% url "wrapped" player_id=player.id year=year %}">{{ year|unlocalize }}</a>
         {% if not forloop.last %}|{% endif %}
     {% endfor %}
 </div>

@@ -57,7 +57,7 @@
         <ul>
             {% for q in q_and_a %}
                 <li>
-                    <a href="#qna{{ forloop.counter }}">{{ q|safe }}</a>
+                    <a href="#qna{{ forloop.counter|unlocalize }}">{{ q|safe }}</a>
                 </li>
             {% endfor %}
         </ul>
@@ -316,7 +316,7 @@ local url_prefix = "{{ boogiestats_url_prefix }}"
     </h3>
     {% for q, a in q_and_a.items %}
         <h4 id="qna{{ forloop.counter }}">
-            <b>Q:</b> {{ q|safe }} <a class="text-muted small" href="#qna{{ forloop.counter }}">#</a>
+            <b>Q:</b> {{ q|safe }} <a class="text-muted small" href="#qna{{ forloop.counter|unlocalize }}">#</a>
         </h4>
         {{ a|safe }}
         <hr>

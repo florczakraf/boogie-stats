@@ -153,7 +153,7 @@
     <div>
         See yearly stats:
         {% for year in wrapped_years %}
-            <a href="{% url "wrapped" player_id=player.id year=year %}">{{ year }}</a>
+            <a href="{% url "wrapped" player_id=player.id year=year %}">{{ year|unlocalize }}</a>
             {% if not forloop.last %}|{% endif %}
         {% endfor %}
     </div>

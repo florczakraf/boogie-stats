@@ -10,7 +10,7 @@
             <div>{{ score|attr:lb_attribute|div:100|stringformat:".2f" }}%</div>
         </a>
         <div class="score-box mx-auto"
-             style="grid-template-columns: {{ score.fantastics_plus }}fr {{ score.fantastics }}fr {{ score.excellents }}fr {{ score.greats }}fr {{ score.decents }}fr {{ score.way_offs }}fr {{ score.misses }}fr">
+             style="grid-template-columns: {{ score.fantastics_plus|unlocalize }}fr {{ score.fantastics|unlocalize }}fr {{ score.excellents|unlocalize }}fr {{ score.greats|unlocalize }}fr {{ score.decents|unlocalize }}fr {{ score.way_offs|unlocalize }}fr {{ score.misses|unlocalize }}fr">
             <div class="fantastic"></div>
             <div class="fantastic_white"></div>
             <div class="excellent"></div>
