@@ -1,6 +1,5 @@
 {% extends "boogie_ui/root.html" %}
 {% load mathfilters %}
-{% load l10n %}
 {% load boogiestats_tags %}
 {% block title %}
     {{ score|attr:lb_attribute|div:100|stringformat:".2f" }}% {{ lb_display_name }} [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}

@@ -1,7 +1,6 @@
 {% extends "boogie_ui/root.html" %}
 {% load bootstrap_icons %}
 {% load mathfilters %}
-{% load l10n %}
 {% block title %}
     {{ player.name }} ({{ player.machine_tag }})
 {% endblock title %}
@@ -50,7 +49,7 @@
                                data-bs-toggle="tooltip"
                                title="{{ icon }}: @{{ handle_link.0 }}"
                                role="button"
-                               href="{{ handle_link.1|unlocalize }}"
+                               href="{{ handle_link.1 }}"
                                target="_blank">{% bs_icon icon %}</a>
                         {% endfor %}
                         {% for icon, handle_link in custom_social_links.items %}
@@ -58,7 +57,7 @@
                                data-bs-toggle="tooltip"
                                title="{{ icon }}: @{{ handle_link.0 }}"
                                role="button"
-                               href="{{ handle_link.1|unlocalize }}"
+                               href="{{ handle_link.1 }}"
                                target="_blank">{% custom_icon icon %}</a>
                         {% endfor %}
                     </li>

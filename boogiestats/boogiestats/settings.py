@@ -76,9 +76,9 @@ TEMPLATES = [
                 "boogiestats.boogie_ui.context_processors.logo",
                 "boogiestats.boogie_ui.context_processors.search",
             ],
-            "builtins":[
+            "builtins": [
                 "django.templatetags.l10n",
-            ]
+            ],
         },
     },
 ]
@@ -176,9 +176,4 @@ BS_EXTRA_Q_AND_A: Dict[str, str] = {}
 BS_UPSTREAM_API_ENDPOINT = "https://api.groovestats.com"
 
 # Number formatting values
-
-USE_L10N = True
 USE_THOUSAND_SEPARATOR = True
-
-THOUSAND_SEPARATOR = "\xa0"
-NUMBER_GROUPING = 3
