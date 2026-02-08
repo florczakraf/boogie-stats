@@ -42,8 +42,20 @@ def gs_api_key():
     return "abcdef0123456789" * 4
 
 
+@pytest.mark.parametrize(
+    ("gs_integration", "num_gs_calls"),
+    [
+        (GSIntegration.REQUIRE, 1),
+        (GSIntegration.TRY, 1),
+        (GSIntegration.SKIP, 0),
+    ],
+)
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_player_scores_when_lb_source_is_bs(client, gs_api_key, requests_mock, player_index):
+def test_player_scores_when_lb_source_is_bs(
+    client, gs_api_key, requests_mock, player_index, song, gs_integration, num_gs_calls
+):
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", gs_integration=gs_integration)
+
     hash = "0123456789ABCDEF"
     unranked_song = {
         f"player{player_index}": {
@@ -62,15 +74,39 @@ def test_player_scores_when_lb_source_is_bs(client, gs_api_key, requests_mock, p
         **kwargs,
     )
 
-    assert len(requests_mock.request_history) == 1
-    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
-    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
+    assert len(requests_mock.request_history) == num_gs_calls
+    if num_gs_calls:
+        assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
+        assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
+
     assert response.json() == {
         f"player{player_index}": {
             "chartHash": hash,
             "isRanked": True,
-            "gsLeaderboard": [],
-            "exLeaderboard": [],
+            "exLeaderboard": [
+                {
+                    "date": song.scores.all()[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isFail": False,
+                    "isRival": False,
+                    "isSelf": False,
+                    "machineTag": "1234",
+                    "name": "1234",
+                    "rank": 1,
+                    "score": 0,
+                },
+            ],
+            "gsLeaderboard": [
+                {
+                    "date": song.scores.all()[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isFail": False,
+                    "isRival": False,
+                    "isSelf": False,
+                    "machineTag": "ABCD",
+                    "name": "ABCD",
+                    "rank": 1,
+                    "score": 8595,
+                },
+            ],
         }
     }
     assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"

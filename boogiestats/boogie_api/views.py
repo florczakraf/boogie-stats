@@ -156,7 +156,14 @@ def _request_leaderboards(request):
         sentry_sdk.capture_exception(e)
         return JsonResponse(data=GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"], status=400)
 
-    gs_response = _try_gs_get(request)
+    player_instances = [p["player_instance"] for p in players.values()]
+    gs_integrations = [p and p.gs_integration or GSIntegration.REQUIRE for p in player_instances]
+    should_attempt_gs = any(g != GSIntegration.SKIP for g in gs_integrations)
+
+    if should_attempt_gs:
+        gs_response = _try_gs_get(request)
+    else:
+        gs_response = {}
 
     final_response = {}
     response_headers = {}
@@ -173,7 +180,7 @@ def _request_leaderboards(request):
             player_instance.leaderboard_source if player_instance is not None else LeaderboardSource.BS.value
         )
 
-        if leaderboard_source == LeaderboardSource.BS:
+        if leaderboard_source == LeaderboardSource.BS or not gs_player:
             final_response[player_id] = {
                 "chartHash": chart_hash,
                 "isRanked": True,
