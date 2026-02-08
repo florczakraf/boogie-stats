@@ -208,22 +208,22 @@ class Player(models.Model):
     pull_gs_name_and_tag = models.BooleanField(
         default=True,
         verbose_name="Pull GrooveStats name and machine tag",
-        help_text="Pull & update player name and machine tag on successful score submission to GrooveStats. This setting will be ignored when GrooveStats Integration is set to Skip Groovestats.",
+        help_text="Pull & update player name and machine tag on successful score submission to GrooveStats. This setting will be ignored when GrooveStats Integration is set to Skip GrooveStats.",
     )
     leaderboard_source = models.IntegerField(
         choices=LeaderboardSource.choices,
         default=LeaderboardSource.BS,
-        help_text="In-game leaderboards source. When GrooveStats is selected, it might still fall back to BoogieStats in case of GS errors or timeouts. This setting will be ignored when GrooveStats Integration is set to Skip Groovestats.",
+        help_text="In-game leaderboards source. When GrooveStats is selected, it might still fall back to BoogieStats in case of GS errors or timeouts. This setting will be ignored when GrooveStats Integration is set to Skip GrooveStats.",
     )
     gs_integration = models.IntegerField(
         choices=GSIntegration.choices,
-        default=GSIntegration.REQUIRE,  # TODO change to TRY_GS in a separate migration
+        default=GSIntegration.TRY,
         verbose_name="GrooveStats Integration",
         help_text=mark_safe(
             """This option defines the behavior on score submission.
             <ul>
             <li>Require GrooveStats (discouraged, old default) will respond with a failure to the game when there's been an error / timeout during score submission to GS and will not save the score in BS in such cases. This can result in scores actually being saved in GS but not in BS.</li>
-            <li>Try Groovestats (recommended, new default) will attempt to send the score to GrooveStats and despite of the result, save the score in BS. You can filter such scores on your profile page and manually submit them again or mark them as submitted.</li>
+            <li>Try GrooveStats (recommended, new default) will attempt to send the score to GrooveStats and despite of the result, save the score in BS. You can filter such scores on your profile page and manually submit them again or mark them as submitted.</li>
             <li>Skip GrooveStats can be used when you don't care about GS or the events like ITL/SRPG. It will save your scores only in BS for the best score submission performance. You can still manually submit them to GS later from the UI using GS QR-code API.</li>
             </ul>"""
         ),  # nosec
