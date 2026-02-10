@@ -14,7 +14,22 @@
 {% endblock head_extras %}
 {% block content %}
     {% with song=score.song %}
-        <h2 class="mt-2">{% include "boogie_ui/song_link.html" %}</h2>
+        <h2 class="mt-2">
+            {% include "boogie_ui/song_link.html" %}
+            {% if user.is_authenticated and user.player.id == score.player.id and score.needs_gs_submission %}
+                <a href="{{ score.gs_submission_link }}"
+                   target="_blank"
+                   class="btn btn-sm btn-primary">Submit to GS</a>
+                <form method="post"
+                      class="d-inline"
+                      action="{% url "mark_score_as_gs_submitted" pk=score.pk %}">
+                    {% csrf_token %}
+                    <input type="submit"
+                           class="btn btn-sm btn-success"
+                           value="Mark as successfully submitted">
+                </form>
+            {% endif %}
+        </h2>
     {% endwith %}
     <h3 class="text-center">ITG Score: {{ score.itg_score|div:100|stringformat:".2f" }}%</h3>
     {% if score.has_judgments %}
@@ -50,6 +65,7 @@
                     {% include "boogie_ui/convert_timestamp.html" %}
                 {% endwith %}
             </li>
+            <li>GS Submission Status: {{ score.get_gs_status_display }}</li>
         </ul>
     </div>
     {% if score.has_judgments %}

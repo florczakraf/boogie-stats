@@ -11,9 +11,11 @@ from django.db import models
 from django.db.models import Count
 from django.db.models.signals import m2m_changed
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from redis import Redis
 
+from boogiestats.boogie_api.choices import GSIntegration, GSStatus, LeaderboardSource
 from boogiestats.boogie_api.managers import PlayerManager, ScoreManager
 from boogiestats.boogie_api.utils import get_chart_info, get_redis
 from boogiestats.boogiestats.exceptions import Managed404Error
@@ -21,11 +23,6 @@ from boogiestats.boogiestats.exceptions import Managed404Error
 MAX_LEADERBOARD_RIVALS = 3
 MAX_LEADERBOARD_ENTRIES = 50
 LIVE_CACHE_TIMEOUT_SECONDS = 15 * 60
-
-
-class LeaderboardSource(models.IntegerChoices):
-    BS = 1, "BoogieStats"
-    GS = 2, "GrooveStats"
 
 
 def make_leaderboard_entry(rank, score, score_type, is_rival=False, is_self=False):
@@ -210,10 +207,27 @@ class Player(models.Model):
     join_date = models.DateTimeField(default=now, db_index=True)
     pull_gs_name_and_tag = models.BooleanField(
         default=True,
-        verbose_name="Pull GrooveStats name and tag",
-        help_text="Pull name and tag on successful GS-ranked score submission",
+        verbose_name="Pull GrooveStats name and machine tag",
+        help_text="Pull & update player name and machine tag on successful score submission to GrooveStats. This setting will be ignored when GrooveStats Integration is set to Skip GrooveStats.",
     )
-    leaderboard_source = models.IntegerField(choices=LeaderboardSource.choices, default=LeaderboardSource.BS)
+    leaderboard_source = models.IntegerField(
+        choices=LeaderboardSource.choices,
+        default=LeaderboardSource.BS,
+        help_text="In-game leaderboards source. When GrooveStats is selected, it might still fall back to BoogieStats in case of GS errors or timeouts. This setting will be ignored when GrooveStats Integration is set to Skip GrooveStats.",
+    )
+    gs_integration = models.IntegerField(
+        choices=GSIntegration.choices,
+        default=GSIntegration.TRY,
+        verbose_name="GrooveStats Integration",
+        help_text=mark_safe(
+            """This option defines the behavior on score submission.
+            <ul>
+            <li>Require GrooveStats (discouraged, old default) will respond with a failure to the game when there's been an error / timeout during score submission to GS and will not save the score in BS in such cases. This can result in scores actually being saved in GS but not in BS.</li>
+            <li>Try GrooveStats (recommended, new default) will attempt to send the score to GrooveStats and despite of the result, save the score in BS. You can filter such scores on your profile page and manually submit them again or mark them as submitted.</li>
+            <li>Skip GrooveStats can be used when you don't care about GS or the events like ITL/SRPG. It will save your scores only in BS for the best score submission performance. You can still manually submit them to GS later from the UI using GS QR-code API.</li>
+            </ul>"""
+        ),  # nosec
+    )
     one_star = models.PositiveIntegerField(default=0, db_index=True)
     two_stars = models.PositiveIntegerField(default=0, db_index=True)
     three_stars = models.PositiveIntegerField(default=0, db_index=True)
@@ -364,6 +378,7 @@ class Score(models.Model):
     submission_day = models.DateField(default=now, db_index=True)
     itg_score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)], db_index=True)
     ex_score = models.PositiveIntegerField(validators=[MaxValueValidator(MAX_SCORE)], default=0, db_index=True)
+    gs_status = models.IntegerField(choices=GSStatus.choices, default=GSStatus.OK, db_index=True)
 
     comment = models.CharField(max_length=MAX_COMMENT_LENGTH, blank=True)
     is_itg_top = models.BooleanField(default=True, db_index=True)
@@ -435,3 +450,26 @@ class Score(models.Model):
 
     def __str__(self):
         return f"{self.id} - {self.submission_date} - {self.itg_score/100}% - {self.ex_score/100}% EX - {self.song.display_name} - {self.player}"
+
+    @property
+    def gs_submission_link(self):
+        if self.has_judgments:
+            gs_qr_prefix = "https://groovestats.com/QR/"
+            payload = (
+                f"{self.song_id}/"
+                f"T{self.total_steps:x}"
+                f"G{self.fantastics_plus:x}H{self.fantastics:x}"
+                f"I{self.excellents:x}J{self.greats:x}"
+                f"K{self.decents:x}L{self.way_offs:x}"
+                f"M{self.misses:x}"
+                f"H{self.holds_held:x}T{self.total_holds:x}"
+                f"R{self.rolls_held:x}T{self.total_rolls:x}"
+                f"M{self.mines_hit:x}T{self.total_mines:x}/"
+                f"F0R{self.rate:x}C{self.used_cmod:x}V3"
+            ).upper()
+            return gs_qr_prefix + payload
+        return f"https://groovestats.com/qr.php?h={self.song_id}&s={self.itg_score}&f=0&r={self.rate}&v=3"
+
+    @property
+    def needs_gs_submission(self):
+        return self.gs_status != GSStatus.OK

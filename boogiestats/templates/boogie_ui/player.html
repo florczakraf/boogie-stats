@@ -170,6 +170,20 @@
        class="btn {% if request.resolver_match.url_name == "player_most_played" %}btn-success{% else %}btn-secondary{% endif %}">
         Most Played
     </a>
+    {% if user.is_authenticated and user.player.id == player.id %}
+        {% if num_gs_failed %}
+            <a href="{% url "player_gs_failed" player_id=player.id %}"
+               class="btn {% if request.resolver_match.url_name == "player_gs_failed" %}btn-success{% else %}btn-secondary{% endif %}">
+                GS Failed ({{ num_gs_failed }})
+            </a>
+        {% endif %}
+        {% if num_gs_skipped %}
+            <a href="{% url "player_gs_skipped" player_id=player.id %}"
+               class="btn {% if request.resolver_match.url_name == "player_gs_skipped" %}btn-success{% else %}btn-secondary{% endif %}">
+                GS Skipped ({{ num_gs_skipped }})
+            </a>
+        {% endif %}
+    {% endif %}
     {% if scores %}
         {% include "boogie_ui/paginator.html" %}
         <div class="table-responsive">

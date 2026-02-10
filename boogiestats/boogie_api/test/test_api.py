@@ -2,11 +2,19 @@ import json
 from unittest.mock import Mock
 
 import pytest
+import requests
 import requests_mock as requests_mock_lib
 from django.conf import settings
 
 from boogiestats import __version__ as boogiestats_version
-from boogiestats.boogie_api.models import LeaderboardSource, Player, Score, Song
+from boogiestats.boogie_api.models import (
+    GSIntegration,
+    GSStatus,
+    LeaderboardSource,
+    Player,
+    Score,
+    Song,
+)
 from boogiestats.boogie_api.views import (
     GROOVESTATS_RESPONSES,
     LB_SOURCE_MAPPING,
@@ -34,8 +42,20 @@ def gs_api_key():
     return "abcdef0123456789" * 4
 
 
+@pytest.mark.parametrize(
+    ("gs_integration", "num_gs_calls"),
+    [
+        (GSIntegration.REQUIRE, 1),
+        (GSIntegration.TRY, 1),
+        (GSIntegration.SKIP, 0),
+    ],
+)
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_player_scores_when_lb_source_is_bs(client, gs_api_key, requests_mock, player_index):
+def test_player_scores_when_lb_source_is_bs(
+    client, gs_api_key, requests_mock, player_index, song, gs_integration, num_gs_calls
+):
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", gs_integration=gs_integration)
+
     hash = "0123456789ABCDEF"
     unranked_song = {
         f"player{player_index}": {
@@ -54,15 +74,39 @@ def test_player_scores_when_lb_source_is_bs(client, gs_api_key, requests_mock, p
         **kwargs,
     )
 
-    assert len(requests_mock.request_history) == 1
-    assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
-    assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
+    assert len(requests_mock.request_history) == num_gs_calls
+    if num_gs_calls:
+        assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
+        assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
+
     assert response.json() == {
         f"player{player_index}": {
             "chartHash": hash,
             "isRanked": True,
-            "gsLeaderboard": [],
-            "exLeaderboard": [],
+            "exLeaderboard": [
+                {
+                    "date": song.scores.all()[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isFail": False,
+                    "isRival": False,
+                    "isSelf": False,
+                    "machineTag": "1234",
+                    "name": "1234",
+                    "rank": 1,
+                    "score": 0,
+                },
+            ],
+            "gsLeaderboard": [
+                {
+                    "date": song.scores.all()[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "isFail": False,
+                    "isRival": False,
+                    "isSelf": False,
+                    "machineTag": "ABCD",
+                    "name": "ABCD",
+                    "rank": 1,
+                    "score": 8595,
+                },
+            ],
         }
     }
     assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
@@ -1435,3 +1479,139 @@ def test_custom_upstream_api_endpoint_is_taken_from_settings(
     )
 
     assert requests_mock.called_once
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+@pytest.mark.parametrize(
+    ("gs_integration", "score_saved", "gs_status", "submission_attempted"),
+    [
+        (GSIntegration.REQUIRE, False, None, True),
+        (GSIntegration.TRY, True, GSStatus.ERROR, True),
+        (GSIntegration.SKIP, True, GSStatus.SKIPPED, False),
+    ],
+)
+def test_score_submit_when_gs_timeouts(
+    player_index, gs_integration, score_saved, gs_status, submission_attempted, client, gs_api_key, requests_mock
+):
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", exc=requests.Timeout)
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", gs_integration=gs_integration)
+
+    kwargs = {
+        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=76957dd1f96f764e&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "score": 10_000,
+                "comment": "",
+                "judgmentCounts": {
+                    "fantasticPlus": 1,
+                    "totalSteps": 1,
+                },
+                "rate": 100,
+            }
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert (response.status_code == 200) is score_saved
+    assert (requests_mock.call_count == 1) is submission_attempted
+    assert (Score.objects.count() == 1) is score_saved
+
+    if score_saved:
+        score: Score = Score.objects.first()
+        assert score.gs_status == gs_status
+
+
+@pytest.mark.parametrize("player_index", [1, 2])
+def test_score_submit_when_gs_timeouts_for_new_player(player_index, client, gs_api_key, requests_mock):
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", exc=requests.Timeout)
+    kwargs = {
+        f"HTTP_x_api_key_player_{player_index}": gs_api_key,
+    }
+    response = client.post(
+        f"/score-submit.php?chartHashP{player_index}=76957dd1f96f764e&maxLeaderboardResults=3",
+        data={
+            f"player{player_index}": {
+                "score": 10_000,
+                "comment": "",
+                "judgmentCounts": {
+                    "fantasticPlus": 1,
+                    "totalSteps": 1,
+                },
+                "rate": 100,
+            }
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert response.status_code == 504
+    assert requests_mock.call_count == 1
+    assert Score.objects.count() == 0
+    assert Song.objects.count() == 0
+
+
+@pytest.mark.parametrize(
+    ("p1_gs_integration", "p2_gs_integration", "num_scores", "submission_attempted", "response_status_code"),
+    [
+        # sadly, for consistency we need to "downgrade" try and skip to require if there's one
+        (GSIntegration.REQUIRE, GSIntegration.REQUIRE, 0, True, 504),
+        (GSIntegration.REQUIRE, GSIntegration.TRY, 0, True, 504),
+        (GSIntegration.REQUIRE, GSIntegration.SKIP, 0, True, 504),
+        (GSIntegration.TRY, GSIntegration.TRY, 2, True, 200),
+        (GSIntegration.TRY, GSIntegration.SKIP, 2, True, 200),
+        (GSIntegration.SKIP, GSIntegration.SKIP, 2, False, 200),
+    ],
+)
+def test_score_submit_when_gs_timeouts_for_two_players(
+    client,
+    gs_api_key,
+    other_player_gs_api_key,
+    p1_gs_integration,
+    p2_gs_integration,
+    num_scores,
+    submission_attempted,
+    response_status_code,
+    requests_mock,
+):
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="p1", gs_integration=p1_gs_integration)
+    Player.objects.create(gs_api_key=other_player_gs_api_key, machine_tag="p2", gs_integration=p2_gs_integration)
+
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", exc=requests.Timeout)
+    kwargs = {
+        "HTTP_x_api_key_player_1": gs_api_key,
+        "HTTP_x_api_key_player_2": other_player_gs_api_key,
+    }
+    chart_hash = "76957dd1f96f764e"
+    response = client.post(
+        f"/score-submit.php?chartHashP1={chart_hash}&chartHashP2={chart_hash}&maxLeaderboardResults=3",
+        data={
+            "player1": {
+                "score": 10_000,
+                "comment": "",
+                "judgmentCounts": {
+                    "fantasticPlus": 1,
+                    "totalSteps": 1,
+                },
+                "rate": 100,
+            },
+            "player2": {
+                "score": 5_000,
+                "comment": "",
+                "judgmentCounts": {
+                    "fantastic": 1,
+                    "totalSteps": 1,
+                },
+                "rate": 100,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert response.status_code == response_status_code
+    assert (requests_mock.call_count == 1) is submission_attempted
+    assert Score.objects.count() == num_scores

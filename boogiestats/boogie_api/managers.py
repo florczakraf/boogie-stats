@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 
+from boogiestats.boogie_api.choices import GSStatus
 from boogiestats.boogie_api.utils import score_to_star_field
 
 if TYPE_CHECKING:
@@ -37,6 +38,7 @@ class ScoreManager(models.Manager):
         itg_score: int,
         comment: str,
         rate: int,
+        gs_status: GSStatus = GSStatus.OK,
         used_cmod: Optional[bool] = None,
         judgments: Optional = None,
     ):
@@ -51,6 +53,7 @@ class ScoreManager(models.Manager):
             is_itg_top=new_is_itg_top,
             rate=rate,
             used_cmod=used_cmod,
+            gs_status=gs_status,
         )
 
         self._handle_judgments(score_object, judgments)

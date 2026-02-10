@@ -12,7 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -22,7 +22,7 @@ from formset.views import FormViewMixin, IncompleteSelectResponseMixin
 from redis import ResponseError
 from redis.commands.search.query import Query
 
-from boogiestats.boogie_api.models import Player, Score, Song
+from boogiestats.boogie_api.models import GSStatus, Player, Score, Song
 from boogiestats.boogie_api.utils import get_chart_info, get_redis, set_sentry_user
 from boogiestats.boogie_ui.forms import EditPlayerForm
 from boogiestats.boogiestats.exceptions import Managed404Error
@@ -317,6 +317,9 @@ class PlayerView(RequireAuthForPaginationMixin, LeaderboardSourceMixin, generic.
         context["social_links"] = self._get_social_links(player, SOCIAL_LINKS)
         context["custom_social_links"] = self._get_social_links(player, CUSTOM_SOCIAL_LINKS)
 
+        context["num_gs_failed"] = player.scores.filter(gs_status=GSStatus.ERROR).count()
+        context["num_gs_skipped"] = player.scores.filter(gs_status=GSStatus.SKIPPED).count()
+
         return context
 
     def _get_social_links(self, player, mapper):
@@ -378,6 +381,22 @@ class PlayerMostPlayedView(PlayerView):
             }
         )
         return context
+
+
+class PlayerGSFailedView(PlayerView):
+    def get_queryset(self):
+        player_id = self.kwargs["player_id"]
+        player = Player.get_or_404(id=player_id)
+
+        return player.scores.filter(gs_status=GSStatus.ERROR).order_by("-id").prefetch_related("song")
+
+
+class PlayerGSSkippedView(PlayerView):
+    def get_queryset(self):
+        player_id = self.kwargs["player_id"]
+        player = Player.get_or_404(id=player_id)
+
+        return player.scores.filter(gs_status=GSStatus.SKIPPED).order_by("-id").prefetch_related("song")
 
 
 class PlayerStatsView(generic.base.TemplateView):
@@ -914,3 +933,24 @@ class PlayerWrappedView(generic.base.TemplateView):
         context.update(sums)
 
         return context
+
+
+@require_POST
+@login_required(login_url="/login/")
+def mark_score_as_gs_submitted(request, pk):
+    score: Score = get_object_or_404(Score, pk=pk)
+    myself: Player = request.user.player
+
+    if score.player != myself:
+        messages.error(request, "You can only modify your own scores!", extra_tags="alert-danger")
+        return redirect("score", pk=pk)
+
+    score.gs_status = GSStatus.OK
+    score.save()
+    messages.success(
+        request,
+        "Score marked as successfully submitted to GS.",
+        extra_tags="alert-success",
+    )
+
+    return redirect("score", pk=pk)

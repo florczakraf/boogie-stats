@@ -734,3 +734,46 @@ def test_score_create_updates_players_num_songs(player, song_without_scores):
 
     player.refresh_from_db()
     assert player.num_songs == start_num_songs + 1
+
+
+def test_gs_submission_link_when_judgments_are_missing(player, song_without_scores):
+    score = player.scores.create(
+        song=song_without_scores,
+        itg_score=6_400,
+        comment="comment",
+        rate=105,
+    )
+
+    expected = "https://groovestats.com/qr.php?h=yetanothersong&s=6400&f=0&r=105&v=3"
+
+    assert score.gs_submission_link == expected
+
+
+def test_gs_submission_link_with_judgments(player, song_without_scores):
+    score = player.scores.create(
+        song=song_without_scores,
+        itg_score=9987,
+        comment="FA , 98.95EX, 23w, 3e, C740",
+        rate=100,
+        judgments={
+            "decent": 0,
+            "excellent": 3,
+            "fantastic": 23,
+            "fantasticPlus": 398,
+            "great": 0,
+            "holdsHeld": 30,
+            "minesHit": 0,
+            "miss": 0,
+            "rollsHeld": 12,
+            "totalHolds": 30,
+            "totalMines": 2,
+            "totalRolls": 12,
+            "totalSteps": 424,
+            "wayOff": 0,
+        },
+        used_cmod=True,
+    )
+
+    expected = "https://groovestats.com/QR/YETANOTHERSONG/T1A8G18EH17I3J0K0L0M0H1ET1ERCTCM0T2/F0R64C1V3"
+
+    assert score.gs_submission_link == expected
