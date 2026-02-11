@@ -85,7 +85,7 @@ def test_player_scores_when_lb_source_is_bs(
             "isRanked": True,
             "exLeaderboard": [
                 {
-                    "date": song.scores.all()[1].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date": song.scores.all()[0].submission_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "isFail": False,
                     "isRival": False,
                     "isSelf": False,
