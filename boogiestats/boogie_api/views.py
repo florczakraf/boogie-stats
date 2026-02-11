@@ -41,7 +41,7 @@ GROOVESTATS_RESPONSES = {
         "error": "Couldn't contact GrooveStats API.",
     },
 }
-GROOVESTATS_TIMEOUT = (5, 20)  # (connect, read) timeout
+GROOVESTATS_TIMEOUT = (4, 6)  # (connect, read) timeout
 SUPPORTED_EVENTS = ("rpg", "itl")
 LB_SOURCE_MAPPING = {
     LeaderboardSource.BS.value: "BS",
