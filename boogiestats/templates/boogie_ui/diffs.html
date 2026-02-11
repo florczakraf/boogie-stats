@@ -1,0 +1,20 @@
+<div>
+    {% for steps_type, diffs in diffs_split.items %}
+        <div class="d-flex flex-row">
+            {{ steps_type }}:
+            {% for diff in diffs %}
+                {% with chart_info=diff %}
+                    <div class="mx-1"
+                         data-bs-toggle="tooltip"
+                         title="{{ diff.diff }}: {{ diff.number_of_scores }} scores">
+                        {% if diff.number_of_scores > 0 %}
+                            <a href="{% url "song_highscores" song_hash=diff.hash %}">{% include "boogie_ui/diff_box.html" %}</a>
+                        {% else %}
+                            <div class="grayscale">{% include "boogie_ui/diff_box.html" %}</div>
+                        {% endif %}
+                    </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>

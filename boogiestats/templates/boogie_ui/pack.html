@@ -1,0 +1,36 @@
+{% extends "boogie_ui/root.html" %}
+{% load mathfilters %}
+{% block title %}
+    {{ pack_name }}
+{% endblock title %}
+{% block content %}
+    <h1>{{ pack_name }}</h1>
+    {% if missing_data %}
+        <h2>This pack is too big to render. There are {{ missing_data }} charts missing in this summary.</h2>
+    {% endif %}
+    <hr>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead class="bg-body-secondary">
+                <tr>
+                    <th scope="col" class="w-1 text-nowrap">Title</th>
+                    <th scope="col" class="w-1 text-nowrap">Artist</th>
+                    <th scope="col" class="w-1 text-nowrap">Charts</th>
+                </tr>
+            </thead>
+            <tbody class="align-middle">
+                {% for song_diffs_split in songs_diffs_split %}
+                    <tr>
+                        <td class="text-nowrap">{{ song_diffs_split.0.0 }}</td>
+                        <td class="text-nowrap">{{ song_diffs_split.0.1 }}</td>
+                        <td class="text-nowrap">
+                            {% with diffs_split=song_diffs_split.1 %}
+                                {% include "boogie_ui/diffs.html" %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock content %}
