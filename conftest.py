@@ -5,7 +5,7 @@ from boogiestats.boogie_api.models import Player, Song
 
 
 @pytest.fixture(autouse=True)
-def enable_db_access_for_all_tests(db):
+def enable_db_access_for_all_tests(transactional_db):
     pass
 
 
