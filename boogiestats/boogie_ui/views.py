@@ -23,16 +23,25 @@ from redis import ResponseError
 from redis.commands.search.query import Query
 
 from boogiestats.boogie_api.models import GSStatus, Player, Score, Song
-from boogiestats.boogie_api.utils import get_chart_info, get_redis, set_sentry_user
+from boogiestats.boogie_api.utils import (
+    get_chart_info,
+    get_pack_info,
+    get_redis,
+    set_sentry_user,
+)
 from boogiestats.boogie_ui.forms import EditPlayerForm
 from boogiestats.boogiestats.exceptions import Managed404Error
 
 ENTRIES_PER_PAGE = 30
 CALENDAR_VALUES = (1, 10, 15, 20, 25, 30, 35, 40, 50, 60)
 EXTRA_CALENDAR_VALUES = (100,)
+
 STEPS_TYPE_MAPPING = {"dance-single": "Singles", "dance-double": "Doubles", "dance-couple": "Couples"}
 STEPS_TYPE_ORDER = defaultdict(lambda: 999)
 STEPS_TYPE_ORDER.update({"dance-single": 0, "dance-double": 1})
+DIFF_ORDER = defaultdict(lambda: 999)
+DIFF_ORDER.update({"Beginner": 0, "Easy": 1, "Medium": 2, "Hard": 3, "Challenge": 4, "Edit": 5})
+
 SOCIAL_LINKS = {
     "twitch_handle": "https://twitch.tv/{handle}",
     "youtube_handle": "https://www.youtube.com/@{handle}",
@@ -43,6 +52,10 @@ CUSTOM_SOCIAL_LINKS = {
     "kamaitachi_handle": "https://kamai.tachi.ac/u/{handle}",
     "bluesky_handle": "https://bsky.app/profile/{handle}",
 }
+
+
+def diff_sort_key(x):
+    return STEPS_TYPE_ORDER[x["steps_type"]], int(x["diff_number"]), DIFF_ORDER[x["diff"]]
 
 
 class RequireAuthForPaginationMixin:
@@ -507,10 +520,10 @@ class SongView(RequireAuthForPaginationMixin, LeaderboardSourceMixin, generic.Li
         if chart_info := song.chart_info:
             diffs_hashes = chart_info["diffs"]
             diffs = [get_chart_info(x) for x in diffs_hashes]
-            context["packs"] = ", ".join(sorted(chart_info["packs"]))
+            context["packs"] = sorted(chart_info["packs"])
             diffs = sorted(
                 diffs,
-                key=lambda x: (STEPS_TYPE_ORDER[x["steps_type"]], int(x["diff_number"]), x["diff"]),
+                key=diff_sort_key,
             )
             diffs_playcounts = {song.hash: song.number_of_scores for song in Song.objects.filter(hash__in=diffs_hashes)}
             diffs_split = defaultdict(list)
@@ -954,3 +967,78 @@ def mark_score_as_gs_submitted(request, pk):
     )
 
     return redirect("score", pk=pk)
+
+
+class PackView(LeaderboardSourceMixin, generic.TemplateView):
+    template_name = "boogie_ui/pack.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        pack_name = self.kwargs["pack_name"]
+        pack_charts = get_pack_info(pack_name)
+
+        if not pack_charts:
+            raise Managed404Error("Requested pack does not exist.")
+
+        max_num_charts = 1_000
+        if len(pack_charts) > max_num_charts:
+            context["missing_data"] = len(pack_charts) - max_num_charts
+
+        pack_info = {hash: get_chart_info(hash) for hash in pack_charts[:max_num_charts]}
+        songs, used_hashes = self.get_songs_and_hashes(pack_info)
+
+        playcounts = {song.hash: song.number_of_scores for song in Song.objects.filter(hash__in=used_hashes)}
+
+        songs.sort(
+            key=lambda diffs: (
+                diffs[0]["titletranslit"].lower() or diffs[0]["title"].lower(),
+                diffs[0]["artisttranslit"].lower() or diffs[0]["artist"].lower(),
+            )
+        )
+
+        songs_diffs_split = []
+        for diffs in songs:
+            diffs_split = defaultdict(list)
+            for diff in diffs:
+                steps_type_name = STEPS_TYPE_MAPPING.get(diff["steps_type"], diff["steps_type"])
+                diff["number_of_scores"] = playcounts.get(diff["hash"], 0)
+                diffs_split[steps_type_name].append(diff)
+            songs_diffs_split.append(dict(diffs_split))
+
+        display_names = [
+            (
+                diffs[0]["titletranslit"] or diffs[0]["title"],
+                diffs[0]["artisttranslit"] or diffs[0]["artist"],
+            )
+            for diffs in songs
+        ]
+
+        context["pack_name"] = pack_name
+        context["songs_diffs_split"] = zip(display_names, songs_diffs_split)
+
+        return context
+
+    def get_songs_and_hashes(self, pack_info):
+        used_hashes = set()
+        songs = []
+        for chart_info in pack_info.values():
+            if chart_info["hash"] in used_hashes:
+                continue
+
+            used_hashes.add(chart_info["hash"])
+            diffs = []
+            diffs.append(chart_info)
+            for other_diff_hash in chart_info["diffs"]:
+                if other_diff_hash in used_hashes:
+                    continue
+                try:
+                    diffs.append(pack_info[other_diff_hash])
+                    used_hashes.add(other_diff_hash)
+                except KeyError:
+                    pass  # the other diff can exist in other pack
+
+            diffs.sort(key=diff_sort_key)
+            songs.append(diffs)
+
+        return songs, used_hashes

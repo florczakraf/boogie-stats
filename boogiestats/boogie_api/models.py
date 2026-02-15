@@ -17,7 +17,7 @@ from redis import Redis
 
 from boogiestats.boogie_api.choices import GSIntegration, GSStatus, LeaderboardSource
 from boogiestats.boogie_api.managers import PlayerManager, ScoreManager
-from boogiestats.boogie_api.utils import get_chart_info, get_redis
+from boogiestats.boogie_api.utils import get_chart_info, get_display_name, get_redis
 from boogiestats.boogiestats.exceptions import Managed404Error
 
 MAX_LEADERBOARD_RIVALS = 3
@@ -118,21 +118,7 @@ class Song(models.Model):
         final_name = self.hash
 
         if info := self.chart_info:
-            artist = info["artisttranslit"] or info["artist"]
-            title = info["titletranslit"] or info["title"]
-
-            subtitle = info["subtitletranslit"] or info["subtitle"]
-            if subtitle:
-                if not (subtitle.startswith("(") and subtitle.endswith(")")):  # fix inconsistent braces
-                    subtitle = f"({subtitle})"
-                subtitle = f" {subtitle}"
-
-            base_display_name = f"{artist} - {title}{subtitle}"
-            final_name = base_display_name
-
-            steps_type = info["steps_type"]
-            if steps_type != "dance-single":  # don't display dance-single because it's most common chart type
-                final_name += f" ({steps_type})"
+            final_name = get_display_name(info)
 
         return final_name
 

@@ -47,8 +47,44 @@ def score_to_star_field(score: "Score"):
 
 def get_chart_info(hash_v3: str) -> dict | None:
     """Chart info based on an external (optional) chart database"""
-    if settings.BS_CHART_DB_PATH is not None:
-        path = Path(settings.BS_CHART_DB_PATH) / "charts" / hash_v3[:2] / f"{hash_v3[2:]}.json"
-        if path.exists():
-            return json.loads(path.read_text())
+    if settings.BS_CHART_DB_PATH is None:
+        return None
+
+    base_path = (Path(settings.BS_CHART_DB_PATH) / "charts").resolve()
+    path = (base_path / hash_v3[:2] / f"{hash_v3[2:]}.json").resolve()
+    if path.is_relative_to(base_path) and path.exists():
+        return json.loads(path.read_text())
     return None
+
+
+def get_pack_info(pack_name: str) -> dict | None:
+    if settings.BS_CHART_DB_PATH is None:
+        return None
+
+    base_path = (Path(settings.BS_CHART_DB_PATH) / "packs").resolve()
+    path = (base_path / f"{pack_name}.json").resolve()
+    if path.is_relative_to(base_path) and path.exists():
+        return json.loads(path.read_text())
+    return None
+
+
+def get_display_name(chart_info: dict, *, with_steps_type: bool = True) -> str:
+    artist = chart_info["artisttranslit"] or chart_info["artist"]
+    title = chart_info["titletranslit"] or chart_info["title"]
+
+    subtitle = chart_info["subtitletranslit"] or chart_info["subtitle"]
+    if subtitle:
+        if not (subtitle.startswith("(") and subtitle.endswith(")")):  # fix inconsistent braces
+            subtitle = f"({subtitle})"
+        subtitle = f" {subtitle}"
+
+    base_display_name = f"{artist} - {title}{subtitle}"
+    final_name = base_display_name
+
+    if with_steps_type:
+        steps_type = chart_info["steps_type"]
+        # never display dance-single because it's most common chart type
+        if steps_type != "dance-single":
+            final_name += f" ({steps_type})"
+
+    return final_name

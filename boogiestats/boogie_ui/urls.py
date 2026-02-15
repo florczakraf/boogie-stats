@@ -35,6 +35,7 @@ urlpatterns = [
     path("songs/<str:song_hash>/", views.SongView.as_view(), name="song"),
     path("song_by_date/<str:song_hash>/", views.SongByDateView.as_view(), name="song_by_date"),
     path("songs/<str:song_hash>/highscores", views.SongHighscoresView.as_view(), name="song_highscores"),
+    path("packs/<str:pack_name>/", views.PackView.as_view(), name="pack"),
     path("scores/", views.ScoreListView.as_view(), name="scores"),
     path("scores/<int:pk>/", views.ScoreView.as_view(), name="score"),
     path("scores/<int:pk>/mark_as_gs_submitted", views.mark_score_as_gs_submitted, name="mark_score_as_gs_submitted"),

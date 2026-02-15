@@ -13,27 +13,16 @@
 {% endblock head_extras %}
 {% block content %}
     <h2 class="mt-2">{% include "boogie_ui/song_display_name.html" %}</h2>
-    <div>
-        {% for steps_type, diffs in diffs_split.items %}
-            <div class="d-flex flex-row">
-                {{ steps_type }}:
-                {% for diff in diffs %}
-                    {% with chart_info=diff %}
-                        <div class="mx-1"
-                             data-bs-toggle="tooltip"
-                             title="{{ diff.diff }}: {{ diff.number_of_scores }} scores">
-                            {% if diff.number_of_scores > 0 %}
-                                <a href="{% url "song_highscores" song_hash=diff.hash %}">{% include "boogie_ui/diff_box.html" %}</a>
-                            {% else %}
-                                <div class="grayscale">{% include "boogie_ui/diff_box.html" %}</div>
-                            {% endif %}
-                        </div>
-                    {% endwith %}
-                {% endfor %}
-            </div>
+    {% with diffs_split=diffs_split %}
+        {% include "boogie_ui/diffs.html" %}
+    {% endwith %}
+    <p>
+        Packs:
+        {% for p in packs %}
+            <a href="{% url "pack" pack_name=p %}">{{ p }}</a>
+            {% if not forloop.last %},{% endif %}
         {% endfor %}
-    </div>
-    <p>Packs: {{ packs }}</p>
+    </p>
     <div class="d-flex flex-wrap gap-2 mb-3">
         <a href="{% url "song" song_hash=song.hash %}"
            class="btn {% if request.resolver_match.url_name in "song,song_by_date" %}btn-success{% else %}btn-secondary{% endif %}">
