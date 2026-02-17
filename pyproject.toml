@@ -23,6 +23,7 @@ dependencies = [
     "prometheus-client (~=0.21)",
     "django-ipware (~=7.0)",
     "django-formset (~=1.6)",
+    "tenacity (>=9.1.4,<10.0.0)",
 ]
 
 [tool.poetry]

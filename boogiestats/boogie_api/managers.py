@@ -1,15 +1,25 @@
+import logging
 import uuid
 from typing import TYPE_CHECKING, Optional
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
+from django.db.utils import OperationalError
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 
 from boogiestats.boogie_api.choices import GSStatus
 from boogiestats.boogie_api.utils import score_to_star_field
 
 if TYPE_CHECKING:
     from boogiestats.boogie_api.models import Player, Song
+
+logger = logging.getLogger(__name__)
 
 JUDGMENTS_MAP = {
     "miss": "misses",
@@ -30,6 +40,17 @@ JUDGMENTS_MAP = {
 
 
 class ScoreManager(models.Manager):
+    @retry(
+        retry=retry_if_exception_type(OperationalError),
+        stop=stop_after_attempt(10),
+        wait=wait_exponential_jitter(initial=0.01, max=1.0, jitter=0.05),
+        reraise=True,
+        before_sleep=lambda retry_state: logger.warning(
+            "Score creation locked, retrying (attempt %d)",
+            retry_state.attempt_number,
+            extra={"exception": str(retry_state.outcome.exception())},
+        ),
+    )
     @transaction.atomic
     def create(
         self,

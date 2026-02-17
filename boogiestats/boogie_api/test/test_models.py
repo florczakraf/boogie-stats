@@ -1,8 +1,11 @@
+import threading
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from tenacity import retry_if_not_result
 
-from boogiestats.boogie_api.models import Player, Song
+from boogiestats.boogie_api.models import Player, Score, Song
 
 
 @pytest.fixture
@@ -777,3 +780,77 @@ def test_gs_submission_link_with_judgments(player, song_without_scores):
     expected = "https://groovestats.com/QR/YETANOTHERSONG/T1A8G18EH17I3J0K0L0M0H1ET1ERCTCM0T2/F0R64C1V3"
 
     assert score.gs_submission_link == expected
+
+
+@pytest.mark.parametrize("disable_retry", [False, True])
+def test_concurrent_score_creation(disable_retry, monkeypatch):
+    """There's a possibility of two different processes would attempt to write to the database during score creation in
+    deployments with multiple workers. The database would remain consistent but one of them would fail with an
+    OperationalError"""
+
+    if disable_retry:
+        monkeypatch.setattr(
+            "boogiestats.boogie_api.managers.ScoreManager.create.retry.retry",
+            retry_if_not_result(lambda x: True),
+        )
+
+    song = Song.objects.create(hash="song")
+    player1 = Player.objects.create(gs_api_key="player1", machine_tag="P1")
+    player2 = Player.objects.create(gs_api_key="player2", machine_tag="P2")
+
+    player1.scores.create(song=song, itg_score=5000, comment="initial1", rate=100)
+    player2.scores.create(song=song, itg_score=5500, comment="initial2", rate=100)
+
+    errors = []
+    barrier = threading.Barrier(2)  # to synchronize start
+
+    def create_higher_score(player, base_score):
+        try:
+            barrier.wait()
+            player.scores.create(
+                song=song, itg_score=base_score + 1, comment=f"{player.machine_tag} {base_score + 1}", rate=100
+            )
+        except Exception as e:
+            errors.append(
+                {
+                    "error": type(e).__name__,
+                    "message": str(e),
+                }
+            )
+
+    t1 = threading.Thread(target=create_higher_score, args=(player1, 5000))
+    t2 = threading.Thread(target=create_higher_score, args=(player2, 5500))
+
+    t1.start()
+    t2.start()
+
+    t1.join(timeout=1)
+    t2.join(timeout=1)
+
+    if disable_retry:
+        if not errors:
+            pytest.xfail(
+                "There's a possibility that the above threads won't collide but it's unlikely. "
+                "Investigate if you see this xfail often."
+            )
+        assert errors
+    else:
+        assert not errors
+
+        song.refresh_from_db()
+        player1.refresh_from_db()
+        player2.refresh_from_db()
+
+        assert song.scores.count() == 4
+        itg_highscore: Score = song.itg_highscore
+        assert itg_highscore.itg_score == 5501
+
+        assert player1.scores.count() == 2
+        assert player1.scores.first().is_itg_top is False
+        assert player1.scores.last().itg_score == 5001
+        assert player1.scores.last().is_itg_top is True
+
+        assert player2.scores.count() == 2
+        assert player2.scores.first().is_itg_top is False
+        assert player2.scores.last().itg_score == 5501
+        assert player2.scores.last().is_itg_top is True
