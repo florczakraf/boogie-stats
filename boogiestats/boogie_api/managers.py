@@ -2,18 +2,21 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, Optional
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
+from django.db.models import F
 from django.db.utils import OperationalError
 from tenacity import (
-    retry,
+    RetryCallState,
+    Retrying,
     retry_if_exception_type,
     stop_after_attempt,
-    wait_exponential_jitter,
 )
 
 from boogiestats.boogie_api.choices import GSStatus
+from boogiestats.boogie_api.metrics import SCORE_CREATION_ATTEMPTS, SCORES_CREATED
 from boogiestats.boogie_api.utils import score_to_star_field
 
 if TYPE_CHECKING:
@@ -39,20 +42,47 @@ JUDGMENTS_MAP = {
 }
 
 
-class ScoreManager(models.Manager):
-    @retry(
-        retry=retry_if_exception_type(OperationalError),
-        stop=stop_after_attempt(10),
-        wait=wait_exponential_jitter(initial=0.01, max=1.0, jitter=0.05),
-        reraise=True,
-        before_sleep=lambda retry_state: logger.warning(
-            "Score creation locked, retrying (attempt %d)",
-            retry_state.attempt_number,
-            extra={"exception": str(retry_state.outcome.exception())},
-        ),
+def _score_creation_before_sleep(retry_state: RetryCallState):
+    logger.warning(
+        "Score creation locked, retrying (attempt %d)",
+        retry_state.attempt_number,
+        extra={"exception": str(retry_state.outcome.exception())},
     )
-    @transaction.atomic
+
+
+class ScoreManager(models.Manager):
     def create(
+        self,
+        song: "Song",
+        player: "Player",
+        itg_score: int,
+        comment: str,
+        rate: int,
+        gs_status: GSStatus = GSStatus.OK,
+        used_cmod: Optional[bool] = None,
+        judgments: Optional = None,
+    ):
+        retrying = Retrying(
+            retry=retry_if_exception_type(OperationalError),
+            stop=stop_after_attempt(settings.BS_SCORE_CREATION_ATTEMPTS),
+            wait=settings.BS_SCORE_CREATION_RETRY_STRATEGY,
+            reraise=True,
+            before_sleep=_score_creation_before_sleep,
+        )
+        for attempt in retrying:
+            with attempt:
+                result = self._create_atomic(song, player, itg_score, comment, rate, gs_status, used_cmod, judgments)
+
+        song.update_search_cache()
+
+        attempt_number = attempt.retry_state.attempt_number
+        SCORE_CREATION_ATTEMPTS.labels(str(attempt_number)).inc()
+        SCORES_CREATED.inc()
+
+        return result
+
+    @transaction.atomic
+    def _create_atomic(
         self,
         song: "Song",
         player: "Player",
@@ -85,7 +115,6 @@ class ScoreManager(models.Manager):
 
         self._update_song(score_object, song)
         self._update_player(score_object, player, previous_itg_top, new_is_itg_top, new_is_ex_top)
-        song.update_search_cache()  # TODO: this *really* needs to be done async
 
         return score_object
 
@@ -148,24 +177,26 @@ class ScoreManager(models.Manager):
         song.save()
 
     def _update_player(self, score_object, player, previous_itg_top, itg_improved, ex_improved):
-        player.latest_score = score_object
-        player.num_scores += 1
+        attrs = {
+            "latest_score": score_object,
+            "num_scores": F("num_scores") + 1,
+        }
 
         if itg_improved and (increase_star_field := score_to_star_field(score_object)):
-            old_value = getattr(player, increase_star_field)
-            setattr(player, increase_star_field, old_value + 1)
+            attrs[increase_star_field] = F(increase_star_field) + 1
 
             if (previous_itg_top is not None) and (decrease_star_field := score_to_star_field(previous_itg_top)):
-                old_value = getattr(player, decrease_star_field)
-                setattr(player, decrease_star_field, old_value - 1)
+                attrs[decrease_star_field] = F(decrease_star_field) - 1
 
         if ex_improved and score_object.ex_score == 10_000:
-            player.five_stars += 1
+            attrs["five_stars"] = F("five_stars") + 1
 
         if previous_itg_top is None:
-            player.num_songs += 1
+            attrs["num_songs"] = F("num_songs") + 1
 
-        player.save()
+        # `update` skips full_clean on the instance, which would fail because of the F-expressions
+        # It's safe in this case because we do db-side updates
+        type(player).objects.filter(pk=player.pk).update(**attrs)
 
 
 class PlayerManager(models.Manager):
