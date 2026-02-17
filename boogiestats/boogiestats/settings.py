@@ -16,6 +16,9 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from typing import Dict, Optional
 
+from tenacity import wait_exponential_jitter
+from tenacity.wait import wait_base
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -120,11 +123,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
+USE_I18N = True
+USE_THOUSAND_SEPARATOR = True
 
 TIME_ZONE = "UTC"
-
-USE_I18N = True
-
 USE_TZ = True
 
 
@@ -175,5 +177,6 @@ BS_EXTRA_Q_AND_A: Dict[str, str] = {}
 # Upstream API endpoint, useful for chaining multiple BS instances
 BS_UPSTREAM_API_ENDPOINT = "https://api.groovestats.com"
 
-# Number formatting values
-USE_THOUSAND_SEPARATOR = True
+# Score creation retry configuration (might be useful for sqlite deployments)
+BS_SCORE_CREATION_ATTEMPTS: int = 10
+BS_SCORE_CREATION_RETRY_STRATEGY: wait_base = wait_exponential_jitter(initial=0.01, max=1.0, jitter=0.05)

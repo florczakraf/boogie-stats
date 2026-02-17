@@ -10,10 +10,19 @@ import sentry_sdk
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from prometheus_client import Counter
 
 from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.choices import GSIntegration, GSStatus, LeaderboardSource
+from boogiestats.boogie_api.metrics import (
+    BS_SCORE_HANDLING_DURATION,
+    GS_FREED_SCORES,
+    GS_GET_REQUEST_DURATION,
+    GS_GET_REQUESTS_ERRORS_TOTAL,
+    GS_GET_REQUESTS_TOTAL,
+    GS_POST_REQUEST_DURATION,
+    GS_POST_REQUESTS_ERRORS_TOTAL,
+    GS_POST_REQUESTS_TOTAL,
+)
 from boogiestats.boogie_api.models import Player, Song
 from boogiestats.boogie_api.utils import set_sentry_user
 
@@ -47,15 +56,6 @@ LB_SOURCE_MAPPING = {
     LeaderboardSource.BS.value: "BS",
     LeaderboardSource.GS.value: "GS",
 }
-
-GS_GET_REQUESTS_TOTAL = Counter("boogiestats_gs_get_requests_total", "Number of GS GET requests")
-GS_GET_REQUESTS_ERRORS_TOTAL = Counter(
-    "boogiestats_gs_get_requests_errors_total", "Number of unsuccessful GS GET requests"
-)
-GS_POST_REQUESTS_TOTAL = Counter("boogiestats_gs_post_requests_total", "Number of GS POST requests")
-GS_POST_REQUESTS_ERRORS_TOTAL = Counter(
-    "boogiestats_gs_post_requests_errors_total", "Number of unsuccessful GS POST requests"
-)
 
 
 def new_session(request):
@@ -197,6 +197,7 @@ def _request_leaderboards(request):
     return JsonResponse(data=final_response, headers=response_headers)
 
 
+@GS_GET_REQUEST_DURATION.time()
 def _try_gs_get(request):
     GS_GET_REQUESTS_TOTAL.inc()
     headers = create_headers(request)
@@ -271,6 +272,7 @@ def _make_score_submit_response(gs_response, players, max_results):
     return final_response, response_headers
 
 
+@GS_POST_REQUEST_DURATION.time()
 def _post_gs(request, body_parsed, require_gs):
     headers = create_headers(request)
     gs_response = {}
@@ -327,6 +329,8 @@ def score_submit(request):
     gs_response = {}
     if should_attempt_gs:
         gs_response = _post_gs(request, body_parsed, require_gs)
+    else:
+        GS_FREED_SCORES.inc()
 
     if isinstance(gs_response, JsonResponse):
         return gs_response
@@ -341,6 +345,7 @@ def score_submit(request):
     return JsonResponse(data=final_response, headers=response_headers)
 
 
+@BS_SCORE_HANDLING_DURATION.time()
 def handle_scores(body_parsed, gs_response, players):
     for player_index, player in players.items():
         player_id = f"player{player_index}"
