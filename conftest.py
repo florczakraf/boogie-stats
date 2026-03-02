@@ -67,6 +67,7 @@ def player(song, other_song):
             "totalSteps": 92,
         },
     )
+    p.refresh_from_db()  # otherwise the returned player would have stale num_scores data
     return p
 
 

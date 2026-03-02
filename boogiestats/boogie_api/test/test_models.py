@@ -3,7 +3,6 @@ import threading
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from tenacity import retry_if_not_result
 
 from boogiestats.boogie_api.models import Player, Score, Song
 
@@ -783,16 +782,13 @@ def test_gs_submission_link_with_judgments(player, song_without_scores):
 
 
 @pytest.mark.parametrize("disable_retry", [False, True])
-def test_concurrent_score_creation(disable_retry, monkeypatch):
+def test_concurrent_score_creation(disable_retry, settings):
     """There's a possibility of two different processes would attempt to write to the database during score creation in
     deployments with multiple workers. The database would remain consistent but one of them would fail with an
     OperationalError"""
 
     if disable_retry:
-        monkeypatch.setattr(
-            "boogiestats.boogie_api.managers.ScoreManager.create.retry.retry",
-            retry_if_not_result(lambda x: True),
-        )
+        settings.BS_SCORE_CREATION_ATTEMPTS = 1
 
     song = Song.objects.create(hash="song")
     player1 = Player.objects.create(gs_api_key="player1", machine_tag="P1")
@@ -842,15 +838,22 @@ def test_concurrent_score_creation(disable_retry, monkeypatch):
         player2.refresh_from_db()
 
         assert song.scores.count() == 4
+        assert song.scores.values("player").distinct().count() == 2
+
+        assert song.number_of_scores == 4  # these are denormalized fields
+        assert song.number_of_players == 2
+
         itg_highscore: Score = song.itg_highscore
         assert itg_highscore.itg_score == 5501
 
         assert player1.scores.count() == 2
+        assert player1.num_scores == 2
         assert player1.scores.first().is_itg_top is False
         assert player1.scores.last().itg_score == 5001
         assert player1.scores.last().is_itg_top is True
 
         assert player2.scores.count() == 2
+        assert player2.num_scores == 2
         assert player2.scores.first().is_itg_top is False
         assert player2.scores.last().itg_score == 5501
         assert player2.scores.last().is_itg_top is True
