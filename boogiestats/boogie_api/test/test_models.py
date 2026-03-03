@@ -857,3 +857,34 @@ def test_concurrent_score_creation(disable_retry, settings):
         assert player2.scores.first().is_itg_top is False
         assert player2.scores.last().itg_score == 5501
         assert player2.scores.last().is_itg_top is True
+
+
+def test_small_score_improvement_properly_retains_stars(player, song):
+    assert player.two_stars == 0
+
+    player.scores.create(song=song, itg_score=9840, comment="", rate=100)
+
+    player.refresh_from_db()
+    assert player.two_stars == 1
+
+    player.scores.create(song=song, itg_score=9894, comment="", rate=100)
+
+    player.refresh_from_db()
+    assert player.two_stars == 1
+
+
+def test_big_score_improvement_properly_updates_stars(player, song):
+    assert player.two_stars == 0
+    assert player.three_stars == 0
+
+    player.scores.create(song=song, itg_score=9840, comment="", rate=100)
+
+    player.refresh_from_db()
+    assert player.two_stars == 1
+    assert player.three_stars == 0
+
+    player.scores.create(song=song, itg_score=9994, comment="", rate=100)
+
+    player.refresh_from_db()
+    assert player.two_stars == 0
+    assert player.three_stars == 1

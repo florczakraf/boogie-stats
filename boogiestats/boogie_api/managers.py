@@ -186,7 +186,10 @@ class ScoreManager(models.Manager):
             attrs[increase_star_field] = F(increase_star_field) + 1
 
             if (previous_itg_top is not None) and (decrease_star_field := score_to_star_field(previous_itg_top)):
-                attrs[decrease_star_field] = F(decrease_star_field) - 1
+                if increase_star_field != decrease_star_field:
+                    attrs[decrease_star_field] = F(decrease_star_field) - 1
+                else:
+                    del attrs[decrease_star_field]
 
         if ex_improved and score_object.ex_score == 10_000:
             attrs["five_stars"] = F("five_stars") + 1
