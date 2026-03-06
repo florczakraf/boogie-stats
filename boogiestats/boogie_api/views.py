@@ -10,6 +10,7 @@ import sentry_sdk
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from requests import Request, Session
 
 from boogiestats import __version__ as boogiestats_version
 from boogiestats.boogie_api.choices import GSIntegration, GSStatus, LeaderboardSource
@@ -49,13 +50,28 @@ GROOVESTATS_RESPONSES = {
         "message": "Something went wrong.",
         "error": "Couldn't contact GrooveStats API.",
     },
+    "INVALID_ACTION": {
+        "message": "Something went wrong.",
+        "error": "Invalid action",
+        "status_code": 400,
+    },
 }
+API_KEY_HEADER_PREFIX = "x-api-key-player-"
 GROOVESTATS_TIMEOUT = (4, 6)  # (connect, read) timeout
 SUPPORTED_EVENTS = ("rpg", "itl")
 LB_SOURCE_MAPPING = {
     LeaderboardSource.BS.value: "BS",
     LeaderboardSource.GS.value: "GS",
 }
+
+requests_session = Session()
+
+
+def select_upstream(request):
+    use_action_dispatcher = bool(request.GET.get("action", ""))
+    if use_action_dispatcher:
+        return settings.BS_UPSTREAM_API_ENDPOINT_DISPATCHER
+    return settings.BS_UPSTREAM_API_ENDPOINT
 
 
 def new_session(request):
@@ -84,8 +100,8 @@ def parse_players(request):
             players[player_index]["chartHash"] = v
 
     for k, v in request.headers.items():
-        if k.lower().startswith("x-api-key-player-"):
-            player_index = int(k.lower().removeprefix("x-api-key-player-"))
+        if k.lower().startswith(API_KEY_HEADER_PREFIX):
+            player_index = int(k.lower().removeprefix(API_KEY_HEADER_PREFIX))
             players[player_index]["gsApiKey"] = v
             player_instance: Optional[Player] = Player.get_by_gs_api_key(v)
             players[player_index]["player_instance"] = player_instance
@@ -105,7 +121,7 @@ def create_headers(request):
     """
 
     return {
-        **{k: v for k, v in request.headers.items() if k.lower().startswith("x-api-key")},
+        **{k: v for k, v in request.headers.items() if k.lower().startswith(API_KEY_HEADER_PREFIX)},
         "User-Agent": f"{request.headers.get('User-Agent', 'Anonymous')} via BoogieStats/{boogiestats_version}",
     }
 
@@ -197,17 +213,36 @@ def _request_leaderboards(request):
     return JsonResponse(data=final_response, headers=response_headers)
 
 
+def normalize_gs_headers(prepared_headers: requests.structures.CaseInsensitiveDict):
+    """For some reason GS doesn't respect HTTP standard in the new API endpoints
+    and expects the API key headers to be lowercase instead of accepting arbitrary
+    capitalization so we have to overwrite default behavior of the requests library."""
+
+    final_headers = {}
+    for name, value in prepared_headers.items():
+        if name.lower().startswith(API_KEY_HEADER_PREFIX):
+            final_headers[name.lower()] = value
+        else:
+            final_headers[name] = value
+
+    return final_headers
+
+
 @GS_GET_REQUEST_DURATION.time()
 def _try_gs_get(request):
     GS_GET_REQUESTS_TOTAL.inc()
     headers = create_headers(request)
+    upstream = select_upstream(request)
+    upstream_request = Request(
+        method="GET",
+        url=upstream + request.path,
+        params=request.GET,
+        headers=headers,
+    )
+    prepared_request = requests_session.prepare_request(upstream_request)
+    prepared_request.headers = normalize_gs_headers(prepared_request.headers)
     try:
-        raw_response = requests.get(
-            settings.BS_UPSTREAM_API_ENDPOINT + request.path,
-            params=request.GET,
-            headers=headers,
-            timeout=GROOVESTATS_TIMEOUT,
-        )
+        raw_response = requests_session.send(prepared_request, timeout=GROOVESTATS_TIMEOUT)
         gs_response = raw_response.json()
         logger.info(gs_response)
     except (requests.Timeout, requests.ConnectionError):
@@ -275,17 +310,22 @@ def _make_score_submit_response(gs_response, players, max_results):
 @GS_POST_REQUEST_DURATION.time()
 def _post_gs(request, body_parsed, require_gs):
     headers = create_headers(request)
-    gs_response = {}
+    upstream = select_upstream(request)
 
+    upstream_request = Request(
+        method="POST",
+        url=upstream + request.path,
+        params=request.GET,
+        headers=headers,
+        json=body_parsed,
+    )
+    prepared_request = requests_session.prepare_request(upstream_request)
+    prepared_request.headers = normalize_gs_headers(prepared_request.headers)
+
+    gs_response = {}
     try:
         GS_POST_REQUESTS_TOTAL.inc()
-        raw_response = requests.post(
-            settings.BS_UPSTREAM_API_ENDPOINT + "/score-submit.php",
-            params=request.GET,
-            headers=headers,
-            json=body_parsed,
-            timeout=GROOVESTATS_TIMEOUT,
-        )
+        raw_response = requests_session.send(prepared_request, timeout=GROOVESTATS_TIMEOUT)
         gs_response = raw_response.json()
         logger.info(gs_response)
     except (requests.Timeout, requests.ConnectionError):

@@ -174,8 +174,9 @@ BS_REDIS_PORT: Optional[int] = None
 # It's a dictionary in Question -> Answer format. The question will also appear in the Table of Contents in the User Manual.
 BS_EXTRA_Q_AND_A: Dict[str, str] = {}
 
-# Upstream API endpoint, useful for chaining multiple BS instances
+# Upstream API endpoints, useful for chaining multiple BS instances or completely disabling GS for testing
 BS_UPSTREAM_API_ENDPOINT = "https://api.groovestats.com"
+BS_UPSTREAM_API_ENDPOINT_DISPATCHER = "https://apiservice.groovestats.com/api"
 
 # Score creation retry configuration (might be useful for sqlite deployments)
 BS_SCORE_CREATION_ATTEMPTS: int = 10
