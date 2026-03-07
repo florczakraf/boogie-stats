@@ -19,9 +19,11 @@ from boogiestats.boogie_api.views import (
     GROOVESTATS_RESPONSES,
     LB_SOURCE_MAPPING,
     create_headers,
+    normalize_gs_headers,
 )
 
 GROOVESTATS_ENDPOINT = settings.BS_UPSTREAM_API_ENDPOINT
+GROOVESTATS_ENDPOINT_DISPATCHER = settings.BS_UPSTREAM_API_ENDPOINT_DISPATCHER
 
 
 @pytest.fixture(autouse=True)
@@ -30,8 +32,22 @@ def requests_mock():
         yield mock
 
 
-def test_player_scores_without_api_keys(client):
-    response = client.get("/player-scores.php", data={"chartHashP1": "01234567890ABCDEF"})
+def test_invalid_action(client):
+    response = client.get("/?action=invalid")
+
+    assert response.json() == GROOVESTATS_RESPONSES["INVALID_ACTION"]
+    assert response.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/player-scores.php?chartHashP1=01234567890ABCDEF",
+        "/?action=playerScores&chartHashP1=01234567890ABCDEF",
+    ],
+)
+def test_player_scores_without_api_keys(client, path):
+    response = client.get(path)
 
     assert response.json() == GROOVESTATS_RESPONSES["PLAYERS_VALIDATION_ERROR"]
     assert response.status_code == 400
@@ -51,8 +67,9 @@ def gs_api_key():
     ],
 )
 @pytest.mark.parametrize("player_index", [1, 2])
+@pytest.mark.parametrize("use_action", [True, False])
 def test_player_scores_when_lb_source_is_bs(
-    client, gs_api_key, requests_mock, player_index, song, gs_integration, num_gs_calls
+    client, gs_api_key, requests_mock, player_index, song, gs_integration, num_gs_calls, use_action
 ):
     Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", gs_integration=gs_integration)
 
@@ -64,13 +81,19 @@ def test_player_scores_when_lb_source_is_bs(
             "gsLeaderboard": [],
         }
     }
-    requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(unranked_song))
+    if use_action:
+        requests_mock.get(GROOVESTATS_ENDPOINT_DISPATCHER + "/?action=playerScores", text=json.dumps(unranked_song))
+        url = f"/?action=playerScores&chartHashP{player_index}={hash}"
+    else:
+        requests_mock.get(GROOVESTATS_ENDPOINT + "/player-scores.php", text=json.dumps(unranked_song))
+        url = f"/player-scores.php?chartHashP{player_index}={hash}"
+
     kwargs = {
         f"HTTP_x_api_key_player_{player_index}": gs_api_key,
     }
+
     response = client.get(
-        "/player-scores.php",
-        data={f"chartHashP{player_index}": hash},
+        url,
         **kwargs,
     )
 
@@ -156,7 +179,7 @@ def test_player_scores_when_lb_source_is_gs(client, gs_api_key, requests_mock, p
     assert len(requests_mock.request_history) == 1
     assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
     assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
-    assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
+    assert requests_mock.last_request.headers["User-Agent"].endswith(f"via BoogieStats/{boogiestats_version}")
     assert response.json() == ranked_song
     assert response.headers[f"bs-leaderboard-player-{player_index}"] == "GS"
 
@@ -277,7 +300,8 @@ def test_player_leaderboards_when_lb_source_is_gs(client, gs_api_key, requests_m
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
-def test_score_submit_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index):
+@pytest.mark.parametrize("use_action", [True, False])
+def test_score_submit_when_lb_source_is_gs(client, gs_api_key, requests_mock, player_index, use_action):
     Player.objects.create(gs_api_key=gs_api_key, machine_tag="1234", leaderboard_source=LeaderboardSource.GS)
 
     hash = "76957dd1f96f764d"
@@ -333,12 +357,18 @@ def test_score_submit_when_lb_source_is_gs(client, gs_api_key, requests_mock, pl
             "result": "score-added",
         }
     }
-    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(expected_result))
+    if use_action:
+        requests_mock.post(GROOVESTATS_ENDPOINT_DISPATCHER + "/?action=scoreSubmit", text=json.dumps(expected_result))
+        url = f"/?action=scoreSubmit&chartHashP{player_index}={hash}&maxLeaderboardResults=3"
+    else:
+        requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", text=json.dumps(expected_result))
+        url = f"/score-submit.php?chartHashP{player_index}={hash}&maxLeaderboardResults=3"
+
     kwargs = {
         f"HTTP_x_api_key_player_{player_index}": gs_api_key,
     }
     response = client.post(
-        f"/score-submit.php?chartHashP{player_index}={hash}&maxLeaderboardResults=3",
+        url,
         data={
             f"player{player_index}": {
                 "score": 5805,
@@ -361,7 +391,7 @@ def test_score_submit_when_lb_source_is_gs(client, gs_api_key, requests_mock, pl
     assert requests_mock.last_request.qs[f"chartHashP{player_index}"] == [hash]
     assert requests_mock.last_request.qs["maxLeaderboardResults"] == ["3"]
     assert requests_mock.last_request.headers[f"x-api-key-player-{player_index}"] == gs_api_key
-    assert requests_mock.last_request.headers["user-agent"].endswith(f"via BoogieStats/{boogiestats_version}")
+    assert requests_mock.last_request.headers["User-Agent"].endswith(f"via BoogieStats/{boogiestats_version}")
     player = Player.objects.first()
     assert player.machine_tag == "DUPA"
     assert player.name == "andr_test"
@@ -1615,3 +1645,22 @@ def test_score_submit_when_gs_timeouts_for_two_players(
     assert response.status_code == response_status_code
     assert (requests_mock.call_count == 1) is submission_attempted
     assert Score.objects.count() == num_scores
+
+
+def test_normalize_gs_headers():
+    s = requests.Session()
+    request = requests.Request(
+        "GET",
+        "https://example.com/path",
+        headers={
+            "SomeHeader": "SomeValue",
+            "X-Api-Key-Player-1": "ApiKey",
+        },
+    )
+    prepared_request = s.prepare_request(request)
+
+    normalized = normalize_gs_headers(prepared_request.headers)
+
+    assert normalized["SomeHeader"] == "SomeValue"
+    assert normalized["x-api-key-player-1"] == "ApiKey"
+    assert "X-Api-Key-Player-1" not in normalized
