@@ -18,7 +18,7 @@ from boogiestats.boogie_api.models import Player, Score, Song
 if settings.BS_CHART_DB_PATH:
 
     def hash_generator():
-        jsons = Path(settings.BS_CHART_DB_PATH).rglob("*.json")
+        jsons = (Path(settings.BS_CHART_DB_PATH) / "charts").rglob("*.json")
         for json_path in jsons:
             try:
                 yield json.loads(json_path.read_bytes().decode("utf8", errors="replace"))["hash"]
