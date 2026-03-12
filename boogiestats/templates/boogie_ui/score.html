@@ -2,7 +2,7 @@
 {% load mathfilters %}
 {% load boogiestats_tags %}
 {% block title %}
-    {{ score|attr:lb_attribute|div:100|stringformat:".2f" }}% {{ lb_display_name }} [{{ score.song.chart_info.diff_number }}] {{ score.song.display_name }}
+    {{ score|attr:lb_attribute|div:100|stringformat:".2f" }}% {{ lb_display_name }} [{{ score.song.chart_info.diff_number|unlocalize }}] {{ score.song.display_name }}
 {% endblock title %}
 {% block head_extras %}
     <meta property="og:type" content="website" />
