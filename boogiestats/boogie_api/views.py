@@ -57,6 +57,7 @@ GROOVESTATS_RESPONSES = {
     },
 }
 API_KEY_HEADER_PREFIX = "x-api-key-player-"
+BYPASS_UPSTREAM_HEADER = "bs-bypass-upstream"
 GROOVESTATS_TIMEOUT = (4, 6)  # (connect, read) timeout
 SUPPORTED_EVENTS = ("rpg", "itl")
 LB_SOURCE_MAPPING = {
@@ -195,6 +196,9 @@ def _request_leaderboards(request):
         leaderboard_source = (
             player_instance.leaderboard_source if player_instance is not None else LeaderboardSource.BS.value
         )
+        gs_integration = (
+            GSIntegration(player_instance.gs_integration).label if player_instance else GSIntegration.REQUIRE.label
+        )
 
         if leaderboard_source == LeaderboardSource.BS or not gs_player:
             final_response[player_id] = {
@@ -209,6 +213,7 @@ def _request_leaderboards(request):
             final_response[player_id] = gs_player
 
         response_headers[f"bs-leaderboard-player-{player_index}"] = LB_SOURCE_MAPPING[leaderboard_source]
+        response_headers[f"bs-gs-integration-{player_index}"] = gs_integration
 
     return JsonResponse(data=final_response, headers=response_headers)
 
@@ -284,6 +289,7 @@ def _make_score_submit_response(gs_response, players, max_results):
 
         player_instance: Player = player["player_instance"]
         leaderboard_source = player_instance.leaderboard_source
+        gs_integration = GSIntegration(player_instance.gs_integration).label
 
         if leaderboard_source == LeaderboardSource.BS or not gs_player:
             final_response[player_id] = {
@@ -303,6 +309,7 @@ def _make_score_submit_response(gs_response, players, max_results):
             )
 
         response_headers[f"bs-leaderboard-player-{player_index}"] = LB_SOURCE_MAPPING[leaderboard_source]
+        response_headers[f"bs-gs-integration-{player_index}"] = gs_integration
 
     return final_response, response_headers
 
@@ -361,10 +368,14 @@ def score_submit(request):
     max_results = int(request.GET.get("maxLeaderboardResults", 1))
 
     player_instances = [p["player_instance"] for p in players.values()]
-    # if player doesn't exist we need to call GS to verify the key for the first time
-    gs_integrations = [p and p.gs_integration or GSIntegration.REQUIRE for p in player_instances]
-    should_attempt_gs = any(g != GSIntegration.SKIP for g in gs_integrations)
-    require_gs = any(g == GSIntegration.REQUIRE for g in gs_integrations)
+    if all(player_instances) and request.headers.get(BYPASS_UPSTREAM_HEADER):
+        should_attempt_gs = False
+        require_gs = False
+    else:
+        # if player doesn't exist we need to call GS to verify the key for the first time
+        gs_integrations = [p and p.gs_integration or GSIntegration.REQUIRE for p in player_instances]
+        should_attempt_gs = any(g != GSIntegration.SKIP for g in gs_integrations)
+        require_gs = any(g == GSIntegration.REQUIRE for g in gs_integrations)
 
     gs_response = {}
     if should_attempt_gs:
