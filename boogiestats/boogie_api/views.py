@@ -57,6 +57,7 @@ GROOVESTATS_RESPONSES = {
     },
 }
 API_KEY_HEADER_PREFIX = "x-api-key-player-"
+BYPASS_UPSTREAM_HEADER = "bs-bypass-upstream"
 GROOVESTATS_TIMEOUT = (4, 6)  # (connect, read) timeout
 SUPPORTED_EVENTS = ("rpg", "itl")
 LB_SOURCE_MAPPING = {
@@ -367,10 +368,14 @@ def score_submit(request):
     max_results = int(request.GET.get("maxLeaderboardResults", 1))
 
     player_instances = [p["player_instance"] for p in players.values()]
-    # if player doesn't exist we need to call GS to verify the key for the first time
-    gs_integrations = [p and p.gs_integration or GSIntegration.REQUIRE for p in player_instances]
-    should_attempt_gs = any(g != GSIntegration.SKIP for g in gs_integrations)
-    require_gs = any(g == GSIntegration.REQUIRE for g in gs_integrations)
+    if all(player_instances) and request.headers.get(BYPASS_UPSTREAM_HEADER):
+        should_attempt_gs = False
+        require_gs = False
+    else:
+        # if player doesn't exist we need to call GS to verify the key for the first time
+        gs_integrations = [p and p.gs_integration or GSIntegration.REQUIRE for p in player_instances]
+        should_attempt_gs = any(g != GSIntegration.SKIP for g in gs_integrations)
+        require_gs = any(g == GSIntegration.REQUIRE for g in gs_integrations)
 
     gs_response = {}
     if should_attempt_gs:
