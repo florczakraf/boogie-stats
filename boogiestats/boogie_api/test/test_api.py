@@ -133,6 +133,7 @@ def test_player_scores_when_lb_source_is_bs(
         }
     }
     assert response.headers[f"bs-leaderboard-player-{player_index}"] == "BS"
+    assert response.headers[f"bs-gs-integration-{player_index}"] == gs_integration.label
 
 
 @pytest.mark.parametrize("player_index", [1, 2])
@@ -1553,6 +1554,7 @@ def test_score_submit_when_gs_timeouts(
     if score_saved:
         score: Score = Score.objects.first()
         assert score.gs_status == gs_status
+        assert response.headers[f"bs-gs-integration-{player_index}"] == gs_integration.label
 
 
 @pytest.mark.parametrize("player_index", [1, 2])

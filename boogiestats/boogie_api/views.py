@@ -195,6 +195,9 @@ def _request_leaderboards(request):
         leaderboard_source = (
             player_instance.leaderboard_source if player_instance is not None else LeaderboardSource.BS.value
         )
+        gs_integration = (
+            GSIntegration(player_instance.gs_integration).label if player_instance else GSIntegration.REQUIRE.label
+        )
 
         if leaderboard_source == LeaderboardSource.BS or not gs_player:
             final_response[player_id] = {
@@ -209,6 +212,7 @@ def _request_leaderboards(request):
             final_response[player_id] = gs_player
 
         response_headers[f"bs-leaderboard-player-{player_index}"] = LB_SOURCE_MAPPING[leaderboard_source]
+        response_headers[f"bs-gs-integration-{player_index}"] = gs_integration
 
     return JsonResponse(data=final_response, headers=response_headers)
 
@@ -284,6 +288,7 @@ def _make_score_submit_response(gs_response, players, max_results):
 
         player_instance: Player = player["player_instance"]
         leaderboard_source = player_instance.leaderboard_source
+        gs_integration = GSIntegration(player_instance.gs_integration).label
 
         if leaderboard_source == LeaderboardSource.BS or not gs_player:
             final_response[player_id] = {
@@ -303,6 +308,7 @@ def _make_score_submit_response(gs_response, players, max_results):
             )
 
         response_headers[f"bs-leaderboard-player-{player_index}"] = LB_SOURCE_MAPPING[leaderboard_source]
+        response_headers[f"bs-gs-integration-{player_index}"] = gs_integration
 
     return final_response, response_headers
 
