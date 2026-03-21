@@ -16,6 +16,7 @@ from boogiestats.boogie_api.models import (
     Song,
 )
 from boogiestats.boogie_api.views import (
+    BYPASS_UPSTREAM_HEADER,
     GROOVESTATS_RESPONSES,
     LB_SOURCE_MAPPING,
     create_headers,
@@ -1611,6 +1612,132 @@ def test_score_submit_when_gs_timeouts_for_two_players(
 ):
     Player.objects.create(gs_api_key=gs_api_key, machine_tag="p1", gs_integration=p1_gs_integration)
     Player.objects.create(gs_api_key=other_player_gs_api_key, machine_tag="p2", gs_integration=p2_gs_integration)
+
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", exc=requests.Timeout)
+    kwargs = {
+        "HTTP_x_api_key_player_1": gs_api_key,
+        "HTTP_x_api_key_player_2": other_player_gs_api_key,
+    }
+    chart_hash = "76957dd1f96f764e"
+    response = client.post(
+        f"/score-submit.php?chartHashP1={chart_hash}&chartHashP2={chart_hash}&maxLeaderboardResults=3",
+        data={
+            "player1": {
+                "score": 10_000,
+                "comment": "",
+                "judgmentCounts": {
+                    "fantasticPlus": 1,
+                    "totalSteps": 1,
+                },
+                "rate": 100,
+            },
+            "player2": {
+                "score": 5_000,
+                "comment": "",
+                "judgmentCounts": {
+                    "fantastic": 1,
+                    "totalSteps": 1,
+                },
+                "rate": 100,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert response.status_code == response_status_code
+    assert (requests_mock.call_count == 1) is submission_attempted
+    assert Score.objects.count() == num_scores
+
+    if response_status_code == 200:
+        assert response.headers["bs-gs-integration-1"] == p1_gs_integration.label
+        assert response.headers["bs-gs-integration-2"] == p2_gs_integration.label
+
+
+@pytest.mark.parametrize(
+    ("p1_gs_integration", "p2_gs_integration", "num_scores", "submission_attempted", "response_status_code"),
+    [
+        (GSIntegration.REQUIRE, GSIntegration.REQUIRE, 2, False, 200),
+        (GSIntegration.REQUIRE, GSIntegration.TRY, 2, False, 200),
+        (GSIntegration.REQUIRE, GSIntegration.SKIP, 2, False, 200),
+        (GSIntegration.TRY, GSIntegration.TRY, 2, False, 200),
+        (GSIntegration.TRY, GSIntegration.SKIP, 2, False, 200),
+        (GSIntegration.SKIP, GSIntegration.SKIP, 2, False, 200),
+    ],
+)
+def test_score_submit_with_upstream_bypass_header_when_players_exist(
+    client,
+    gs_api_key,
+    other_player_gs_api_key,
+    p1_gs_integration,
+    p2_gs_integration,
+    num_scores,
+    submission_attempted,
+    response_status_code,
+    requests_mock,
+):
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="p1", gs_integration=p1_gs_integration)
+    Player.objects.create(gs_api_key=other_player_gs_api_key, machine_tag="p2", gs_integration=p2_gs_integration)
+
+    requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", exc=requests.Timeout)
+    kwargs = {
+        "HTTP_x_api_key_player_1": gs_api_key,
+        "HTTP_x_api_key_player_2": other_player_gs_api_key,
+        f"HTTP_{BYPASS_UPSTREAM_HEADER.replace('-', '_')}": "1",
+    }
+    chart_hash = "76957dd1f96f764e"
+    response = client.post(
+        f"/score-submit.php?chartHashP1={chart_hash}&chartHashP2={chart_hash}&maxLeaderboardResults=3",
+        data={
+            "player1": {
+                "score": 10_000,
+                "comment": "",
+                "judgmentCounts": {
+                    "fantasticPlus": 1,
+                    "totalSteps": 1,
+                },
+                "rate": 100,
+            },
+            "player2": {
+                "score": 5_000,
+                "comment": "",
+                "judgmentCounts": {
+                    "fantastic": 1,
+                    "totalSteps": 1,
+                },
+                "rate": 100,
+            },
+        },
+        content_type="application/json",
+        **kwargs,
+    )
+
+    assert response.status_code == response_status_code
+    assert (requests_mock.call_count == 1) is submission_attempted
+    assert Score.objects.count() == num_scores
+    assert response.headers["bs-gs-integration-1"] == p1_gs_integration.label
+    assert response.headers["bs-gs-integration-2"] == p2_gs_integration.label
+
+
+@pytest.mark.parametrize(
+    ("p1_gs_integration", "num_scores", "submission_attempted", "response_status_code"),
+    [
+        (GSIntegration.REQUIRE, 0, True, 504),
+        (GSIntegration.TRY, 0, True, 504),
+        (GSIntegration.SKIP, 0, True, 504),
+    ],
+)
+def test_score_submit_with_upstream_bypass_header_when_player_doesnt_exist(
+    client,
+    gs_api_key,
+    other_player_gs_api_key,
+    p1_gs_integration,
+    num_scores,
+    submission_attempted,
+    response_status_code,
+    requests_mock,
+):
+    Player.objects.create(gs_api_key=gs_api_key, machine_tag="p1", gs_integration=p1_gs_integration)
 
     requests_mock.post(GROOVESTATS_ENDPOINT + "/score-submit.php", exc=requests.Timeout)
     kwargs = {
