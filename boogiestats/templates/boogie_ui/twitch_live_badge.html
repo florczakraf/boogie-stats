@@ -4,7 +4,7 @@
            href="https://www.twitch.tv/{{ player.twitch_handle }}"
            target="_blank">live</a>
         {% if player.is_live_cached == None %}
-            <span class="visually-hidden check-live-status">{{ player.id }}</span>
+            <span class="visually-hidden check-live-status">{{ player.id|unlocalize }}</span>
         {% endif %}
     </span>
 {% endif %}
