@@ -5,6 +5,7 @@
     <link href="{% static 'formset/css/bootstrap5-extra.css' %}"
           rel="stylesheet">
     <link href="{% static 'formset/css/collections.css' %}" rel="stylesheet">
+    <script src="{% url 'javascript-catalog' %}"></script>{% comment %}django-formset requires i18n{% endcomment %}
     <script type="module" src="{% static 'formset/js/django-formset.js' %}"></script>
 {% endblock head_extras %}
 {% block title %}
