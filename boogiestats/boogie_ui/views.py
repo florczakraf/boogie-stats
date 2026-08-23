@@ -59,11 +59,10 @@ def diff_sort_key(x):
 
 
 class RequireAuthForPaginationMixin:
-    PAGES_FOR_ANONYMOUS = 3
-
     def dispatch(self, request, *args, **kwargs):
         page_num = int(request.GET.get("page", 1))
-        if page_num > self.PAGES_FOR_ANONYMOUS and not request.user.is_authenticated:
+        limit = settings.BS_PAGES_FOR_ANONYMOUS
+        if limit and page_num > limit and not request.user.is_authenticated:
             return redirect(f"{reverse('login')}?next={request.path}?page={page_num}")
 
         return super().dispatch(request, *args, **kwargs)

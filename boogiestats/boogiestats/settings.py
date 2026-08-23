@@ -181,3 +181,7 @@ BS_UPSTREAM_API_ENDPOINT_DISPATCHER = "https://apiservice.groovestats.com/api"
 # Score creation retry configuration (might be useful for sqlite deployments)
 BS_SCORE_CREATION_ATTEMPTS: int = 10
 BS_SCORE_CREATION_RETRY_STRATEGY: wait_base = wait_exponential_jitter(initial=0.01, max=1.0, jitter=0.05)
+
+# Limit the number of pages available to logged-out users to prevent automatic scrappers from abusing the service.
+# Set to `None` to disable the limit.
+BS_PAGES_FOR_ANONYMOUS: int | None = 3
