@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 from django.views.decorators.csrf import csrf_exempt
+from django.views.i18n import JavaScriptCatalog
 
 from boogiestats.boogie_api.urls import action_dispatcher
 from boogiestats.boogie_ui.views import Handler404, IndexView
@@ -21,6 +22,7 @@ urlpatterns = [
     path("", include("boogiestats.boogie_ui.urls")),
     path("", include("boogiestats.boogie_api.urls")),
     path("admin/", admin.site.urls),
+    path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
     path("", include("django_prometheus.urls")),
 ]
 

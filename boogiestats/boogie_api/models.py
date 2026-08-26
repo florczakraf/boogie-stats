@@ -205,14 +205,12 @@ class Player(models.Model):
         choices=GSIntegration.choices,
         default=GSIntegration.TRY,
         verbose_name="GrooveStats Integration",
-        help_text=mark_safe(
-            """This option defines the behavior on score submission.
+        help_text=mark_safe("""This option defines the behavior on score submission.
             <ul>
             <li>Require GrooveStats (discouraged, old default) will respond with a failure to the game when there's been an error / timeout during score submission to GS and will not save the score in BS in such cases. This can result in scores actually being saved in GS but not in BS.</li>
             <li>Try GrooveStats (recommended, new default) will attempt to send the score to GrooveStats and despite of the result, save the score in BS. You can filter such scores on your profile page and manually submit them again or mark them as submitted.</li>
             <li>Skip GrooveStats can be used when you don't care about GS or the events like ITL/SRPG. It will save your scores only in BS for the best score submission performance. You can still manually submit them to GS later from the UI using GS QR-code API.</li>
-            </ul>"""
-        ),  # nosec
+            </ul>"""),  # nosec
     )
     one_star = models.PositiveIntegerField(default=0, db_index=True)
     two_stars = models.PositiveIntegerField(default=0, db_index=True)

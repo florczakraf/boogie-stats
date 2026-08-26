@@ -1,6 +1,6 @@
 from django import forms
+from formset.forms import FormMixin
 from formset.renderers.bootstrap import FormRenderer
-from formset.utils import FormMixin
 from formset.widgets import DualSelector
 
 from boogiestats.boogie_api.models import Player

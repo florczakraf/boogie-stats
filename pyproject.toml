@@ -12,17 +12,17 @@ license = "AGPLv3"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "Django (~=5.1)",
-    "requests (~=2.32)",
-    "gunicorn (~=23.0)",
+    "Django (~=5.2)",
+    "requests (~=2.34)",
+    "gunicorn (~=26.1)",
     "django-mathfilters (~=1.0)",
-    "redis (~=5.2)",
-    "sentry-sdk (~=2.22)",
+    "redis (~=8.1)",
+    "sentry-sdk (~=2.68)",
     "django-bootstrap-icons (==0.9.0)",
-    "django-prometheus (~=2.3)",
-    "prometheus-client (~=0.21)",
+    "django-prometheus (~=2.5)",
+    "prometheus-client (~=0.26)",
     "django-ipware (~=7.0)",
-    "django-formset (~=1.6)",
+    "django-formset (~=2.2)",
     "tenacity (>=9.1.4,<10.0.0)",
 ]
 
@@ -37,16 +37,16 @@ poetry-plugin-shell = ">1.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.4"
-pytest-django = "^4.9.0"
-black = "24.10.0"
+pytest = "^9.1"
+pytest-django = "^4.14"
+black = "^26.5"
 requests-mock = "^1.12.1"
-flake8 = "^7.1.1"
-djlint = "1.36.4"
-bandit = "^1.8.2"
-pre-commit = "^4.1.0"
-pre-commit-hooks = "^5.0.0"
-isort = "^5.13.2"
+flake8 = "^7.3.0"
+djlint = "1.44.2"
+bandit = "^1.9.4"
+pre-commit = "^4.6.2"
+pre-commit-hooks = "^6.0.0"
+isort = "^8.0.1"
 
 [build-system]
 requires = ["poetry-core"]
