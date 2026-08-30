@@ -3,7 +3,7 @@
 import django
 from redis import ResponseError
 from redis.commands.search.field import NumericField, TagField, TextField
-from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+from redis.commands.search.index_definition import IndexDefinition, IndexType
 
 
 def setup_index(r):
