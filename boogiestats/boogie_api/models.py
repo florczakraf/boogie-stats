@@ -185,7 +185,9 @@ class Player(models.Model):
     objects = PlayerManager()
 
     user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)  # to utilize standard auth stuff
-    api_key = models.CharField(max_length=64, db_index=True, unique=True)
+    # DEPRECATED: identities (`PlayerIdentity`) are the source of truth for keys now.
+    # Kept (populated only for pre-identity rows) for rollback safety during the transition.
+    api_key = models.CharField(max_length=64, db_index=True, unique=True, null=True, blank=True)
     machine_tag = models.CharField(max_length=4, db_index=True)
     name = models.CharField(max_length=64, db_index=True)
     rivals = models.ManyToManyField(
@@ -375,7 +377,7 @@ class PlayerIdentity(models.Model):
 
 
 def validate_rivals(sender, **kwargs):
-    if kwargs["instance"].rivals.filter(api_key=kwargs["instance"].api_key).count() == 1:
+    if kwargs["instance"].rivals.filter(pk=kwargs["instance"].pk).count() == 1:
         raise ValidationError("You can't be your own rival")
 
 
