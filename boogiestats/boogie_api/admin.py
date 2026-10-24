@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from boogiestats.boogie_api.models import Player, Score, Song
+from boogiestats.boogie_api.models import Player, PlayerIdentity, Score, Song
 
 
 class PlayerAdmin(admin.ModelAdmin):
@@ -39,6 +39,14 @@ class SongAdmin(admin.ModelAdmin):
     )
 
 
+class PlayerIdentityAdmin(admin.ModelAdmin):
+    readonly_fields = ("player", "provider", "external_id", "created_at")
+    list_display = ("player", "provider", "external_id", "created_at")
+    list_filter = ("provider",)
+    search_fields = ("external_id", "player__name")
+
+
 admin.site.register(Player, PlayerAdmin)
+admin.site.register(PlayerIdentity, PlayerIdentityAdmin)
 admin.site.register(Score, ScoreAdmin)
 admin.site.register(Song, SongAdmin)

@@ -15,7 +15,12 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from redis import Redis
 
-from boogiestats.boogie_api.choices import GSIntegration, GSStatus, LeaderboardSource
+from boogiestats.boogie_api.choices import (
+    GSIntegration,
+    GSStatus,
+    IdentityProvider,
+    LeaderboardSource,
+)
 from boogiestats.boogie_api.managers import PlayerManager, ScoreManager
 from boogiestats.boogie_api.utils import get_chart_info, get_display_name, get_redis
 from boogiestats.boogiestats.exceptions import Managed404Error
@@ -340,6 +345,38 @@ class Player(models.Model):
 
         cache.set(self._twitch_live_cache_key, False, 60)  # back off for some time on errors
         return False
+
+
+class PlayerIdentity(models.Model):
+    """An external credential that belongs to a player.
+
+    A player can hold multiple identities (e.g. after rotating a GS API key),
+    so a player is no longer anchored to a single key.
+    """
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="identities")
+    provider = models.CharField(max_length=32, choices=IdentityProvider.choices, db_index=True)
+    # e.g. SHA-256 of the GS API key (64 chars), or an OAuth provider subject ID.
+    # 255 is the max length of an OIDC `sub` claim, i.e. the ceiling for any OAuth-based provider.
+    # Identifiers longer than this (e.g. WebAuthn credential IDs) should be hashed on the way in.
+    external_id = models.CharField(max_length=255, db_index=True)
+    created_at = models.DateTimeField(default=now, db_index=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["provider", "external_id"], name="unique_provider_external_id")]
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.provider}: {self.external_id[:12]}... -> {self.player}"
+
+    @staticmethod
+    def get_by_gs_api_key(gs_api_key) -> Optional["Player"]:
+        external_id = Player.gs_api_key_to_bs_api_key(gs_api_key)
+        identity = PlayerIdentity.objects.filter(provider=IdentityProvider.GS_API_KEY, external_id=external_id).first()
+        return identity.player if identity else None
 
 
 def validate_rivals(sender, **kwargs):

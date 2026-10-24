@@ -15,7 +15,7 @@ from tenacity import (
     stop_after_attempt,
 )
 
-from boogiestats.boogie_api.choices import GSStatus
+from boogiestats.boogie_api.choices import GSStatus, IdentityProvider
 from boogiestats.boogie_api.metrics import SCORE_CREATION_ATTEMPTS, SCORES_CREATED
 from boogiestats.boogie_api.utils import score_to_star_field
 
@@ -213,5 +213,10 @@ class PlayerManager(models.Manager):
             **kwargs,
         )
         player.save()
+
+        player.identities.create(
+            provider=IdentityProvider.GS_API_KEY,
+            external_id=self.model.gs_api_key_to_bs_api_key(gs_api_key),
+        )
 
         return player
