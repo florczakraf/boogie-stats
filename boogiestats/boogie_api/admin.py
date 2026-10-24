@@ -7,7 +7,6 @@ class PlayerAdmin(admin.ModelAdmin):
     # we need to exclude foreign models, otherwise the admin won't load in sensible time
     readonly_fields = (
         "user",
-        "api_key",
         "latest_score",
     )
 

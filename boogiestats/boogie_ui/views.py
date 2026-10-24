@@ -9,6 +9,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect
@@ -22,14 +24,15 @@ from formset.views import FormViewMixin, IncompleteSelectResponseMixin
 from redis import ResponseError
 from redis.commands.search.query import Query
 
-from boogiestats.boogie_api.models import GSStatus, Player, Score, Song
+from boogiestats.boogie_api.choices import IdentityProvider
+from boogiestats.boogie_api.models import GSStatus, Player, PlayerIdentity, Score, Song
 from boogiestats.boogie_api.utils import (
     get_chart_info,
     get_pack_info,
     get_redis,
     set_sentry_user,
 )
-from boogiestats.boogie_ui.forms import EditPlayerForm
+from boogiestats.boogie_ui.forms import AddIdentityForm, EditPlayerForm
 from boogiestats.boogiestats.exceptions import Managed404Error
 
 ENTRIES_PER_PAGE = 30
@@ -638,8 +641,65 @@ class EditPlayerView(
     def get_object(self, **kwargs):
         return self.request.user.player
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["identities"] = self.request.user.player.identities.order_by("created_at")
+        return context
+
     def get_success_url(self):
         return reverse("edit")
+
+
+@require_POST
+@login_required(login_url="/login/")
+def add_identity(request):
+    form = AddIdentityForm(request.POST)
+
+    if not form.is_valid():
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(request, error, extra_tags="alert-danger")
+        return redirect("edit")
+
+    gs_api_key = form.cleaned_data["gs_api_key"]
+    external_id = Player.gs_api_key_to_bs_api_key(gs_api_key)
+    myself: Player = request.user.player
+
+    if myself.identities.filter(provider=IdentityProvider.GS_API_KEY, external_id=external_id).exists():
+        messages.warning(request, "This API key is already attached to your profile.", extra_tags="alert-warning")
+        return redirect("edit")
+
+    try:
+        myself.identities.create(provider=IdentityProvider.GS_API_KEY, external_id=external_id)
+    except (IntegrityError, ValidationError):
+        messages.error(
+            request,
+            "This API key is already used by another profile.",
+            extra_tags="alert-danger",
+        )
+        return redirect("edit")
+
+    messages.success(request, "API key attached to your profile.", extra_tags="alert-success")
+    return redirect("edit")
+
+
+@require_POST
+@login_required(login_url="/login/")
+def remove_identity(request, identity_id):
+    myself: Player = request.user.player
+    identity = get_object_or_404(PlayerIdentity, id=identity_id, player=myself)
+
+    if myself.identities.count() == 1:
+        messages.error(
+            request,
+            "You can't remove your last API key - add a new one first, otherwise you'd be locked out.",
+            extra_tags="alert-danger",
+        )
+        return redirect("edit")
+
+    identity.delete()
+    messages.success(request, "API key removed from your profile.", extra_tags="alert-success")
+    return redirect("edit")
 
 
 class MyProfileView(LoginRequiredMixin, generic.RedirectView):

@@ -185,9 +185,6 @@ class Player(models.Model):
     objects = PlayerManager()
 
     user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)  # to utilize standard auth stuff
-    # DEPRECATED: identities (`PlayerIdentity`) are the source of truth for keys now.
-    # Kept (populated only for pre-identity rows) for rollback safety during the transition.
-    api_key = models.CharField(max_length=64, db_index=True, unique=True, null=True, blank=True)
     machine_tag = models.CharField(max_length=4, db_index=True)
     name = models.CharField(max_length=64, db_index=True)
     rivals = models.ManyToManyField(
@@ -368,6 +365,16 @@ class PlayerIdentity(models.Model):
 
     def __str__(self):
         return f"{self.provider}: {self.external_id[:12]}... -> {self.player}"
+
+    @property
+    def display_name(self):
+        """Human-friendly label for the UI.
+
+        Deliberately does not include any part of `external_id`: for GS API
+        keys we store only a hash of half the key, so no fragment of it is
+        recognizable to the player and showing one would only confuse.
+        """
+        return self.get_provider_display()
 
     @staticmethod
     def get_by_gs_api_key(gs_api_key) -> Optional["Player"]:

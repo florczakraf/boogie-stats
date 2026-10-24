@@ -20,5 +20,43 @@
                 df-click="disable -> submit -> proceed"
                 class="btn btn-primary">Submit</button>
         </django-formset>
+        <h3 class="mt-4">API Keys</h3>
+        <p class="text-muted">
+            These keys can submit scores to your profile. You can attach multiple keys
+            (e.g. one per machine) and remove old ones after rotating.
+        </p>
+        <ul class="list-group mb-3">
+            {% for identity in identities %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {{ identity.display_name }}
+                        <span class="text-muted">added {{ identity.created_at|date:"Y-m-d" }}</span>
+                    </span>
+                    <form method="post"
+                          action="{% url 'remove_identity' identity.id %}"
+                          class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+        <form method="post"
+              action="{% url 'add_identity' %}"
+              class="row g-2 align-items-center">
+            {% csrf_token %}
+            <div class="col-auto">
+                <input type="password"
+                       name="gs_api_key"
+                       minlength="32"
+                       maxlength="32"
+                       required
+                       class="form-control"
+                       placeholder="First 32 characters of your GS API key">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">Add API key</button>
+            </div>
+        </form>
     </div>
 {% endblock content %}

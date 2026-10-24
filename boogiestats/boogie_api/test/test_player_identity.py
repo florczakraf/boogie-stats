@@ -2,7 +2,6 @@ import importlib.util
 import pathlib
 
 import pytest
-from django.apps import apps as global_apps
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -34,9 +33,6 @@ class TestPlayerCreationCreatesIdentity:
         assert identity.provider == IdentityProvider.GS_API_KEY
         assert identity.external_id == Player.gs_api_key_to_bs_api_key("playerkey")
         assert identity.player == player
-
-    def test_creating_player_no_longer_writes_api_key(self, player):
-        assert Player.objects.get(pk=player.pk).api_key is None
 
     def test_all_players_have_at_least_one_identity(self, player):
         other = Player.objects.create(gs_api_key="otherkey", machine_tag="OT")
@@ -140,23 +136,49 @@ class TestReadPathsGoThroughIdentities:
 
 
 class TestDataMigration:
-    def test_backfill_creates_one_identity_per_player(self, player, db):
-        # simulate a pre-identity row: api_key populated, no identities
+    @pytest.fixture
+    def stub_apps(self, player):
+        # The backfill runs on the historical Player model which still has api_key.
+        # Since the column is dropped from the current schema, simulate the legacy
+        # rows with a stub. Every Player row maps to the fixture's known key.
         legacy_api_key = Player.gs_api_key_to_bs_api_key("playerkey")
-        Player.objects.filter(pk=player.pk).update(api_key=legacy_api_key)
+
+        class LegacyRow:
+            def __init__(self, pk):
+                self.pk = pk
+                self.api_key = legacy_api_key
+
+        class Manager:
+            def all(self):
+                return self
+
+            def iterator(self):
+                return iter(LegacyRow(pk=p.pk) for p in Player.objects.all())
+
+        class LegacyPlayer:
+            objects = Manager()
+
+        class StubApps:
+            @staticmethod
+            def get_model(app_label, model_name):
+                return LegacyPlayer if model_name == "Player" else PlayerIdentity
+
+        return StubApps()
+
+    def test_backfill_creates_one_identity_per_player(self, player, stub_apps):
         PlayerIdentity.objects.all().delete()
         create_identities_for_existing_players = load_backfill_function()
 
-        create_identities_for_existing_players(global_apps, None)
+        create_identities_for_existing_players(stub_apps, None)
 
         identity = player.identities.get()
         assert identity.provider == "gs_api_key"
-        assert identity.external_id == legacy_api_key
+        assert identity.external_id == Player.gs_api_key_to_bs_api_key("playerkey")
 
-    def test_backfill_is_idempotent(self, player):
+    def test_backfill_is_idempotent(self, player, stub_apps):
         create_identities_for_existing_players = load_backfill_function()
 
-        create_identities_for_existing_players(global_apps, None)
-        create_identities_for_existing_players(global_apps, None)
+        create_identities_for_existing_players(stub_apps, None)
+        create_identities_for_existing_players(stub_apps, None)
 
         assert player.identities.count() == 1
