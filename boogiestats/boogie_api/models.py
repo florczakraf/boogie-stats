@@ -281,11 +281,6 @@ class Player(models.Model):
         return super().save(*args, **kwargs)
 
     @staticmethod
-    def get_by_gs_api_key(gs_api_key) -> Optional["Player"]:
-        api_key = Player.gs_api_key_to_bs_api_key(gs_api_key)
-        return Player.objects.filter(api_key=api_key).first()
-
-    @staticmethod
     def gs_api_key_to_bs_api_key(gs_api_key):
         return sha256(gs_api_key[:32].encode("ascii")).hexdigest()
 

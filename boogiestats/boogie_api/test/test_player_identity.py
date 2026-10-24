@@ -3,11 +3,12 @@ import pathlib
 
 import pytest
 from django.apps import apps as global_apps
+from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from boogiestats.boogie_api.choices import IdentityProvider
-from boogiestats.boogie_api.models import Player, PlayerIdentity
+from boogiestats.boogie_api.choices import GSIntegration, IdentityProvider
+from boogiestats.boogie_api.models import Player, PlayerIdentity, Score
 
 MIGRATION_NAME = "0030_backfill_playeridentities"
 
@@ -91,6 +92,48 @@ class TestExternalIdLength:
     def test_external_id_cannot_be_longer_than_255_chars(self, player):
         with pytest.raises(ValidationError):
             PlayerIdentity.objects.create(player=player, provider=IdentityProvider.GS_API_KEY, external_id="x" * 256)
+
+
+class TestReadPathsGoThroughIdentities:
+    def test_auth_backend_authenticates_by_identity(self, player):
+        user = authenticate(request=None, gs_api_key="playerkey")
+
+        assert user == player.user
+
+    def test_auth_backend_for_unknown_key_returns_none(self, player):
+        assert authenticate(request=None, gs_api_key="non-existent") is None
+
+    def test_auth_backend_works_for_rotated_key(self, player):
+        player.identities.create(
+            provider=IdentityProvider.GS_API_KEY, external_id=Player.gs_api_key_to_bs_api_key("newkey")
+        )
+
+        assert authenticate(request=None, gs_api_key="newkey") == player.user
+        assert authenticate(request=None, gs_api_key="playerkey") == player.user
+
+    def test_auth_backend_rejects_retired_key(self, player):
+        player.identities.get().delete()
+
+        assert authenticate(request=None, gs_api_key="playerkey") is None
+
+    def test_score_submission_with_rotated_key_lands_on_the_same_player(self, client, player):
+        player.gs_integration = GSIntegration.SKIP
+        player.save()
+        new_key = "ffffffffffffffff" * 4
+        player.identities.create(
+            provider=IdentityProvider.GS_API_KEY, external_id=Player.gs_api_key_to_bs_api_key(new_key)
+        )
+
+        response = client.post(
+            "/score-submit.php?chartHashP1=0123456789ABCDEF&maxLeaderboardResults=3",
+            data={"player1": {"score": 5000, "comment": "foo", "rate": 100}},
+            content_type="application/json",
+            HTTP_x_api_key_player_1=new_key,
+        )
+
+        assert response.status_code == 200
+        assert Score.objects.count() == 1
+        assert Score.objects.get().player == player
 
 
 class TestDataMigration:
