@@ -24,31 +24,103 @@ def test_failed_login(client, player):
     assert "Invalid GS API Key" in response.content.decode()
 
 
-def test_changing_gs_api_key_rotates_the_identity(player):
-    form = EditPlayerForm(
-        data={
-            "machine_tag": "PL",
-            "name": "PL",
-            "gs_integration": GSIntegration.REQUIRE,
-            "leaderboard_source": LeaderboardSource.BS,
-            "gs_api_key": "newkeynewkeynewkeynewkeynewkeyne",
-            "rivals": [],
-        },
-        instance=player,
+NEW_KEY = "newkeynewkeynewkeynewkeynewkeyne"
+
+
+def test_add_identity_attaches_a_second_key(client, player):
+    client.force_login(player.user)
+
+    response = client.post(reverse("add_identity"), data={"gs_api_key": NEW_KEY}, follow=True)
+
+    assert response.status_code == 200
+    assert "API key attached to your profile." in response.content.decode()
+    assert player.identities.count() == 2
+    assert PlayerIdentity.get_by_gs_api_key(NEW_KEY) == player
+    assert PlayerIdentity.get_by_gs_api_key("playerkey") == player  # old key still works
+
+
+def test_add_identity_requires_login(client, player):
+    response = client.post(reverse("add_identity"), data={"gs_api_key": NEW_KEY}, follow=True)
+
+    assert response.request["PATH_INFO"] == reverse("login")
+    assert player.identities.count() == 1
+
+
+def test_add_identity_rejects_bad_key(client, player):
+    client.force_login(player.user)
+
+    response = client.post(reverse("add_identity"), data={"gs_api_key": "too-short"}, follow=True)
+
+    assert "API key attached to your profile." not in response.content.decode()
+    assert player.identities.count() == 1
+
+
+def test_add_identity_rejects_duplicate_key(client, player):
+    client.force_login(player.user)
+    player.identities.create(provider=IdentityProvider.GS_API_KEY, external_id=Player.gs_api_key_to_bs_api_key(NEW_KEY))
+
+    response = client.post(reverse("add_identity"), data={"gs_api_key": NEW_KEY}, follow=True)
+
+    assert "already attached to your profile." in response.content.decode()
+    assert player.identities.count() == 2
+
+
+OTHER_KEY = "otherkeyotherkeyotherkeyotherkey"
+
+
+def test_add_identity_rejects_key_used_by_other_player(client, player, rival1):
+    client.force_login(player.user)
+    rival1.identities.create(
+        provider=IdentityProvider.GS_API_KEY, external_id=Player.gs_api_key_to_bs_api_key(OTHER_KEY)
     )
 
-    assert form.is_valid()
-    form.save()
+    response = client.post(
+        reverse("add_identity"),
+        data={"gs_api_key": OTHER_KEY},
+        follow=True,
+    )
 
+    assert "already used by another profile." in response.content.decode()
     assert player.identities.count() == 1
+
+
+def test_remove_identity_retires_the_key(client, player):
+    client.force_login(player.user)
+    identity = player.identities.create(
+        provider=IdentityProvider.GS_API_KEY, external_id=Player.gs_api_key_to_bs_api_key(NEW_KEY)
+    )
+
+    response = client.post(reverse("remove_identity", kwargs={"identity_id": identity.id}), follow=True)
+
+    assert response.status_code == 200
+    assert "API key removed from your profile." in response.content.decode()
+    assert player.identities.count() == 1
+    assert PlayerIdentity.get_by_gs_api_key(NEW_KEY) is None
+    assert PlayerIdentity.get_by_gs_api_key("playerkey") == player
+
+
+def test_cannot_remove_the_last_identity(client, player):
+    client.force_login(player.user)
     identity = player.identities.get()
-    assert identity.provider == IdentityProvider.GS_API_KEY
-    assert identity.external_id == Player.gs_api_key_to_bs_api_key("newkeynewkeynewkeynewkeynewkeyne")
-    assert PlayerIdentity.get_by_gs_api_key("newkeynewkeynewkeynewkeynewkeyne") == player
-    assert PlayerIdentity.get_by_gs_api_key("playerkey") is None  # old key retired
+
+    response = client.post(reverse("remove_identity", kwargs={"identity_id": identity.id}), follow=True)
+
+    assert "You can't remove your last API key" in response.content.decode()
+    assert player.identities.count() == 1
 
 
-def test_edit_form_without_new_key_keeps_the_identity(player):
+def test_cannot_remove_someone_elses_identity(client, player, rival1):
+    client.force_login(player.user)
+    foreign_identity = rival1.identities.get()
+
+    response = client.post(reverse("remove_identity", kwargs={"identity_id": foreign_identity.id}), follow=True)
+
+    # POST + Http404 → the project's TemplateView-based 404 handler responds with 405
+    assert response.status_code == 405
+    assert rival1.identities.count() == 1
+
+
+def test_edit_form_does_not_touch_identities(player):
     form = EditPlayerForm(
         data={
             "machine_tag": "XX",
