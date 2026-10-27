@@ -9,6 +9,7 @@ from django.db import IntegrityError
 
 from boogiestats.boogie_api.choices import GSIntegration, IdentityProvider
 from boogiestats.boogie_api.models import Player, PlayerIdentity, Score
+from boogiestats.boogie_api.views import get_or_create_player
 
 MIGRATION_NAME = "0030_backfill_playeridentities"
 
@@ -32,17 +33,33 @@ class TestPlayerCreationCreatesIdentity:
     def test_creating_player_creates_its_first_identity(self, player):
         identity = player.identities.get()
         assert identity.provider == IdentityProvider.GS_API_KEY
-        assert identity.external_id == Player.gs_api_key_to_bs_api_key("playerkey")
+        key = Player.gs_api_key_to_bs_api_key("playerkey")
+        assert identity.external_id == key
         assert identity.player == player
-
-    def test_creating_player_no_longer_writes_api_key(self, player):
-        assert Player.objects.get(pk=player.pk).api_key is None
+        assert identity.player.api_key == key
 
     def test_all_players_have_at_least_one_identity(self, player):
         other = Player.objects.create(gs_api_key="otherkey", machine_tag="OT")
 
         assert PlayerIdentity.objects.filter(player=player).exists()
         assert PlayerIdentity.objects.filter(player=other).exists()
+
+
+class TestNoOrphanPlayers:
+    def test_failed_identity_creation_does_not_orphan_a_player(self, monkeypatch):
+        """If the identity insert fails (e.g. a concurrent request with the same
+        new key won the race and inserted the identity first), the player row
+        must not survive without any identity."""
+
+        def boom(self, *args, **kwargs):
+            raise IntegrityError("duplicate identity")
+
+        monkeypatch.setattr(PlayerIdentity, "save", boom)
+
+        with pytest.raises(IntegrityError):
+            get_or_create_player("brandnewkey")
+
+        assert not Player.objects.filter(identities__isnull=True)
 
 
 class TestLookupByIdentity:
