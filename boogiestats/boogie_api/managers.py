@@ -15,7 +15,7 @@ from tenacity import (
     stop_after_attempt,
 )
 
-from boogiestats.boogie_api.choices import GSStatus
+from boogiestats.boogie_api.choices import GSStatus, IdentityProvider
 from boogiestats.boogie_api.metrics import SCORE_CREATION_ATTEMPTS, SCORES_CREATED
 from boogiestats.boogie_api.utils import score_to_star_field
 
@@ -204,14 +204,21 @@ class ScoreManager(models.Manager):
 
 class PlayerManager(models.Manager):
     def create(self, gs_api_key, machine_tag, **kwargs):
-        user = User.objects.create_user(username=uuid.uuid4().hex)
-        kwargs.setdefault("name", machine_tag)
-        player = self.model(
-            user=user,
-            api_key=self.model.gs_api_key_to_bs_api_key(gs_api_key),
-            machine_tag=machine_tag,
-            **kwargs,
-        )
-        player.save()
+        with transaction.atomic():
+            user = User.objects.create_user(username=uuid.uuid4().hex)
+            kwargs.setdefault("name", machine_tag)
+            api_key = self.model.gs_api_key_to_bs_api_key(gs_api_key)
+            player = self.model(
+                user=user,
+                api_key=api_key,
+                machine_tag=machine_tag,
+                **kwargs,
+            )
+            player.save()
 
-        return player
+            player.identities.create(
+                provider=IdentityProvider.GS_API_KEY,
+                external_id=api_key,
+            )
+
+            return player

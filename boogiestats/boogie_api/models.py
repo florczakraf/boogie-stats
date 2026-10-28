@@ -15,7 +15,12 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from redis import Redis
 
-from boogiestats.boogie_api.choices import GSIntegration, GSStatus, LeaderboardSource
+from boogiestats.boogie_api.choices import (
+    GSIntegration,
+    GSStatus,
+    IdentityProvider,
+    LeaderboardSource,
+)
 from boogiestats.boogie_api.managers import PlayerManager, ScoreManager
 from boogiestats.boogie_api.utils import get_chart_info, get_display_name, get_redis
 from boogiestats.boogiestats.exceptions import Managed404Error
@@ -180,7 +185,9 @@ class Player(models.Model):
     objects = PlayerManager()
 
     user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)  # to utilize standard auth stuff
-    api_key = models.CharField(max_length=64, db_index=True, unique=True)
+    # DEPRECATED: identities (`PlayerIdentity`) are the source of truth for keys now.
+    # Kept (populated only for pre-identity rows) for rollback safety during the transition.
+    api_key = models.CharField(max_length=64, db_index=True, unique=True, null=True, blank=True)
     machine_tag = models.CharField(max_length=4, db_index=True)
     name = models.CharField(max_length=64, db_index=True)
     rivals = models.ManyToManyField(
@@ -276,11 +283,6 @@ class Player(models.Model):
         return super().save(*args, **kwargs)
 
     @staticmethod
-    def get_by_gs_api_key(gs_api_key) -> Optional["Player"]:
-        api_key = Player.gs_api_key_to_bs_api_key(gs_api_key)
-        return Player.objects.filter(api_key=api_key).first()
-
-    @staticmethod
     def gs_api_key_to_bs_api_key(gs_api_key):
         return sha256(gs_api_key[:32].encode("ascii")).hexdigest()
 
@@ -342,8 +344,40 @@ class Player(models.Model):
         return False
 
 
+class PlayerIdentity(models.Model):
+    """An external credential that belongs to a player.
+
+    A player can hold multiple identities (e.g. after rotating a GS API key),
+    so a player is no longer anchored to a single key.
+    """
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="identities")
+    provider = models.CharField(max_length=32, choices=IdentityProvider.choices, db_index=True)
+    # e.g. SHA-256 of the GS API key (64 chars), or an OAuth provider subject ID.
+    # 255 is the max length of an OIDC `sub` claim, i.e. the ceiling for any OAuth-based provider.
+    # Identifiers longer than this (e.g. WebAuthn credential IDs) should be hashed on the way in.
+    external_id = models.CharField(max_length=255, db_index=True)
+    created_at = models.DateTimeField(default=now, db_index=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["provider", "external_id"], name="unique_provider_external_id")]
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.provider}: {self.external_id[:12]}... -> {self.player}"
+
+    @staticmethod
+    def get_by_gs_api_key(gs_api_key) -> Optional["Player"]:
+        external_id = Player.gs_api_key_to_bs_api_key(gs_api_key)
+        identity = PlayerIdentity.objects.filter(provider=IdentityProvider.GS_API_KEY, external_id=external_id).first()
+        return identity.player if identity else None
+
+
 def validate_rivals(sender, **kwargs):
-    if kwargs["instance"].rivals.filter(api_key=kwargs["instance"].api_key).count() == 1:
+    if kwargs["instance"].rivals.filter(pk=kwargs["instance"].pk).count() == 1:
         raise ValidationError("You can't be your own rival")
 
 

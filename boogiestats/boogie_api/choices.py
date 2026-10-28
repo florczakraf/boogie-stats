@@ -12,6 +12,10 @@ class GSIntegration(models.IntegerChoices):
     SKIP = 3, "Skip GrooveStats"
 
 
+class IdentityProvider(models.TextChoices):
+    GS_API_KEY = "gs_api_key", "GrooveStats API key"
+
+
 class GSStatus(models.IntegerChoices):
     OK = 1, "OK"
     ERROR = 2, "An error occurred during submission (GS might have accepted the score)"

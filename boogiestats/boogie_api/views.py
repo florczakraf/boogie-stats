@@ -24,7 +24,7 @@ from boogiestats.boogie_api.metrics import (
     GS_POST_REQUESTS_ERRORS_TOTAL,
     GS_POST_REQUESTS_TOTAL,
 )
-from boogiestats.boogie_api.models import Player, Song
+from boogiestats.boogie_api.models import Player, PlayerIdentity, Song
 from boogiestats.boogie_api.utils import set_sentry_user
 
 logger = logging.getLogger("django.server.boogiestats")
@@ -104,7 +104,7 @@ def parse_players(request):
         if k.lower().startswith(API_KEY_HEADER_PREFIX):
             player_index = int(k.lower().removeprefix(API_KEY_HEADER_PREFIX))
             players[player_index]["gsApiKey"] = v
-            player_instance: Optional[Player] = Player.get_by_gs_api_key(v)
+            player_instance: Optional[Player] = PlayerIdentity.get_by_gs_api_key(v)
             players[player_index]["player_instance"] = player_instance
             set_sentry_user(request, player_instance)
 
@@ -159,7 +159,7 @@ def get_local_leaderboard(player_instance, chart_hash, num_entries, score_type):
 
 
 def get_or_create_player(gs_api_key):
-    player_instance = Player.get_by_gs_api_key(gs_api_key)
+    player_instance = PlayerIdentity.get_by_gs_api_key(gs_api_key)
     if not player_instance:
         machine_tag = uuid.uuid4().hex[:4].upper()
         player_instance = Player.objects.create(gs_api_key=gs_api_key, machine_tag=machine_tag)

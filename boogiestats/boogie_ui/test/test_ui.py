@@ -1,7 +1,13 @@
 import pytest
 from django.urls import reverse
 
-from boogiestats.boogie_api.models import GSStatus, Score
+from boogiestats.boogie_api.choices import (
+    GSIntegration,
+    IdentityProvider,
+    LeaderboardSource,
+)
+from boogiestats.boogie_api.models import GSStatus, Player, PlayerIdentity, Score
+from boogiestats.boogie_ui.forms import EditPlayerForm
 
 
 def test_successful_login(client, player):
@@ -16,6 +22,49 @@ def test_failed_login(client, player):
 
     assert response.status_code == 401
     assert "Invalid GS API Key" in response.content.decode()
+
+
+def test_changing_gs_api_key_rotates_the_identity(player):
+    form = EditPlayerForm(
+        data={
+            "machine_tag": "PL",
+            "name": "PL",
+            "gs_integration": GSIntegration.REQUIRE,
+            "leaderboard_source": LeaderboardSource.BS,
+            "gs_api_key": "newkeynewkeynewkeynewkeynewkeyne",
+            "rivals": [],
+        },
+        instance=player,
+    )
+
+    assert form.is_valid()
+    form.save()
+
+    assert player.identities.count() == 1
+    identity = player.identities.get()
+    assert identity.provider == IdentityProvider.GS_API_KEY
+    assert identity.external_id == Player.gs_api_key_to_bs_api_key("newkeynewkeynewkeynewkeynewkeyne")
+    assert PlayerIdentity.get_by_gs_api_key("newkeynewkeynewkeynewkeynewkeyne") == player
+    assert PlayerIdentity.get_by_gs_api_key("playerkey") is None  # old key retired
+
+
+def test_edit_form_without_new_key_keeps_the_identity(player):
+    form = EditPlayerForm(
+        data={
+            "machine_tag": "XX",
+            "name": "XX",
+            "gs_integration": GSIntegration.REQUIRE,
+            "leaderboard_source": LeaderboardSource.BS,
+            "rivals": [],
+        },
+        instance=player,
+    )
+
+    assert form.is_valid()
+    form.save()
+
+    assert player.identities.count() == 1
+    assert PlayerIdentity.get_by_gs_api_key("playerkey") == player
 
 
 def test_managing_rivals_requires_login(client, player, rival1):

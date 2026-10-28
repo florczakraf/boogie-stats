@@ -1,8 +1,10 @@
 from django import forms
+from django.db import transaction
 from formset.forms import FormMixin
 from formset.renderers.bootstrap import FormRenderer
 from formset.widgets import DualSelector
 
+from boogiestats.boogie_api.choices import IdentityProvider
 from boogiestats.boogie_api.models import Player
 
 
@@ -56,12 +58,20 @@ class EditPlayerForm(FormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Exclude "ourselves" from the possible rival list in the form
-        self.fields["rivals"].queryset = Player.objects.exclude(api_key=self.instance.api_key)
+        self.fields["rivals"].queryset = Player.objects.exclude(pk=self.instance.pk)
 
     def save(self, commit=True):
         self.full_clean()
         if gs_api_key := self.cleaned_data["gs_api_key"]:
-            bs_api_key = Player.gs_api_key_to_bs_api_key(gs_api_key)
-            self.instance.api_key = bs_api_key
+            self._rotate_gs_api_key_identity(gs_api_key)
 
         return super().save(commit)
+
+    @transaction.atomic
+    def _rotate_gs_api_key_identity(self, gs_api_key):
+        # changing the key replaces the old one, i.e. the old key stops working
+        self.instance.identities.filter(provider=IdentityProvider.GS_API_KEY).delete()
+        self.instance.identities.create(
+            provider=IdentityProvider.GS_API_KEY,
+            external_id=Player.gs_api_key_to_bs_api_key(gs_api_key),
+        )
