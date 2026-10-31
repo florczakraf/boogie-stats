@@ -71,7 +71,8 @@
    target="_blank">BoogieStats don't support GrooveStats Launcher method anymore</a>), you can skip to <a href="#join-and-enable-boogiestats">Join and Enable BoogieStats section</a>.
     <ol>
         <li>
-            Download and install ITGmania from the <a href="https://www.itgmania.com/" target="_blank">official website</a>.
+            Download and install ITGmania from the <a href="https://www.itgmania.com/"
+    target="_blank">official website</a>.
             Optionally, migrate your profile form SM5 (if you have one) using <a href="https://github.com/itgmania/itgmania/blob/release/Docs/Userdocs/sm5_migration.md"
     target="_blank">the following guide</a>.
         </li>
@@ -133,7 +134,8 @@ HttpAllowHosts=*.groovestats.com,{{ boogiestats_allow_host }}
     </h4>
     <p>
         Zarzob's fork of Simply Love, commonly referred to as <code>zmod</code>, has an extended support for BoogieStats.
-        You can download it from the <a href="https://github.com/zarzob/Simply-Love-SM5" target="_blank">project's GitHub page</a>.
+        You can download it from the <a href="https://github.com/zarzob/Simply-Love-SM5"
+    target="_blank">project's GitHub page</a>.
     </p>
     <p>
         If you run already have a recent version of <code>zmod</code>, just
@@ -291,13 +293,15 @@ local url_prefix = "{{ boogiestats_url_prefix }}"
                 Using glob search might be useful when you're unsure about the phrase you search for. For example a simple
                 <code>warning</code> query would fail to find <code>WARNINGxWARNINGxWARNING</code> song. Adding a star on
                 either end of the word will try to match more characters on that end. However, an extra single quote mark
-                is needed at the beginning of the term. <a href="{% url "search" %}?q='warning*" target="_blank">[example]</a>
+                is needed at the beginning of the term. <a href="{% url "search" %}?q='warning*"
+    target="_blank">[example]</a>
             </li>
             <li>
                 You might want to search for songs within a pack that match a given query. Please note that the current
                 chart metadata database stores only one pack name per chart, and it might not be what you expect. Similar
                 notation could be used for artist, title and subtitle but there are also fields with <code>translit</code>
-                suffix because that's how the charts store the info. <a href="{% url "search" %}?q=@pack_name:itl" target="_blank">[example]</a>
+                suffix because that's how the charts store the info. <a href="{% url "search" %}?q=@pack_name:itl"
+    target="_blank">[example]</a>
             </li>
             <li>
                 There's an option to search by chart type. To search all double songs an extra backslash escape is needed

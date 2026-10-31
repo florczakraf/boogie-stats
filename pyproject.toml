@@ -8,9 +8,9 @@ description = "A pass-through proxy for groovestats.com that records non-ranked 
 authors = [
     {name = "Rafał Florczak", email="florczak.raf+boogiestats@gmail.com"}
 ]
-license = "AGPLv3"
+license = "AGPL-3.0-or-later"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "Django (~=5.2)",
     "requests (~=2.34)",
@@ -21,7 +21,7 @@ dependencies = [
     "django-bootstrap-icons (==0.9.0)",
     "django-prometheus (~=2.5)",
     "prometheus-client (~=0.26)",
-    "django-ipware (~=7.0)",
+    "django-ipware (~=8.0)",
     "django-formset (~=2.2)",
     "tenacity (>=9.1.4,<10.0.0)",
 ]
@@ -35,18 +35,17 @@ packages = [
 [tool.poetry.requires-plugins]
 poetry-plugin-shell = ">1.0.0"
 
-
 [tool.poetry.group.dev.dependencies]
-pytest = "^9.1"
+pytest = "^9.2"
 pytest-django = "^4.14"
-black = "^26.5"
+black = "^26.10"
 requests-mock = "^1.12.1"
-flake8 = "^7.3.0"
-djlint = "1.44.2"
+flake8 = "^7.5"
+djlint = "^1.47"
 bandit = "^1.9.4"
-pre-commit = "^4.6.2"
-pre-commit-hooks = "^6.0.0"
-isort = "^8.0.1"
+pre-commit = "^4.7"
+pre-commit-hooks = "^6.0"
+isort = "^9.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -54,3 +53,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 profile = "black"
+
+[tool.djlint]
+ignore = "H021,H052"
