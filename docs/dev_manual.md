@@ -1,22 +1,23 @@
 ## Environment Setup
-You will need Python 3.10+ in order to run BoogieStats because it's built with Django 5.
-This project uses [Poetry](https://python-poetry.org/docs/) for managing the environment.
+You will need Python 3.11+ in order to run BoogieStats because it's built with Django 5.
+This project uses [uv](https://docs.astral.sh/uv/) for managing the environment.
 It handles virtual environment creation and package installation.
 Follow their docs to learn how to install it.
 
-Once you have Poetry, call:
+Once you have uv, call:
 ```
-$ poetry install
+$ uv sync
 ```
-to install all runtime and development requirements, as well as the project itself in [editable mode](https://pip.pypa.io/en/stable/topics/local-project-installs/).
+to install all runtime and development requirements, as well as the project itself in [editable mode](https://docs.astral.sh/uv/concepts/projects/config/#editable-installs).
 It has to be executed every time dependencies have changed in the repository.
 
 Run this command every time you want to enter the environment:
 ```
-$ poetry shell
+$ source .venv/bin/activate
 ```
-In contrast to a standard virtualenv, Poetry spawns an augmented subshell instead of sourcing environment to the current one.
-In order to leave it, simply call `exit` or press `ctrl-d`.
+In order to leave it, simply call `deactivate` or close the shell.
+Alternatively, prefix any command with `uv run` to execute it in the project environment without activating it,
+for example `uv run pytest`.
 
 Let's create a development settings file with the following contents:
 ```
@@ -86,8 +87,12 @@ If you need more information about pytest, just consult their docs.
 ## Coding Standards
 BoogieStats enforce multiple standards when it comes to code style and quality. They have been packed into
 [pre-commit](https://pre-commit.com/) hooks for easy and consistent usage for developers and CI pipeline.
+Hook environments are managed by pre-commit itself and the linters are not part of the project environment,
+so run them through pre-commit rather than calling them directly.
 You can configure pre-commit to run all the required checks when you make a commit (`pre-commit install`).
 To run checks on all the files manually, simply run: `pre-commit run -a`.
+A single hook can be run with `pre-commit run <hook-id> -a`, for example `pre-commit run black -a`.
+[prek](https://github.com/j178/prek) is a drop-in, faster alternative runner if you prefer it: `prek run -a`.
 
 ## Modifying Models
 Until now, all [models](https://docs.djangoproject.com/en/stable/topics/db/models/) changes could be achieved using normal
@@ -109,17 +114,17 @@ $ django-admin migrate
 
 ## Useful Commands Summary
 ```
-$ poetry install
-$ poetry shell
+$ uv sync
+$ source .venv/bin/activate
 $ pytest
 $ pre-commit run -a
 $ pre-commit install
-$ black .
-$ flake8
-$ djlint --profile django --reformat .
-$ djlint --profile django --check --lint .
-$ bandit --configfile bandit.yml -r boogiestats/
-$ isort .
+$ pre-commit run black -a
+$ pre-commit run isort -a
+$ pre-commit run flake8 -a
+$ pre-commit run bandit -a
+$ pre-commit run djlint-reformat-django -a
+$ pre-commit run djlint-django -a
 $ ./dev/check-pending-migrations.sh
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin runserver 8000
 $ DJANGO_SETTINGS_MODULE=boogiestats.boogiestats.settings_dev django-admin migrate
