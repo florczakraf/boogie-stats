@@ -1,136 +1,79 @@
-exclude: '.git/|.tox/|venv/|.venv/'
 default_stages: [pre-commit]
 fail_fast: true
 
 repos:
-  - repo: local
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=512']
+
+      - id: check-ast
+
+      - id: check-case-conflict
+
+      - id: check-docstring-first
+
+      - id: check-executables-have-shebangs
+
+      - id: check-json
+
+      - id: check-merge-conflict
+
+      - id: check-toml
+
+      - id: check-xml
+
+      - id: check-yaml
+
+      - id: debug-statements
+
+      - id: detect-private-key
+
+      - id: end-of-file-fixer
+
+      - id: trailing-whitespace
+
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 26.10.0
     hooks:
       - id: black
-        name: black
-        entry: black
-        language: system
-        files: '.*\.py$'
 
+  - repo: https://github.com/PyCQA/isort
+    rev: 9.0.0
+    hooks:
       - id: isort
-        name: isort
-        entry: isort
-        language: system
-        files: '.*\.py$'
 
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.5.0
+    hooks:
       - id: flake8
-        name: flake8
-        entry: flake8
-        language: system
-        files: '.*\.py$'
 
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
       - id: bandit
-        name: bandit
-        entry: bandit --configfile bandit.yml
-        language: system
-        files: 'boogiestats/.*\.py$'
+        args: ['-c', 'bandit.yml']
+        files: '^boogiestats/'
 
-      - id: djlint reformat
-        name: djlint reformat
-        entry: djlint --profile django --reformat
-        language: system
-        files: '.*\.html$'
+  - repo: https://github.com/djlint/djLint
+    rev: v1.49.9
+    hooks:
+      - id: djlint-reformat-django
 
-      - id: djlint check
-        name: djlint check
-        entry: djlint --profile django --check --lint
-        language: system
-        files: '.*\.html$'
+      - id: djlint-django
 
+  - repo: local
+    hooks:
       - id: check pending django migrations
         name: check pending django migrations
-        entry: ./dev/check-pending-migrations.sh
+        entry: uv run --no-sync ./dev/check-pending-migrations.sh
         language: system
         files: 'boogiestats/.*\.py$'
 
-      - id: check poetry lock file
-        name: check poetry lock file
-        entry: poetry check --no-interaction
+      - id: check uv lock file
+        name: check uv lock file
+        entry: uv lock --check
         language: system
         pass_filenames: false
         files: '^pyproject\.toml$'
-
-      - id: check-added-large-files
-        name: check-added-large-files
-        entry: check-added-large-files
-        args: [ '--maxkb=512' ]
-        language: system
-
-      - id: check-ast
-        name: check-ast
-        entry: check-ast
-        language: system
-        files: '.*\.py$'
-
-      - id: check-case-conflict
-        name: check-case-conflict
-        entry: check-case-conflict
-        language: system
-
-      - id: check-docstring-first
-        name: check-docstring-first
-        entry: check-docstring-first
-        language: system
-        files: '.*\.py$'
-
-      - id: check-json
-        name: check-json
-        entry: check-json
-        language: system
-        files: '.*\.json$'
-
-      - id: check-merge-conflict
-        name: check-merge-conflict
-        entry: check-merge-conflict
-        language: system
-
-      - id: check-toml
-        name: check-toml
-        entry: check-toml
-        language: system
-        files: '.*\.toml$'
-
-      - id: check-xml
-        name: check-xml
-        entry: check-xml
-        language: system
-        files: '.*\.xml$'
-
-      - id: check-yaml
-        name: check-yaml
-        entry: check-yaml
-        language: system
-        types: [yaml]
-
-      - id: detect-private-key
-        name: detect-private-key
-        entry: detect-private-key
-        language: system
-
-      - id: end-of-file-fixer
-        name: end-of-file-fixer
-        entry: end-of-file-fixer
-        language: system
-        types: [ text ]
-
-      - id: trailing-whitespace-fixer
-        name: trailing-whitespace-fixer
-        entry: trailing-whitespace-fixer
-        language: system
-        types: [ text ]
-
-      - id: debug-statements
-        name: debug-statements
-        entry: debug-statement-hook
-        language: system
-        files: '.*\.py$'
-
-      - id: check-executables-have-shebangs
-        name: check-executables-have-shebangs
-        entry: check-executables-have-shebangs
-        language: system
-        types: [text, executable]

@@ -14,17 +14,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
+          version: "0.13.7"
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Install dependencies
         run: |
-          pip install poetry==2.*
-          poetry install
+          uv sync
       - name: Test with pytest
         run: |
-          poetry run pytest -sv
+          uv run pytest -sv
 
   pre-commit-checks:
     runs-on: ubuntu-latest
@@ -35,14 +36,15 @@ jobs:
       DJANGO_SETTINGS_MODULE: boogiestats.boogiestats.settings
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
+          version: "0.13.7"
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Install dependencies
         run: |
-          pip install poetry==2.*
-          poetry install
+          uv sync
       - name: pre-commit checks
         run: |
-          poetry run pre-commit run -a
+          uv run pre-commit run -a

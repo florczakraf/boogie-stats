@@ -8,7 +8,9 @@
                          data-bs-toggle="tooltip"
                          title="{{ diff.diff }}: {{ diff.number_of_scores }} scores">
                         {% if diff.number_of_scores > 0 %}
-                            <a href="{% url "song_highscores" song_hash=diff.hash %}">{% include "boogie_ui/diff_box.html" %}</a>
+                            <a href="{% url "song_highscores" song_hash=diff.hash %}">
+                                {% include "boogie_ui/diff_box.html" %}
+                            </a>
                         {% else %}
                             <div class="grayscale">{% include "boogie_ui/diff_box.html" %}</div>
                         {% endif %}

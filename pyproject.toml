@@ -26,30 +26,21 @@ dependencies = [
     "tenacity (>=9.1.4,<10.0.0)",
 ]
 
-[tool.poetry]
-requires-poetry = ">=2.0"
-packages = [
-    { include = "boogiestats" },
+[dependency-groups]
+dev = [
+    "pytest>=9.2,<10",
+    "pytest-django>=4.14,<5",
+    "requests-mock>=1.12.1,<2",
+    "pre-commit>=4.7,<5",
 ]
 
-[tool.poetry.requires-plugins]
-poetry-plugin-shell = ">1.0.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^9.2"
-pytest-django = "^4.14"
-black = "^26.10"
-requests-mock = "^1.12.1"
-flake8 = "^7.5"
-djlint = "^1.47"
-bandit = "^1.9.4"
-pre-commit = "^4.7"
-pre-commit-hooks = "^6.0"
-isort = "^9.0"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "boogiestats"
+module-root = ""
 
 [tool.isort]
 profile = "black"
