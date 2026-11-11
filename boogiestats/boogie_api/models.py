@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinLengthValidator, RegexValidator
 from django.db import models
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.signals import m2m_changed
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
@@ -426,17 +426,25 @@ class Score(models.Model):
 
     @classmethod
     def rank(cls, score, score_type):
-        return (
-            list(
-                cls.objects.filter(
-                    song=score.song,
-                    **{f"is_{score_type}_top": True, f"{score_type}_score__gte": getattr(score, f"{score_type}_score")},
-                )
-                .order_by(f"-{score_type}_score", "submission_date", "id")
-                .values_list("id", flat=True)
-            ).index(score.id)
-            + 1
+        score_value = getattr(score, f"{score_type}_score")
+        top_scores = cls.objects.filter(song=score.song, **{f"is_{score_type}_top": True})
+
+        # Count scores ordered before this one instead of looking for this exact row in the
+        # leaderboard. The score may no longer be top if it was superseded by a concurrent
+        # submission between fetching it and calculating its rank.
+        better_scores = top_scores.filter(
+            Q(**{f"{score_type}_score__gt": score_value})
+            | Q(**{f"{score_type}_score": score_value, "submission_date__lt": score.submission_date})
+            | Q(
+                **{
+                    f"{score_type}_score": score_value,
+                    "submission_date": score.submission_date,
+                    "id__lt": score.id,
+                }
+            )
         )
+
+        return better_scores.count() + 1
 
     def calculate_ex(self) -> int:
         if not self.has_judgments:
