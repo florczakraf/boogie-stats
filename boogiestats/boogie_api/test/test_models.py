@@ -196,6 +196,17 @@ def test_get_leaderboard_returns_up_to_num_entries(song, player, top_scores):
     assert len(leaderboard) == 21
 
 
+def test_rank_of_score_that_is_no_longer_top_does_not_raise(song, player):
+    previous_top = player.scores.create(song=song, itg_score=9000, comment="", rate=100)
+    assert Score.rank(previous_top, "itg") == 1
+
+    player.scores.create(song=song, itg_score=9500, comment="", rate=100)
+    previous_top.refresh_from_db()
+
+    assert previous_top.is_itg_top is False
+    assert Score.rank(previous_top, "itg") == 2
+
+
 def test_player_has_one_top_score_for_a_song(song, player):
     score = player.scores.first()
     assert score.is_itg_top is True
